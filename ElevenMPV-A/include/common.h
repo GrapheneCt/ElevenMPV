@@ -29,6 +29,7 @@ extern widget::Widget *g_player_page;
 extern widget::Widget *g_settings_option;
 extern widget::Widget *g_top_text;
 extern graphics::Texture *g_commonBgTex;
+extern graphics::Texture *g_coverBgTex;
 extern widget::BusyIndicator *g_commonBusyInidcator;
 extern widget::Widget *g_commonOptionDialog;
 

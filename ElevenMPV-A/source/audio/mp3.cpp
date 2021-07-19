@@ -41,7 +41,7 @@ audio::Mp3Decoder::Mp3Decoder(const char *path, SceBool isSwDecoderUsed) : Shell
 		text8->Clear();
 	}
 
-	if (ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) {
+	if ((ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) && !metadata->hasCover) {
 
 		ret = file.Open(path, SCE_O_RDONLY, 0);
 		if (ret >= 0) {
@@ -54,6 +54,8 @@ audio::Mp3Decoder::Mp3Decoder(const char *path, SceBool isSwDecoderUsed) : Shell
 				file.Close();
 				coverLoader->size = ID3->ID3EncapsulatedPictureLength;
 				coverLoader->Start();
+
+				metadata->hasCover = SCE_TRUE;
 			}
 		}
 	}

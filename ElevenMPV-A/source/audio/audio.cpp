@@ -24,6 +24,7 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 	widget::Widget *playerCover;
 	widget::BusyIndicator *playerBusyInd;
 	widget::Widget::Color col;
+	SceFVector4 wsize;
 	Misc::OpenResult fres;
 	SceInt32 res;
 
@@ -57,6 +58,13 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 			col.b = 0.286;
 			col.a = 1;
 			g_root->SetFilterColor(&col);
+
+			wsize.x = 960.0;
+			wsize.y = 960.0;
+			wsize.z = 0.0f;
+			wsize.w = 0.0f;
+			g_root->SetSize(&wsize);
+
 			g_root->SetTextureBase(&coverTex);
 		}
 
@@ -109,6 +117,13 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 	col.b = 0.286;
 	col.a = 1;
 	g_root->SetFilterColor(&col);
+
+	wsize.x = 960.0;
+	wsize.y = 960.0;
+	wsize.z = 0.0f;
+	wsize.w = 0.0f;
+	g_root->SetSize(&wsize);
+
 	g_root->SetTextureBase(&coverTex);
 
 	playerCover->SetTextureBase(&coverTex);
@@ -165,7 +180,7 @@ audio::GenericDecoder::~GenericDecoder()
 		if (coverLoader->coverTex.texSurface != SCE_NULL) {
 			searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
 			playerCover = g_player_page->GetChildByHash(&searchParam, 0);
-			playerCover->SetTextureBase(g_commonBgTex);
+			playerCover->SetTextureBase(g_coverBgTex);
 		}
 
 		delete coverLoader;

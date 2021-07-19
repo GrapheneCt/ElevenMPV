@@ -60,7 +60,7 @@ audio::OpusDecoder::OpusDecoder(const char *path, SceBool isSwDecoderUsed) : Gen
 
 		error = opus_picture_tag_parse(&picture_tag, metadata_block);
 		if (error == 0) {
-			if (picture_tag.type == 3) {
+			if (picture_tag.type == 3 && !metadata->hasCover) {
 				if (picture_tag.format == OP_PIC_FORMAT_JPEG || picture_tag.format == OP_PIC_FORMAT_PNG) {
 
 					coverLoader = new audio::PlayerCoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_HIGHEST_PRIORITY, SCE_KERNEL_4KiB, "EMPVA::PlayerCoverLoader");

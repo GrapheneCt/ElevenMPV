@@ -168,7 +168,7 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 
 	delete text8;
 
-	if (ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) {
+	if ((ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) && !metadata->hasCover) {
 
 		ret = file.Open(path, SCE_O_RDONLY, 0);
 		if (ret >= 0) {
@@ -181,6 +181,8 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 				file.Close();
 				coverLoader->size = ID3->ID3EncapsulatedPictureLength;
 				coverLoader->Start();
+
+				metadata->hasCover = SCE_TRUE;
 			}
 		}
 	}

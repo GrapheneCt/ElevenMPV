@@ -24,7 +24,7 @@ SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 	String *text8 = new String();
 	drflac_metadata *pMetadata = (drflac_metadata *)pMeta;
 	s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE) {
+	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE && !s_currentDecoderInstance->metadata->hasCover) {
 		if (pMetadata->data.picture.type == DRFLAC_PICTURE_TYPE_COVER_FRONT) {
 			if (!sce_paf_strncasecmp("image/jpg", pMetadata->data.picture.mime, 9) ||
 				!sce_paf_strncasecmp("image/jpeg", pMetadata->data.picture.mime, 10) ||

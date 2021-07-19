@@ -13,14 +13,6 @@
 #include "menu_settings.h"
 #include "menu_audioplayer.h"
 
-extern "C" {
-
-	//extern const char			sceUserMainThreadName[] = "paf_main_thr";
-	//extern const int			sceUserMainThreadPriority = SCE_KERNEL_DEFAULT_PRIORITY_USER;
-	//extern const unsigned int	sceUserMainThreadStackSize = 6 * 1024 * 1024;
-
-}
-
 using namespace paf;
 
 typedef struct SceSysmoduleOpt {
@@ -50,7 +42,8 @@ widget::Widget *g_settings_page;
 widget::Widget *g_player_page;
 widget::Widget *g_settings_option;
 widget::Widget *g_top_text;
-graphics::Texture *g_commonBgTex;
+graphics::Texture *g_commonBgTex = SCE_NULL;
+graphics::Texture *g_coverBgTex = SCE_NULL;
 widget::BusyIndicator *g_commonBusyInidcator;
 widget::Widget *g_commonOptionDialog;
 
@@ -62,7 +55,7 @@ menu::displayfiles::Page *g_currentDispFilePage;
 menu::settings::SettingsButtonCB *g_settingsButtonCB;
 config::Config *g_config;
 
-static SceBool s_memGrown = SCE_FALSE;
+static SceInt32 s_memGrown = 0;
 
 void pafLoadPrx(SceUInt32 flags)
 {
@@ -71,7 +64,9 @@ void pafLoadPrx(SceUInt32 flags)
 	ScePafInit init_param;
 	SceSysmoduleOpt sysmodule_opt;
 
-	if (flags)
+	if (flags == 2)
+		init_param.global_heap_size = 22 * 1024 * 1024;
+	else if (flags == 1)
 		init_param.global_heap_size = 12 * 1024 * 1024;
 	else
 		init_param.global_heap_size = 5 * 1024 * 1024;
@@ -110,8 +105,19 @@ SceVoid pluginLoadCB(Plugin *plugin)
 	g_config->GetLastDirectory(&initCwd);
 
 	g_commonBgTex = new graphics::Texture();
-	searchParam.hash = EMPVAUtils::GetHash("tex_common_bg");
-	Plugin::LoadTexture(g_commonBgTex, plugin, &searchParam);
+
+	if (s_memGrown == 2) {
+		g_coverBgTex = new graphics::Texture();
+		searchParam.hash = EMPVAUtils::GetHash("tex_common_bg_full");
+		Plugin::LoadTexture(g_commonBgTex, plugin, &searchParam);
+		searchParam.hash = EMPVAUtils::GetHash("tex_common_bg");
+		Plugin::LoadTexture(g_coverBgTex, g_empvaPlugin, &searchParam);
+	}
+	else {
+		searchParam.hash = EMPVAUtils::GetHash("tex_common_bg");
+		Plugin::LoadTexture(g_commonBgTex, plugin, &searchParam);
+		g_coverBgTex = g_commonBgTex;
+	}
 
 	searchParam.hash = EMPVAUtils::GetHash("page_common");
 	g_root_page = g_empvaPlugin->CreateScene(&searchParam, &rwiParam);
@@ -191,9 +197,14 @@ int main() {
 #endif
 
 	//Grow memory if possible
-	ret = sceAppMgrGrowMemory3(16 * 1024 * 1024, 1);
-	if (ret == 0)
-		s_memGrown = SCE_TRUE;
+	ret = sceAppMgrGrowMemory3(32 * 1024 * 1024, 1); // 48 MB
+	if (ret < 0) {
+		ret = sceAppMgrGrowMemory3(16 * 1024 * 1024, 1); // 32 MB
+		if (ret == 0)
+			s_memGrown = 1;
+	}
+	else
+		s_memGrown = 2;
 
 	pafLoadPrx((SceUInt32)s_memGrown);
 
@@ -202,7 +213,11 @@ int main() {
 	fwParam.applicationMode = Framework::Mode_ApplicationA;
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
-	if (s_memGrown) {
+	if (s_memGrown == 2) {
+		fwParam.defaultSurfacePoolSize = 17 * 1024 * 1024 + 512 * 1024;
+		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
+	}
+	else if (s_memGrown == 1) {
 		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024 + 512 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}

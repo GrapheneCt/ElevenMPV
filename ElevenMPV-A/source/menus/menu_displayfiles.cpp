@@ -19,6 +19,7 @@ SceVoid menu::displayfiles::CoverLoaderThread::EntryFunction()
 	Resource::Element searchParam;
 	widget::Widget *playerCover;
 	widget::Widget::Color col;
+	SceFVector4 wsize;
 	Misc::OpenResult fres;
 	graphics::Texture tex;
 	SceInt32 res;
@@ -73,8 +74,14 @@ SceVoid menu::displayfiles::CoverLoaderThread::EntryFunction()
 	col.b = 0.286;
 	col.a = 1;
 
+	wsize.x = 960.0;
+	wsize.y = 960.0;
+	wsize.z = 0.0f;
+	wsize.w = 0.0f;
+
 	if (g_currentDispFilePage == workPage && !g_isPlayerActive) {
 		g_root->SetFilterColor(&col);
+		g_root->SetSize(&wsize);
 		g_root->SetTextureBase(&tex);
 	}
 
@@ -343,13 +350,22 @@ menu::displayfiles::Page::~Page()
 SceVoid menu::displayfiles::Page::ResetBgPlaneTex()
 {
 	widget::Widget::Color col;
+	SceFVector4 wsize;
 
 	col.r = 1;
 	col.g = 1;
 	col.b = 1;
 	col.a = 1;
 	g_root->SetFilterColor(&col);
+
+	wsize.x = 960.0;
+	wsize.y = 544.0;
+	wsize.z = 0.0f;
+	wsize.w = 0.0f;
+	g_root->SetSize(&wsize);
+
 	g_root->SetTextureBase(g_commonBgTex);
+
 	if (g_currentCoverSurf)
 		delete g_currentCoverSurf;
 	g_currentCoverSurf = SCE_NULL;

@@ -461,7 +461,7 @@
       <textobj font_size="20" color="1, 1, 1, 1" text_align="5" ellipsis="1" id="player_style_title_text_obj" />
     </style_text>
   
-	<style_plane color="0.207, 0.247, 0.286, 1" id="plane_bg_style" />
+	<style_plane color="0, 0.007, 0.282, 1" id="plane_bg_style" />
   </styletable>
   <templatetable>
   
@@ -532,7 +532,7 @@
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="it" />
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="nl" />
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt-br" />
+    <locale origsize="3616" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
     <locale origsize="3456" src="empva_files\locale\empva_locale_ru.rcs.zlib" compress="on" id="ru" />
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ko" />
     <locale origsize="2784" src="empva_files\locale\empva_locale_zh-t.rcs.zlib" compress="on" id="zh-t" />
@@ -548,7 +548,7 @@
   <texturetable>
     <texture origsize="25728" src="empva_files\texture\tex_icon_music.zlib" type="texture/gim" id="tex_icon_music" compress="on" />
     <texture origsize="6832" src="empva_files\texture\tex_icon_dir.zlib" type="texture/gim" id="tex_icon_dir" compress="on" />
-    <texture origsize="6832" src="empva_files\texture\tex_icon_unk.zlib" type="texture/gim" id="tex_icon_unk" compress="on" />
+    <texture origsize="6832" src="empva_files\texture\tex_icon_unk.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_icon_unk" compress="on" />
 	<texture origsize="10960" src="empva_files\texture\tex_button_pause.zlib" type="texture/gim" id="tex_button_pause" compress="on" />
 	<texture origsize="10960" src="empva_files\texture\tex_button_play.zlib" type="texture/gim" id="tex_button_play" compress="on" />
 	<texture origsize="10960" src="empva_files\texture\tex_button_rew.zlib" type="texture/gim" id="tex_button_rew" compress="on" />
@@ -558,6 +558,7 @@
 	<texture origsize="5328" src="empva_files\texture\tex_button_repeat_glow.zlib" type="texture/gim" id="tex_button_repeat_glow" compress="on" />
 	<texture origsize="5328" src="empva_files\texture\tex_button_repeat_glow_one.zlib" type="texture/gim" id="tex_button_repeat_glow_one" compress="on" />
 	<texture origsize="5328" src="empva_files\texture\tex_button_repeat.zlib" type="texture/gim" id="tex_button_repeat" compress="on" />
+	<texture src="empva_files\texture\tex_common_bg_full.png" ignore_make_surface_first="on" type="texture/png" id="tex_common_bg_full" />
 	<texture src="empva_files\texture\tex_common_bg.png" type="texture/png" id="tex_common_bg" />
   </texturetable>
   
