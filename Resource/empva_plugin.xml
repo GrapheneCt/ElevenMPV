@@ -532,7 +532,7 @@
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="it" />
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="nl" />
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt" />
-    <locale origsize="3616" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
+    <locale origsize="3504" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
     <locale origsize="3456" src="empva_files\locale\empva_locale_ru.rcs.zlib" compress="on" id="ru" />
     <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ko" />
     <locale origsize="2784" src="empva_files\locale\empva_locale_zh-t.rcs.zlib" compress="on" id="zh-t" />

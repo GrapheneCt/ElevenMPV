@@ -39,14 +39,14 @@ static SceBool imposeIpcActive = SCE_FALSE;
 int setup_stage1()
 {
 	//Get power manage plugin object
-	Plugin *imposePlugin = Plugin::GetByName("power_manage_plugin");
+	Plugin *imposePlugin = Plugin::Find("power_manage_plugin");
 	if (imposePlugin == NULL) {
 		SCE_DBG_LOG_ERROR("Power manage plugin not found\n");
 		goto setup_error_return;	
 	}
 
 	//Power manage plugin -> power manage root
-	widget::Widget *powerRoot = imposePlugin->GetWidgetByNum(1);
+	widget::Widget *powerRoot = imposePlugin->GetInterface(1);
 	if (powerRoot == NULL) {
 		SCE_DBG_LOG_ERROR("Power root not found\n");
 		goto setup_error_return;

@@ -40,7 +40,6 @@ audio::ShellCommonDecoder::ShellCommonDecoder(const char *path, SceBool isSwDeco
 		sceMusicPlayerServiceGetPlayStatusExtension(&pbStat);
 		thread::Thread::Sleep(10);
 	}
-
 	SceMusicPlayerServiceTrackInfo data;
 	sceMusicPlayerServiceGetTrackInfo(&data);
 	totalTime = data.duration;

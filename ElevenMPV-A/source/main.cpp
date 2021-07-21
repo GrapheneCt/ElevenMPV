@@ -141,11 +141,11 @@ SceVoid pluginLoadCB(Plugin *plugin)
 
 	g_texCheckMark = new graphics::Texture();
 	searchParam.hash = EMPVAUtils::GetHash("_common_texture_check_mark");
-	Plugin::LoadTexture(g_texCheckMark, Plugin::GetByName("__system__common_resource"), &searchParam);
+	Plugin::LoadTexture(g_texCheckMark, Plugin::Find("__system__common_resource"), &searchParam);
 
 	g_texTransparent = new graphics::Texture();
 	searchParam.hash = EMPVAUtils::GetHash("_common_texture_transparent");
-	Plugin::LoadTexture(g_texTransparent, Plugin::GetByName("__system__common_resource"), &searchParam);
+	Plugin::LoadTexture(g_texTransparent, Plugin::Find("__system__common_resource"), &searchParam);
 
 	menu::displayfiles::Page::Init();
 	new menu::displayfiles::Page(initCwd.data);
