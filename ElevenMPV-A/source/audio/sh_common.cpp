@@ -17,6 +17,7 @@ audio::ShellCommonDecoder::ShellCommonDecoder(const char *path, SceBool isSwDeco
 	seekFrame = 0;
 
 	SceInt32 error = 0;
+	SceUInt32 timeoutIter = 0;
 
 	sce_paf_memset(&pbStat, 0, sizeof(SceMusicPlayerServicePlayStatusExtension));
 
@@ -24,7 +25,7 @@ audio::ShellCommonDecoder::ShellCommonDecoder(const char *path, SceBool isSwDeco
 	if (error < 0)
 		return;
 
-	error = sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+	error = sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_STOP, 0);
 	if (error < 0)
 		return;
 
@@ -32,14 +33,16 @@ audio::ShellCommonDecoder::ShellCommonDecoder(const char *path, SceBool isSwDeco
 	if (error < 0)
 		return;
 
-	sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_PLAY, 0);
+	sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_PLAY, 0);
 
 	//Wait until SceShell is ready
-	pbStat.currentState = SCE_MUSICCORE_EVENTID_STOP;
-	while (pbStat.currentState == SCE_MUSICCORE_EVENTID_STOP) {
+	pbStat.currentState = SCE_MUSIC_EVENTID_STOP;
+	while (pbStat.currentState == SCE_MUSIC_EVENTID_STOP && timeoutIter < 1000) {
+		timeoutIter++;
 		sceMusicPlayerServiceGetPlayStatusExtension(&pbStat);
 		thread::Thread::Sleep(10);
 	}
+
 	SceMusicPlayerServiceTrackInfo data;
 	sceMusicPlayerServiceGetTrackInfo(&data);
 	totalTime = data.duration;
@@ -65,17 +68,23 @@ SceUInt64 audio::ShellCommonDecoder::GetPosition()
 		}
 	}
 
-	if (pbStat.currentState == SCE_MUSICCORE_EVENTID_STOP && pbStat.currentTime == 0)
+	if (pbStat.currentState == SCE_MUSIC_EVENTID_STOP && pbStat.currentTime == 0)
 		isPlaying = SCE_FALSE;
 	//This is to prevent audio from stopping when power button is pressed
-	if (pbStat.currentState == SCE_MUSICCORE_EVENTID_STOP && isPlaying && !isPaused)
-		sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_PLAY, 0);
+	if (pbStat.currentState == SCE_MUSIC_EVENTID_STOP && isPlaying && !isPaused)
+		sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_PLAY, 0);
 
 	return timeRead;
 }
 
 SceUInt64 audio::ShellCommonDecoder::GetLength()
 {
+	if (totalTime == 0) {
+		SceMusicPlayerServiceTrackInfo data;
+		sceMusicPlayerServiceGetTrackInfo(&data);
+		totalTime = data.duration;
+	}
+
 	return totalTime;
 }
 
@@ -85,7 +94,7 @@ SceUInt64 audio::ShellCommonDecoder::Seek(SceFloat32 percent)
 	seekFrame = (SceUInt32)((SceFloat32)totalTime * percent / 100.0f);
 
 	sceMusicPlayerServiceSetSeekTime(seekFrame);
-	sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_SEEK, 0);
+	sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_SEEK, 0);
 
 	return -1;
 }
@@ -95,7 +104,7 @@ audio::ShellCommonDecoder::~ShellCommonDecoder()
 	isPlaying = SCE_TRUE;
 	isPaused = SCE_FALSE;
 
-	sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+	sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_STOP, 0);
 	sceMusicPlayerServiceTerminate();
 
 	audio::DecoderCore::EndPre();

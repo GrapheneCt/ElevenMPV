@@ -250,7 +250,7 @@ int main() {
 
 	//Reset repeat state
 	sceMusicPlayerServiceInitialize(0);
-	sceMusicPlayerServiceSetRepeatMode(SCE_MUSICSERVICE_REPEAT_DISABLE);
+	sceMusicPlayerServiceSetRepeatMode(SCE_MUSIC_REPEAT_DISABLE);
 	sceMusicPlayerServiceTerminate();
 
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_AUDIOCODEC);

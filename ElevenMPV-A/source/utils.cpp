@@ -155,7 +155,7 @@ SceInt32 EMPVAUtils::PowerCallback(SceInt32 notifyId, SceInt32 notifyCount, SceI
 		if (g_currentPlayerInstance != SCE_NULL) {
 			if (g_currentPlayerInstance->GetCore()->GetDecoder() != SCE_NULL) {
 				if (!g_currentPlayerInstance->GetCore()->GetDecoder()->IsPaused() && !EMPVAUtils::IsDecoderUsed())
-					sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_PLAY, 0);
+					sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_PLAY, 0);
 			}
 		}
 		sceShellUtilExitToLiveBoard();
@@ -210,7 +210,7 @@ SceVoid EMPVAUtils::AppWatchdogTask(ScePVoid pUserData)
 
 				sceAppMgrReleaseBgmPort();
 				if (!EMPVAUtils::IsDecoderUsed()) {
-					sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+					sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_STOP, 0);
 					sceMusicPlayerServiceTerminate();
 				}
 

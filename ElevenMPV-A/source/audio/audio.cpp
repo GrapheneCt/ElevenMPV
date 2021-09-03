@@ -225,9 +225,9 @@ SceBool audio::GenericDecoder::IsPaused()
 SceVoid audio::GenericDecoder::Pause()
 {
 	if (!EMPVAUtils::IsDecoderUsed() && isPaused)
-		sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_PLAY, 0);
+		sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_PLAY, 0);
 	else if (!EMPVAUtils::IsDecoderUsed()) {
-		sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+		sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_STOP, 0);
 	}
 	isPaused = !isPaused;
 }
@@ -235,7 +235,7 @@ SceVoid audio::GenericDecoder::Pause()
 SceVoid audio::GenericDecoder::Stop()
 {
 	if (!EMPVAUtils::IsDecoderUsed())
-		sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
+		sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_STOP, 0);
 	isPlaying = !isPlaying;
 }
 
