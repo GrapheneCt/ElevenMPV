@@ -263,7 +263,7 @@ int main() {
 	pluginParam.resourcePath.Set("app0:empva_plugin.rco");
 	pluginParam.scopeName.Set("__main__");
 
-	pluginParam.loadCB3 = pluginLoadCB;
+	pluginParam.pluginStartCB = pluginLoadCB;
 
 	fw->LoadPluginAsync(&pluginParam);
 

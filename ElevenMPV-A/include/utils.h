@@ -24,18 +24,7 @@ using namespace paf;
 
 extern "C" {
 
-	typedef struct SceAppMgrEvent { // size is 0x64
-		SceInt32 event;				/* Event ID */
-		SceUID appId;			/* Application ID. Added when required by the event */
-		char  param[56];		/* Parameters to pass with the event */
-	} SceAppMgrEvent;
-
-	int sceAppMgrReceiveEventNum(SceUInt32 *num);
-	int sceAppMgrReceiveEvent(SceAppMgrEvent *appEvent);
-	int sceAppMgrQuitForNonSuspendableApp();
-	int sceAppMgrAcquireBgmPortForMusicPlayer();
 	int sceAudioOutSetEffectType(SceInt32 type);
-	int sceAppMgrAcquireBgmPortWithPriority(SceUInt32 priority);
 
 	int sceShellUtilExitToLiveBoard();
 
