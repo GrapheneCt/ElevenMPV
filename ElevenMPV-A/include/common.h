@@ -16,7 +16,6 @@ using namespace paf;
 
 #define MAX_FILES 1024
 
-extern SceUID g_mainThreadUid;
 extern SceUID g_eventFlagUid;
 
 extern SceBool g_isPlayerActive;

@@ -227,6 +227,21 @@ QUICK NOTES
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel.h>
+#include <paf/stdc.h>
+
+#define memcpy sce_paf_memcpy
+#define memset sce_paf_memset
+#define malloc sce_paf_malloc
+#define free sce_paf_free
+#define realloc sce_paf_realloc
+#define fopen sce_paf_fopen
+#define fclose sce_paf_fclose
+#define fread sce_paf_fread
+#define fseek sce_paf_fseek
+#define ftell sce_paf_ftell
+#define fgetc sce_paf_fgetc
+#define ferror { return 0; }
+
 typedef int8_t           drflac_int8;
 typedef uint8_t          drflac_uint8;
 typedef int16_t          drflac_int16;

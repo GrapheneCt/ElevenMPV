@@ -80,6 +80,8 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
       <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceVideodec_stub;-lSceJpegEnc_stub;-lSceFpu;-lsnc;$(OutDir)ElevenMPV-A-PluginManager_stub.a;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>--no-standard-libraries %(AdditionalOptions)</AdditionalOptions>
+      <DataStripping>StripFuncsAndData</DataStripping>
+      <DuplicateStripping>true</DuplicateStripping>
     </Link>
     <PostBuildEvent>
       <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
@@ -110,7 +112,6 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     <ClCompile Include="source\motion.cpp" />
     <ClCompile Include="source\paf_libc_bridge.cpp" />
     <ClCompile Include="source\paf_libc_bridge_asm.cpp">
-      <OptimizationLevel Condition="'$(Configuration)|$(Platform)'=='Debug|PSVita'">Level1</OptimizationLevel>
       <OptimizationLevel Condition="'$(Configuration)|$(Platform)'=='Release|PSVita'">Level1</OptimizationLevel>
     </ClCompile>
     <ClCompile Include="source\paf_runtime.cpp" />

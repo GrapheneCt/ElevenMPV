@@ -57,7 +57,7 @@ SceBool EMPVAUtils::IsRootDevice(const char *path)
 
 const char *EMPVAUtils::GetFileExt(const char *filename)
 {
-	const char *dot = sceClibStrrchr(filename, '.');
+	const char *dot = sce_paf_strrchr(filename, '.');
 
 	if (!dot || dot == filename)
 		return "";
@@ -93,6 +93,7 @@ SceUInt32 EMPVAUtils::Downscale(SceInt32 ix, SceInt32 iy, ScePVoid ibuf, SceInt3
 {
 	/*return stbir_resize_uint8_generic((unsigned char *)ibuf, ix, iy, ix * 4, (unsigned char *)obuf, ox, oy, ox * 4, 4, -1, 0,
 		STBIR_EDGE_CLAMP, STBIR_FILTER_BOX, STBIR_COLORSPACE_LINEAR, NULL);*/
+	return 0;
 }
 
 SceInt32 EMPVAUtils::Alphasort(const void *p1, const void *p2) 
@@ -284,7 +285,7 @@ SceVoid EMPVAUtils::Activate()
 			sceAppMgrAcquireBgmPortWithPriority(0x80);
 	}
 
-	sceKernelChangeThreadPriority(g_mainThreadUid, 77);
+	sceKernelChangeThreadPriority(thread::Thread::GetMainThreadUID(), 77);
 }
 
 SceVoid EMPVAUtils::Deactivate()
@@ -309,7 +310,7 @@ SceVoid EMPVAUtils::Deactivate()
 			sceAppMgrReleaseBgmPort();
 	}
 
-	sceKernelChangeThreadPriority(g_mainThreadUid, SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY);
+	sceKernelChangeThreadPriority(thread::Thread::GetMainThreadUID(), SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY);
 }
 
 SceVoid EMPVAUtils::IPC::Enable()

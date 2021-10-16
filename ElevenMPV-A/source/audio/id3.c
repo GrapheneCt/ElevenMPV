@@ -31,14 +31,13 @@ struct genre genreList[] =
 };
 int genreNumber = sizeof (genreList) / sizeof (struct genre);
 
-
 //Search for FF+D8+FF bytes (first bytes of a jpeg image)
 //Returns file position:
 int searchJPGstart(int fp, int delta){
     int retValue = -1;
     int i = 0;
 
-    unsigned char *tBuffer = malloc(sizeof(unsigned char) * (delta + 2));
+    unsigned char *tBuffer = sce_paf_malloc(sizeof(unsigned char) * (delta + 2));
     if (tBuffer == NULL)
         return -1;
 
@@ -48,12 +47,12 @@ int searchJPGstart(int fp, int delta){
 
     unsigned char *buff = tBuffer;
     for (i=0; i<delta; i++){
-        if(!sceClibMemcmp(buff++, ID3_JPEG, 3)){
+        if(!sce_paf_memcmp(buff++, ID3_JPEG, 3)){
             retValue = startPos + i;
             break;
         }
     }
-    free(tBuffer);
+	sce_paf_free(tBuffer);
     return retValue;
 }
 
@@ -63,7 +62,7 @@ int searchPNGstart(int fp, int delta){
     int retValue = -1;
     int i = 0;
 
-    unsigned char *tBuffer = malloc(sizeof(unsigned char) * (delta + 15));
+    unsigned char *tBuffer = sce_paf_malloc(sizeof(unsigned char) * (delta + 15));
     if (tBuffer == NULL)
         return -1;
 
@@ -73,12 +72,12 @@ int searchPNGstart(int fp, int delta){
 
     unsigned char *buff = tBuffer;
     for (i=0; i<delta; i++){
-        if(!sceClibMemcmp(buff++, ID3_PNG, 16)){
+        if(!sce_paf_memcmp(buff++, ID3_PNG, 16)){
             retValue = startPos + i;
             break;
         }
     }
-	free(tBuffer);
+	sce_paf_free(tBuffer);
     return retValue;
 }
 
@@ -157,7 +156,7 @@ void readTagData(int fp, int tagLength, int maxTagLength, char *tagValue){
     unsigned char* carattere = (unsigned char*)carattere16;
     char* utf8Tag;
 
-    strcpy(tagValue, "");
+	sce_paf_strcpy(tagValue, "");
     tagValue[0] = '\0';
 
     sceIoRead(fp, carattere, tagLength);
@@ -177,7 +176,7 @@ void readTagData(int fp, int tagLength, int maxTagLength, char *tagValue){
         else */
                 utf8Tag = (char*)carattere;
     }
-    if ( utf8Tag == NULL || !strlen(utf8Tag)) {
+    if ( utf8Tag == NULL || !sce_paf_strlen(utf8Tag)) {
         for (i=0; i<tagLength; i++){
             if (carattere[i] >= 0x20 && carattere[i] <= 0xfd) //<= 0x7f
                     tagValue[count++] = carattere[i];
@@ -186,7 +185,7 @@ void readTagData(int fp, int tagLength, int maxTagLength, char *tagValue){
     }
     else
     {
-            strcpy( tagValue, utf8Tag );
+		sce_paf_strcpy( tagValue, utf8Tag );
     }
 }
 
@@ -200,7 +199,7 @@ int ID3v2TagSize(const char *mp3path)
    if (fp < 0) return 0;
 
    sceIoRead(fp, sig, sizeof(sig));
-   if (sceClibStrncmp("ID3",sig,3) != 0 && sceClibStrncmp("ea3", sig, 3) != 0) { //ATRAC3 compat
+   if (sce_paf_strncmp("ID3",sig,3) != 0 && sce_paf_strncmp("ea3", sig, 3) != 0) { //ATRAC3 compat
       sceIoClose(fp);
       return 0;
    }
@@ -229,7 +228,7 @@ int ID3v2(const char *mp3path)
    if (fp < 0) return 0;
 
    sceIoRead(fp, sig, sizeof(sig));
-   if (!sceClibStrncmp("ID3",sig,3) || !sceClibStrncmp("ea3", sig, 3)) { //ATRAC3 compat
+   if (!sce_paf_strncmp("ID3",sig,3) || !sce_paf_strncmp("ea3", sig, 3)) { //ATRAC3 compat
           sceIoRead(fp, &version, sizeof(unsigned short int));
       version = (unsigned short int) swapInt16BigToHost((short int)version);
       version /= 256;
@@ -269,57 +268,57 @@ void ParseID3v2_2(const char *mp3path, struct ID3Tag *id3tag)
          /* Perform checks for end of tags and tag length overflow or zero */
          if(*tag == 0 || tag_length > size || tag_length == 0) break;
 
-         if(!sceClibStrncmp("TP1",tag,3)) /* Artist */
+         if(!sce_paf_strncmp("TP1",tag,3)) /* Artist */
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Artist);
          }
-         else if(!sceClibStrncmp("TT2",tag,3)) /* Title */
+         else if(!sce_paf_strncmp("TT2",tag,3)) /* Title */
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Title);
          }
-         else if(!sceClibStrncmp("TAL",tag,3)) /* Album */
+         else if(!sce_paf_strncmp("TAL",tag,3)) /* Album */
          {
                     sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Album);
          }
-         else if(!sceClibStrncmp("TRK",tag,3)) /* Track No. */
+         else if(!sce_paf_strncmp("TRK",tag,3)) /* Track No. */
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 8, id3tag->ID3TrackText);
             id3tag->ID3Track = sce_paf_atoi(id3tag->ID3TrackText);
          }
-         else if(!sceClibStrncmp("TYE",tag,3)) /* Year */
+         else if(!sce_paf_strncmp("TYE",tag,3)) /* Year */
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 12, id3tag->ID3Year);
          }
-         else if(!sceClibStrncmp("TLE",tag,3)) /* Length */
+         else if(!sce_paf_strncmp("TLE",tag,3)) /* Length */
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 264, buffer);
             id3tag->ID3Length = sce_paf_atoi(buffer);
          }
-         else if(!sceClibStrncmp("COM",tag,3)) /* Comment */
+         else if(!sce_paf_strncmp("COM",tag,3)) /* Comment */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Comment);
          }
-         else if(!sceClibStrncmp("TCO",tag,3)) /* Genre */
+         else if(!sce_paf_strncmp("TCO",tag,3)) /* Genre */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3GenreText);
-            if (id3tag->ID3GenreText[0] == '(' && id3tag->ID3GenreText[strlen(id3tag->ID3GenreText) - 1] == ')')
+            if (id3tag->ID3GenreText[0] == '(' && id3tag->ID3GenreText[sce_paf_strlen(id3tag->ID3GenreText) - 1] == ')')
             {
                 id3tag->ID3GenreText[0] = ' ';
-                id3tag->ID3GenreText[strlen(id3tag->ID3GenreText) - 1] = '\0';
+                id3tag->ID3GenreText[sce_paf_strlen(id3tag->ID3GenreText) - 1] = '\0';
                 int index = sce_paf_atoi(id3tag->ID3GenreText);
                 if (index >= 0 && index < genreNumber)
-                    strcpy(id3tag->ID3GenreText, genreList[index].text);
+					sce_paf_strcpy(id3tag->ID3GenreText, genreList[index].text);
             }
          }
-         else if(!sceClibStrncmp("PIC",tag,3)) /* Picture */
+         else if(!sce_paf_strncmp("PIC",tag,3)) /* Picture */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             sceIoLseek(fp, 5, SCE_SEEK_CUR);
@@ -344,7 +343,7 @@ void ParseID3v2_2(const char *mp3path, struct ID3Tag *id3tag)
          }
          size -= tag_length;
       }
-      strcpy(id3tag->versionfound, "2.2");
+	  sce_paf_strcpy(id3tag->versionfound, "2.2");
       sceIoClose(fp);
    //}
 }
@@ -379,57 +378,57 @@ void ParseID3v2_3(const char *mp3path, struct ID3Tag *id3tag)
          /* Perform checks for end of tags and tag length overflow or zero */
          if(*tag == 0 || tag_length > size || tag_length == 0) break;
 
-         if(!sceClibStrncmp("TPE1",tag,4)) /* Artist */
+         if(!sce_paf_strncmp("TPE1",tag,4)) /* Artist */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Artist);
          }
-         else if(!sceClibStrncmp("TIT2",tag,4)) /* Title */
+         else if(!sce_paf_strncmp("TIT2",tag,4)) /* Title */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Title);
          }
-         else if(!sceClibStrncmp("TALB",tag,4)) /* Album */
+         else if(!sce_paf_strncmp("TALB",tag,4)) /* Album */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Album);
          }
-         else if(!sceClibStrncmp("TRCK",tag,4)) /* Track No. */
+         else if(!sce_paf_strncmp("TRCK",tag,4)) /* Track No. */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 8, id3tag->ID3TrackText);
             id3tag->ID3Track = sce_paf_atoi(id3tag->ID3TrackText);
          }
-         else if(!sceClibStrncmp("TYER",tag,4)) /* Year */
+         else if(!sce_paf_strncmp("TYER",tag,4)) /* Year */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 12, id3tag->ID3Year);
          }
-         else if(!sceClibStrncmp("TLEN",tag,4)) /* Length in milliseconds */
+         else if(!sce_paf_strncmp("TLEN",tag,4)) /* Length in milliseconds */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 264, buffer);
             id3tag->ID3Length = sce_paf_atoi(buffer) / 1000;
          }
-         else if(!sceClibStrncmp("TCON",tag,4)) /* Genre */
+         else if(!sce_paf_strncmp("TCON",tag,4)) /* Genre */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3GenreText);
-            if (id3tag->ID3GenreText[0] == '(' && id3tag->ID3GenreText[strlen(id3tag->ID3GenreText) - 1] == ')')
+            if (id3tag->ID3GenreText[0] == '(' && id3tag->ID3GenreText[sce_paf_strlen(id3tag->ID3GenreText) - 1] == ')')
             {
                 id3tag->ID3GenreText[0] = ' ';
-                id3tag->ID3GenreText[strlen(id3tag->ID3GenreText) - 1] = '\0';
+                id3tag->ID3GenreText[sce_paf_strlen(id3tag->ID3GenreText) - 1] = '\0';
                 int index = sce_paf_atoi(id3tag->ID3GenreText);
                 if (index >= 0 && index < genreNumber)
-                    strcpy(id3tag->ID3GenreText, genreList[index].text);
+					sce_paf_strcpy(id3tag->ID3GenreText, genreList[index].text);
             }
          }
-         else if(!sceClibStrncmp("COMM",tag,4)) /* Comment */
+         else if(!sce_paf_strncmp("COMM",tag,4)) /* Comment */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Comment);
          }
-         else if(!sceClibStrncmp("APIC",tag,4)) /* Picture */
+         else if(!sce_paf_strncmp("APIC",tag,4)) /* Picture */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             sceIoLseek(fp, 12, SCE_SEEK_CUR);
@@ -454,7 +453,7 @@ void ParseID3v2_3(const char *mp3path, struct ID3Tag *id3tag)
          }
          size -= tag_length;
       }
-      strcpy(id3tag->versionfound, "2.3");
+	  sce_paf_strcpy(id3tag->versionfound, "2.3");
       sceIoClose(fp);
    //}
 }
@@ -490,49 +489,49 @@ void ParseID3v2_4(const char *mp3path, struct ID3Tag *id3tag)
          /* Perform checks for end of tags and tag length overflow or zero */
          if(*tag == 0 || tag_length > size || tag_length == 0) break;
 
-         if(!sceClibStrncmp("TPE1",tag,4)) /* Artist */
+         if(!sce_paf_strncmp("TPE1",tag,4)) /* Artist */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Artist);
          }
-         else if(!sceClibStrncmp("TIT2",tag,4)) /* Title */
+         else if(!sce_paf_strncmp("TIT2",tag,4)) /* Title */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Title);
          }
-         else if(!sceClibStrncmp("TALB",tag,4)) /* Album */
+         else if(!sce_paf_strncmp("TALB",tag,4)) /* Album */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Album);
          }
-         else if(!sceClibStrncmp("TRCK",tag,4)) /* Track No. */
+         else if(!sce_paf_strncmp("TRCK",tag,4)) /* Track No. */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 8, id3tag->ID3TrackText);
             id3tag->ID3Track = sce_paf_atoi(id3tag->ID3TrackText);
          }
-         else if(!sceClibStrncmp("TYER",tag,4)) /* Year */
+         else if(!sce_paf_strncmp("TYER",tag,4)) /* Year */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 12, id3tag->ID3Year);
          }
-         else if(!sceClibStrncmp("TLEN",tag,4)) /* Length in milliseconds */
+         else if(!sce_paf_strncmp("TLEN",tag,4)) /* Length in milliseconds */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 264, buffer);
             id3tag->ID3Length = sce_paf_atoi(buffer) / 1000;
          }
-         else if(!sceClibStrncmp("TCON",tag,4)) /* Genre */
+         else if(!sce_paf_strncmp("TCON",tag,4)) /* Genre */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3GenreText);
          }
-         else if(!sceClibStrncmp("COMM",tag,4)) /* Comment */
+         else if(!sce_paf_strncmp("COMM",tag,4)) /* Comment */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 260, id3tag->ID3Comment);
          }
-         else if(!sceClibStrncmp("APIC",tag,4)) /* Picture */
+         else if(!sce_paf_strncmp("APIC",tag,4)) /* Picture */
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             sceIoLseek(fp, 12, SCE_SEEK_CUR);
@@ -557,7 +556,7 @@ void ParseID3v2_4(const char *mp3path, struct ID3Tag *id3tag)
          }
          size -= tag_length;
       }
-      strcpy(id3tag->versionfound, "2.4");
+	  sce_paf_strcpy(id3tag->versionfound, "2.4");
       sceIoClose(fp);
    //}
 }
@@ -623,17 +622,17 @@ int ParseID3v1(const char *mp3path, struct ID3Tag *id3tag){
         /* Track */
         if (*(id3tag->ID3Comment + 28) == 0 && *(id3tag->ID3Comment + 29) > 0) {
            id3tag->ID3Track = (int)*(id3tag->ID3Comment + 29);
-           strcpy(id3tag->versionfound, "1.1");
+		   sce_paf_strcpy(id3tag->versionfound, "1.1");
         } else {
            id3tag->ID3Track = 1;
-           strcpy(id3tag->versionfound, "1.0");
+		   sce_paf_strcpy(id3tag->versionfound, "1.0");
         }
 
         if (((int)id3tag->ID3GenreCode[0] >= 0) & ((int)id3tag->ID3GenreCode[0] < genreNumber)){
-                strcpy(id3tag->ID3GenreText, genreList[(int)id3tag->ID3GenreCode[0]].text);
+			sce_paf_strcpy(id3tag->ID3GenreText, genreList[(int)id3tag->ID3GenreCode[0]].text);
         }
         else{
-                strcpy(id3tag->ID3GenreText, "");
+                sce_paf_strcpy(id3tag->ID3GenreText, "");
         }
         id3tag->ID3GenreText[30] = '\0';
      }else{
@@ -647,11 +646,11 @@ int ParseID3v1(const char *mp3path, struct ID3Tag *id3tag){
 // Main function:
 int ParseID3(const char *mp3path, struct ID3Tag *target)
 {
-    memset(target, 0, sizeof(struct ID3Tag));
+    sce_paf_memset(target, 0, sizeof(struct ID3Tag));
 
     ParseID3v1(mp3path, target);
     ParseID3v2(mp3path, target);
-//    if (!strlen(target->ID3Title))
+//    if (!sce_paf_strlen(target->ID3Title))
 //        getFileName(mp3path, target->ID3Title);
     return 0;
 }

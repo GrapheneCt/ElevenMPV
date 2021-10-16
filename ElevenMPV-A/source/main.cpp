@@ -25,12 +25,11 @@ typedef struct ScePafInit {
 	SceSize global_heap_size;
 	int a2;
 	int a3;
-	int use_gxm;
+	int cdlg_mode;
 	int heap_opt_param1;
 	int heap_opt_param2;
 } ScePafInit; // size is 0x18
 
-SceUID g_mainThreadUid;
 SceUID g_eventFlagUid;
 
 SceBool g_isPlayerActive = SCE_FALSE;
@@ -73,7 +72,7 @@ void pafLoadPrx(SceUInt32 flags)
 
 	init_param.a2 = 0x0000EA60;
 	init_param.a3 = 0x00040000;
-	init_param.use_gxm = SCE_FALSE;
+	init_param.cdlg_mode = SCE_FALSE;
 	init_param.heap_opt_param1 = 0;
 	init_param.heap_opt_param2 = 0;
 
@@ -239,8 +238,6 @@ int main() {
 	sce_paf_memset(&boot, 0, sizeof(SceAppUtilBootParam));
 	sceAppUtilInit(&init, &boot);
 
-	g_mainThreadUid = sceKernelGetThreadId();
-
 	EMPVAUtils::Init();
 
 #ifdef _DEBUG
@@ -263,7 +260,7 @@ int main() {
 	pluginParam.resourcePath.Set("app0:empva_plugin.rco");
 	pluginParam.scopeName.Set("__main__");
 
-	pluginParam.loadCB3 = pluginLoadCB;
+	pluginParam.pluginStartCB = pluginLoadCB;
 
 	fw->LoadPluginAsync(&pluginParam);
 
