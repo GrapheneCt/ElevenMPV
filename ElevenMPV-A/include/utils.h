@@ -23,6 +23,9 @@ using namespace paf;
 #define FLAG_ELEVENMPVA_IS_DECODER_USED 2
 
 extern "C" {
+
+	int sceAudioOutSetEffectType(SceInt32 type);
+
 	int sceShellUtilExitToLiveBoard();
 }
 
