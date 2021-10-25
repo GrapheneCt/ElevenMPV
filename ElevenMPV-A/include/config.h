@@ -3,7 +3,6 @@
 
 #include <kernel.h>
 #include <paf.h>
-#include <ini_file_processor.h>
 
 /* Config layout in safemem: 
 
@@ -39,6 +38,7 @@ namespace config {
 			SceUInt32 power_timer;
 			SceUInt32 notify_mode;
 			SceUInt32 device;
+			SceUInt32 last_pagemode;
 
 		};
 
@@ -62,7 +62,7 @@ namespace config {
 
 		SceBool configReset;
 
-		const SceUInt32 k_configVersion = 15;
+		const SceUInt32 k_configVersion = 16;
 		const SceUInt32 k_defSort = 0;
 		const SceUInt32 k_defAlcMode = 0;
 		const SceUInt32 k_defEqMode = 0;
@@ -74,10 +74,9 @@ namespace config {
 		const SceUInt32 k_defPowerSaving = 1;
 		const SceUInt32 k_defPowerTimer = 1;
 		const SceUInt32 k_defDevice = 0;
+		const SceUInt32 k_defLastPagemode = 0;
 
 		SceUInt32 config_version_holder;
-
-		sce::Ini::IniFileProcessor *iniProcessor;
 	};
 }
 

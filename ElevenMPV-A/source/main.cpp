@@ -15,20 +15,11 @@
 
 using namespace paf;
 
-typedef struct SceSysmoduleOpt {
-	int flags;
-	int *result;
-	int unused[2];
-} SceSysmoduleOpt;
+extern "C" {
+	SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
 
-typedef struct ScePafInit {
-	SceSize global_heap_size;
-	int a2;
-	int a3;
-	int cdlg_mode;
-	int heap_opt_param1;
-	int heap_opt_param2;
-} ScePafInit; // size is 0x18
+	unsigned int sceLibcHeapSize = 6 * 1024 * 1024;
+}
 
 SceUID g_eventFlagUid;
 
@@ -56,35 +47,27 @@ config::Config *g_config;
 
 static SceInt32 s_memGrown = 0;
 
-void pafLoadPrx(SceUInt32 flags)
+SceVoid getMemStatus()
 {
-	SceInt32 ret = -1, load_res;
+	SceInt32 ret = -1;
 
-	ScePafInit init_param;
-	SceSysmoduleOpt sysmodule_opt;
+	SceAppMgrBudgetInfo budgetInfo;
+	sce_paf_memset(&budgetInfo, 0, sizeof(SceAppMgrBudgetInfo));
+	budgetInfo.size = sizeof(SceAppMgrBudgetInfo);
 
-	if (flags == 2)
-		init_param.global_heap_size = 22 * 1024 * 1024;
-	else if (flags == 1)
-		init_param.global_heap_size = 12 * 1024 * 1024;
-	else
-		init_param.global_heap_size = 5 * 1024 * 1024;
-
-	init_param.a2 = 0x0000EA60;
-	init_param.a3 = 0x00040000;
-	init_param.cdlg_mode = SCE_FALSE;
-	init_param.heap_opt_param1 = 0;
-	init_param.heap_opt_param2 = 0;
-
-	sysmodule_opt.flags = 0; // with arg
-	sysmodule_opt.result = &load_res;
-
-	ret = sceSysmoduleLoadModuleInternalWithArg(SCE_SYSMODULE_INTERNAL_PAF, sizeof(init_param), &init_param, &sysmodule_opt);
-
-	if (ret < 0 || load_res < 0) {
-		SCE_DBG_LOG_ERROR("[PAF PRX] Loader: 0x%x\n", ret);
-		SCE_DBG_LOG_ERROR("[PAF PRX] Loader result: 0x%x\n", load_res);
+	ret = sceAppMgrGetBudgetInfo(&budgetInfo);
+	if (ret < 0) {
+		SCE_DBG_LOG_ERROR("[EMPVA_MAIN]  sceAppMgrGetBudgetInfo failed with code 0x%X\n", ret);
 	}
+
+	if (budgetInfo.budgetMain > 17 * 1024 * 1024) {
+		if (budgetInfo.budgetMain < 33 * 1024 * 1024)
+			s_memGrown = 1;
+		else
+			s_memGrown = 2;
+	}
+
+	SCE_DBG_LOG_DEBUG("[EMPVA_DEBUG] Memory grow state: %u\n", s_memGrown);
 }
 
 SceVoid pluginLoadCB(Plugin *plugin)
@@ -195,17 +178,7 @@ int main() {
 	sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_ERROR);
 #endif
 
-	//Grow memory if possible
-	ret = sceAppMgrGrowMemory3(32 * 1024 * 1024, 1); // 48 MB
-	if (ret < 0) {
-		ret = sceAppMgrGrowMemory3(16 * 1024 * 1024, 1); // 32 MB
-		if (ret == 0)
-			s_memGrown = 1;
-	}
-	else
-		s_memGrown = 2;
-
-	pafLoadPrx((SceUInt32)s_memGrown);
+	getMemStatus();
 
 	Framework::InitParam fwParam;
 	fwParam.LoadDefaultParams();

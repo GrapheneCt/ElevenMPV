@@ -26,6 +26,7 @@ config::Config::Config()
 	localConfig->power_saving = k_defPowerSaving;
 	localConfig->power_timer = k_defPowerTimer;
 	localConfig->device = k_defDevice;
+	localConfig->last_pagemode = k_defLastPagemode;
 
 	sceAppUtilLoadSafeMemory(&savedConfVer, sizeof(SceUInt32), 0);
 
