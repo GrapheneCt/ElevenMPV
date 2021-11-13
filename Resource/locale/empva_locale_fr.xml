@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+  <string src="Ce dossier est vide" id="msg_empty_dir" />
+  
+  <string src="Paramètres" id="msg_settings" />
+  <string src="Périphérique" id="msg_settings_device" />
+  <string src="Trier" id="msg_settings_sort" />
+  <string src="Son" id="msg_settings_audio" />
+  <string src="Éco. énergie" id="msg_settings_power" />
+  <string src="Contrôles" id="msg_settings_control" />
+  
+  <string src="Égaliseur" id="msg_settings_audio_eq" />
+  <string src="Contrôle du niveau auto." id="msg_settings_audio_alc" />
+  <string src="Limiter volume dans égaliseur" id="msg_settings_audio_limit" />
+  
+  <string src="Suspendre automatiquement en pause" id="msg_settings_power_save" />
+  <string src="Suspendre après (min)" id="msg_settings_power_time" />
+  
+  <string src="Passer pistes avec stick droit en mode veille" id="msg_settings_control_stick" />
+  <string src="Contrôle par mouvements" id="msg_settings_control_motion" />
+  <string src="Temporisation (sec)" id="msg_settings_control_time" />
+  <string src="Seuil d'angle ( °)" id="msg_settings_control_angle" />
+  
+  <string src="Aléatoire" id="msg_player_shuffle" />
+  <string src="Répéter" id="msg_player_repeat" />
+  
+  <string src="Off" id="msg_option_audio_eq_0" />
+  <string src="Heavy" id="msg_option_audio_eq_1" />
+  <string src="Pop" id="msg_option_audio_eq_2" />
+  <string src="Jazz" id="msg_option_audio_eq_3" />
+  <string src="Unique" id="msg_option_audio_eq_4" />
+  
+  <string src="ux0:/" id="msg_option_device_0" />
+  <string src="ur0:/" id="msg_option_device_1" />
+  <string src="uma0:/" id="msg_option_device_2" />
+  <string src="xmc0:/" id="msg_option_device_3" />
+  <string src="imc0:/" id="msg_option_device_4" />
+  <string src="grw0:/" id="msg_option_device_5" />
+  
+  <string src="Par nom (croissant)" id="msg_option_sort_0" />
+  <string src="Par nom (décroissant)" id="msg_option_sort_1" />
+  <string src="Par taille (décroissante)" id="msg_option_sort_2" />
+  <string src="Par taille (croissante)" id="msg_option_sort_3" />
+  
+</stringset>
