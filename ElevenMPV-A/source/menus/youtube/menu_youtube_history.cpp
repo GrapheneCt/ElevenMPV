@@ -133,12 +133,10 @@ SceVoid menu::youtube::HistoryParserThread::EntryFunction()
 	for (SceInt32 i = totalNum - 1; i != -1; i--) {
 		YTUtils::GetMenuSema()->Wait();
 		if (cancel) {
-			sceClibPrintf("pre signal 0\n");
 			YTUtils::GetMenuSema()->Signal();
 			break;
 		}
 		CreateVideoButton(workPage, entryData + (i * SCE_INI_FILE_PROCESSOR_KEY_BUFFER_SIZE), i);
-		sceClibPrintf("pre signal 1\n");
 		YTUtils::GetMenuSema()->Signal();
 	}
 
