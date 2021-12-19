@@ -4,6 +4,8 @@
 #include <kernel.h>
 #include <paf.h>
 
+#include "common.h"
+
 using namespace paf;
 
 #define ROUND_UP(x, a)	(((x) + ((a) - 1)) & ~((a) - 1))
@@ -94,7 +96,8 @@ public:
 
 		SceVoid Run()
 		{
-			EMPVAUtils::BeginPleaseWait();
+			if (!sceKernelPollEventFlag(g_eventFlagUid, FLAG_ELEVENMPVA_IS_FG, SCE_KERNEL_EVF_WAITMODE_AND, SCE_NULL))
+				EMPVAUtils::BeginPleaseWait();
 			eventHandler(eventId, self, a3, pUserData);
 			EMPVAUtils::EndPleaseWait();
 		}
