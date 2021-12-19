@@ -692,14 +692,10 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 
 		YTUtils::GetMenuSema()->Wait();
 		youtube_get_video_url_by_id(cwd, url, sizeof(url));
-		//YTUtils::GetParseMutex()->Lock();
 		s_ytVidInfo = youtube_parse_video_page(url);
-		//YTUtils::GetParseMutex()->Unlock();
 		if (s_ytVidInfo->playlist.videos.size() && s_ytVidInfo->playlist.selected_index > 0) {
 			YouTubeVideoDetail *ytVidInfoOld = s_ytVidInfo;
-			//YTUtils::GetParseMutex()->Lock();
 			s_ytVidInfo = youtube_parse_video_page((char *)ytVidInfoOld->playlist.videos[0].url.c_str());
-			//YTUtils::GetParseMutex()->Unlock();
 			youtube_destroy_struct(ytVidInfoOld);
 		}
 
@@ -966,18 +962,14 @@ menu::audioplayer::AudioplayerCore::AudioplayerCore(const char *file)
 	case 1000:
 
 		if (!s_ytFirstIdx) {
-			//YTUtils::GetParseMutex()->Lock();
 			s_ytVidInfo = youtube_parse_video_page((char *)file);
-			//YTUtils::GetParseMutex()->Unlock();
 
 			if (!s_ytVidInfo->audio_stream_url.length()) {
-				//YTUtils::GetParseMutex()->Lock();
 				while (!s_ytVidInfo->audio_stream_url.length() && retryAttempt != k_ytRetryAttemptNum) {
 					thread::Sleep(100);
 					s_ytVidInfo = youtube_parse_video_page((char *)file);
 					retryAttempt++;
 				}
-				//YTUtils::GetParseMutex()->Unlock();
 			}
 		}
 		else

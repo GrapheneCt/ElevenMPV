@@ -132,10 +132,7 @@ SceVoid menu::youtube::SearchParserThread::EntryFunction()
 		workPage->resultCount = workPage->parseResult->results.size() - prevResNum;
 	}
 	else {
-		//YTUtils::GetParseMutex()->Lock();
 		workPage->parseResult = youtube_parse_search_word(newRequset.data);
-		//YTUtils::GetParseMutex()->Unlock();
-
 		workPage->resultCount = workPage->parseResult->results.size();
 	}
 

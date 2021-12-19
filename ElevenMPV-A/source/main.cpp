@@ -23,7 +23,7 @@ using namespace paf;
 extern "C" {
 	SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
 
-	unsigned int sceLibcHeapSize = 4 * 1024 * 1024;
+	unsigned int sceLibcHeapSize = 5 * 1024 * 1024;
 }
 
 SceUID g_eventFlagUid;
@@ -304,7 +304,7 @@ int main()
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
 	if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Full) {
-		fwParam.defaultSurfacePoolSize = 18 * 1024 * 1024 + 512 * 1024;
+		fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
 	else if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Mid) {

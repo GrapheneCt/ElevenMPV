@@ -50,7 +50,7 @@ int __module_start(SceSize argc, void *args)
 			init_param.global_heap_size = 12 * 1024 * 1024;
 	}
 	else
-		init_param.global_heap_size = 23 * 1024 * 1024;
+		init_param.global_heap_size = 20 * 1024 * 1024;
 #else
 	init_param.global_heap_size = 12 * 1024 * 1024;
 #endif

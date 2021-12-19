@@ -49,9 +49,7 @@ SceVoid menu::youtube::HistoryParserThread::CreateVideoButton(HistoryPage *page,
 	subtext = button->GetChildByHash(&searchParam, 0);
 
 	youtube_get_video_url_by_id(data, url, sizeof(url));
-	//YTUtils::GetParseMutex()->Lock();
 	vidInfo = youtube_parse_video_page(url);
-	//YTUtils::GetParseMutex()->Unlock();
 
 	if (vidInfo->playlist.videos.size()) {
 

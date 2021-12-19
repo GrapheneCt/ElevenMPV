@@ -37,9 +37,7 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	sce_paf_memset(tmb, 0, sizeof(tmb));
 
 	youtube_get_video_url_by_id(data, url, sizeof(url));
-	//YTUtils::GetParseMutex()->Lock();
 	vidInfo = youtube_parse_video_page(url);
-	//YTUtils::GetParseMutex()->Unlock();
 
 	if (keyWord) {
 		if (!sce_paf_strstr(vidInfo->title.c_str(), keyWord)) {
