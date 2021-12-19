@@ -282,6 +282,7 @@ SceVoid EMPVAUtils::Exit()
 	if (s_shellPluginUID > 0)
 		taiStopUnloadModuleForPid(s_shellPid, s_shellPluginUID, 0, SCE_NULL, 0, SCE_NULL, &ret);
 	YTUtils::Term(SCE_TRUE);
+	sceClibPrintf("terminating proc...\n");
 	sceKernelExitProcess(0);
 }
 

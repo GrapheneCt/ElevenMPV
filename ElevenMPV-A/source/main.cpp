@@ -132,9 +132,9 @@ SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf:
 			g_coverJobQueue->Enqueue(&itemParam);
 		}
 
-		menu::youtube::Base::TermCommon();
-
 		menu::youtube::Base::TermCurrentMode();
+
+		menu::youtube::Base::TermCommon();
 
 		if (g_currentDispFilePage != SCE_NULL) {
 			if (g_currentDispFilePage->prev != SCE_NULL) {

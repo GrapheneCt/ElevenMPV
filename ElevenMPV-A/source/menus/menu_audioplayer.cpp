@@ -196,12 +196,13 @@ SceVoid menu::audioplayer::Audioplayer::_HandlePrev()
 
 SceVoid menu::audioplayer::Audioplayer::YtJobFinishHandler()
 {
-	common::Utils::AddMainThreadTask(RegularTask, SCE_NULL);
+	if (g_isPlayerActive)
+		common::Utils::AddMainThreadTask(RegularTask, SCE_NULL);
 }
 
 SceVoid menu::audioplayer::Audioplayer::HandleNext(SceBool fromHandlePrev, SceBool fromFfButton)
 {
-	if (s_ytVidInfo) {
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube) {
 		// Dirty hack, but works well enough
 		common::Utils::RemoveMainThreadTask(RegularTask, SCE_NULL);
 		EMPVAUtils::RunCallbackAsJob((ui::Widget::EventCallback::EventHandler)_HandleNext, YtJobFinishHandler, fromHandlePrev, (ui::Widget *)fromFfButton, 0, SCE_NULL);
@@ -212,7 +213,7 @@ SceVoid menu::audioplayer::Audioplayer::HandleNext(SceBool fromHandlePrev, SceBo
 
 SceVoid menu::audioplayer::Audioplayer::HandlePrev()
 {
-	if (s_ytVidInfo) {
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube) {
 		// Dirty hack, but works well enough
 		common::Utils::RemoveMainThreadTask(RegularTask, SCE_NULL);
 		EMPVAUtils::RunCallbackAsJob((ui::Widget::EventCallback::EventHandler)_HandlePrev, YtJobFinishHandler, 0, SCE_NULL, 0, SCE_NULL);
@@ -257,11 +258,18 @@ SceVoid menu::audioplayer::Audioplayer::RegularTask(ScePVoid pUserData)
 	ui::Widget *commonWidget;
 	Resource::Element searchParam;
 
-	audio::GenericDecoder *currentDecoder = g_currentPlayerInstance->GetCore()->GetDecoder();
+	audio::GenericDecoder *currentDecoder = SCE_NULL;
+
+	if (g_currentPlayerInstance) {
+		if (g_currentPlayerInstance->GetCore()) {
+			currentDecoder = g_currentPlayerInstance->GetCore()->GetDecoder();
+			currentPos = currentDecoder->GetPosition();
+		}
+	}
+	
 	menu::settings::Settings *config = menu::settings::Settings::GetInstance();
 
 	// Set progressbar value
-	currentPos = currentDecoder->GetPosition();
 	if (!sceKernelPollEventFlag(g_eventFlagUid, FLAG_ELEVENMPVA_IS_FG, SCE_KERNEL_EVF_WAITMODE_AND, SCE_NULL)) {
 		searchParam.hash = EMPVAUtils::GetHash("progressbar_player");
 		ui::ProgressBarTouch *playerProgBar = (ui::ProgressBarTouch *)g_player_page->GetChildByHash(&searchParam, 0);
@@ -289,114 +297,116 @@ SceVoid menu::audioplayer::Audioplayer::RegularTask(ScePVoid pUserData)
 		s_oldCurrentPosSec = currentPosSec;
 	}
 
-	// Delay main PAF thread here to reduce CPU load (more battery life)
-	if (menu::settings::Settings::GetInstance()->fps_limit && !Misc::IsDolce()) {
-		if (!currentDecoder->IsPaused()) {
-			sceDisplayWaitVblankStart();
-		}
-	}
-
-	// Check auto suspend feature
-	if (g_currentPlayerInstance != SCE_NULL) {
-		if (currentDecoder->IsPaused() && config->power_saving) {
-			if ((sceKernelGetProcessTimeLow() - s_timerPof) > 60000000 * config->power_timer)
-				menu::audioplayer::Audioplayer::Close();
-		}
-	}
-
-	// Handle next file
-	if (!currentDecoder->isPlaying) {
-		if (s_repeatState != REPEAT_STATE_ONE) {
-			g_currentPlayerInstance->playlist.isConsumed[g_currentPlayerInstance->playlistIdx] = 1;
-			g_currentPlayerInstance->totalConsumedIdx++;
-		}
-		HandleNext(SCE_FALSE, SCE_FALSE);
-		return;
-	}
-
-	// Check Shell IPC
-	if (!EMPVAUtils::IsSleep()) {
-		ipcCom = EMPVAUtils::IPC::PeekTx();
-		switch (ipcCom) {
-		case EMPVA_IPC_PLAY:
-			searchParam.hash = EMPVAUtils::GetHash("player_play_button");
-			commonWidget = g_player_page->GetChildByHash(&searchParam, 0);
-
-			currentDecoder->Pause();
-
-			if (currentDecoder->IsPaused()) {
-				commonWidget->SetTextureBase(s_playButtonTex);
-				EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 1);
+	if (currentDecoder) {
+		// Delay main PAF thread here to reduce CPU load (more battery life)
+		if (menu::settings::Settings::GetInstance()->fps_limit && !Misc::IsDolce()) {
+			if (!currentDecoder->IsPaused()) {
+				sceDisplayWaitVblankStart();
 			}
-			else {
-				commonWidget->SetTextureBase(s_pauseButtonTex);
-				EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 0);
-			}
-
-			s_timerPof = sceKernelGetProcessTimeLow();
-
-			return;
-			break;
-		case EMPVA_IPC_FF:
-			menu::audioplayer::Audioplayer::HandleNext(SCE_FALSE, SCE_TRUE);
-			return;
-			break;
-		case EMPVA_IPC_REW:
-			menu::audioplayer::Audioplayer::HandlePrev();
-			return;
-			break;
 		}
-	}
 
-	// Check analog stick
-	if (EMPVAUtils::IsSleep() && !Misc::IsDolce() && config->stick_skip) {
+		// Check auto suspend feature
+		if (g_currentPlayerInstance != SCE_NULL) {
+			if (currentDecoder->IsPaused() && config->power_saving) {
+				if ((sceKernelGetProcessTimeLow() - s_timerPof) > 60000000 * config->power_timer)
+					menu::audioplayer::Audioplayer::Close();
+			}
+		}
 
-		sce_paf_memset(&ctrlData, 0, sizeof(SceCtrlData));
-		sceCtrlPeekBufferPositive(0, &ctrlData, 1);
-
-		if (ctrlData.rx < 0x10) {
-			menu::audioplayer::Audioplayer::HandlePrev();
+		// Handle next file
+		if (!currentDecoder->isPlaying) {
+			if (s_repeatState != REPEAT_STATE_ONE) {
+				g_currentPlayerInstance->playlist.isConsumed[g_currentPlayerInstance->playlistIdx] = 1;
+				g_currentPlayerInstance->totalConsumedIdx++;
+			}
+			HandleNext(SCE_FALSE, SCE_FALSE);
 			return;
 		}
-		else if (ctrlData.rx > 0xEF) {
-			menu::audioplayer::Audioplayer::HandleNext(SCE_FALSE, SCE_TRUE);
-			return;
+
+		// Check Shell IPC
+		if (!EMPVAUtils::IsSleep()) {
+			ipcCom = EMPVAUtils::IPC::PeekTx();
+			switch (ipcCom) {
+			case EMPVA_IPC_PLAY:
+				searchParam.hash = EMPVAUtils::GetHash("player_play_button");
+				commonWidget = g_player_page->GetChildByHash(&searchParam, 0);
+
+				currentDecoder->Pause();
+
+				if (currentDecoder->IsPaused()) {
+					commonWidget->SetTextureBase(s_playButtonTex);
+					EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 1);
+				}
+				else {
+					commonWidget->SetTextureBase(s_pauseButtonTex);
+					EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 0);
+				}
+
+				s_timerPof = sceKernelGetProcessTimeLow();
+
+				return;
+				break;
+			case EMPVA_IPC_FF:
+				menu::audioplayer::Audioplayer::HandleNext(SCE_FALSE, SCE_TRUE);
+				return;
+				break;
+			case EMPVA_IPC_REW:
+				menu::audioplayer::Audioplayer::HandlePrev();
+				return;
+				break;
+			}
 		}
-	}
 
-	// Check motion feature
-	if (!Misc::IsDolce() && config->motion_mode) {
-		motionCom = motion::Motion::GetCommand();
-		switch (motionCom) {
-		case motion::Motion::MOTION_STOP:
+		// Check analog stick
+		if (EMPVAUtils::IsSleep() && !Misc::IsDolce() && config->stick_skip) {
 
-			searchParam.hash = EMPVAUtils::GetHash("player_play_button");
-			commonWidget = g_player_page->GetChildByHash(&searchParam, 0);
+			sce_paf_memset(&ctrlData, 0, sizeof(SceCtrlData));
+			sceCtrlPeekBufferPositive(0, &ctrlData, 1);
 
-			currentDecoder->Pause();
-
-			if (currentDecoder->IsPaused()) {
-				commonWidget->SetTextureBase(s_playButtonTex);
-				EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 1);
+			if (ctrlData.rx < 0x10) {
+				menu::audioplayer::Audioplayer::HandlePrev();
+				return;
 			}
-			else {
-				commonWidget->SetTextureBase(s_pauseButtonTex);
-				EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 0);
+			else if (ctrlData.rx > 0xEF) {
+				menu::audioplayer::Audioplayer::HandleNext(SCE_FALSE, SCE_TRUE);
+				return;
 			}
+		}
 
-			s_timerPof = sceKernelGetProcessTimeLow();
+		// Check motion feature
+		if (!Misc::IsDolce() && config->motion_mode) {
+			motionCom = motion::Motion::GetCommand();
+			switch (motionCom) {
+			case motion::Motion::MOTION_STOP:
 
-			break;
-		case motion::Motion::MOTION_NEXT:
+				searchParam.hash = EMPVAUtils::GetHash("player_play_button");
+				commonWidget = g_player_page->GetChildByHash(&searchParam, 0);
 
-			menu::audioplayer::Audioplayer::HandleNext(SCE_FALSE, SCE_TRUE);
+				currentDecoder->Pause();
 
-			break;
-		case motion::Motion::MOTION_PREVIOUS:
+				if (currentDecoder->IsPaused()) {
+					commonWidget->SetTextureBase(s_playButtonTex);
+					EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 1);
+				}
+				else {
+					commonWidget->SetTextureBase(s_pauseButtonTex);
+					EMPVAUtils::IPC::SendInfo(SCE_NULL, SCE_NULL, SCE_NULL, 0);
+				}
 
-			menu::audioplayer::Audioplayer::HandlePrev();
+				s_timerPof = sceKernelGetProcessTimeLow();
 
-			break;
+				break;
+			case motion::Motion::MOTION_NEXT:
+
+				menu::audioplayer::Audioplayer::HandleNext(SCE_FALSE, SCE_TRUE);
+
+				break;
+			case motion::Motion::MOTION_PREVIOUS:
+
+				menu::audioplayer::Audioplayer::HandlePrev();
+
+				break;
+			}
 		}
 	}
 }
@@ -416,7 +426,7 @@ SceVoid menu::audioplayer::Audioplayer::Return()
 	s_playerPlane = g_player_page->GetChildByHash(&searchParam, 0);
 	s_playerPlane->PlayAnimation(0.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
 
-	if (s_ytVidInfo)
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube)
 		YTUtils::GetMenuSema()->Wait();
 }
 
@@ -452,7 +462,7 @@ SceVoid menu::audioplayer::BackButtonCB::BackButtonCBFun(SceInt32 eventId, ui::W
 	ui::Widget *playerPlane = g_player_page->GetChildByHash(&searchParam, 0);
 	playerPlane->PlayAnimationReverse(0.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
 
-	if (s_ytVidInfo)
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube)
 		YTUtils::GetMenuSema()->Signal();
 }
 
@@ -834,7 +844,7 @@ menu::audioplayer::Audioplayer::~Audioplayer()
 	ui::Widget *commonWidget;
 	SceInt32 i = 0;
 
-	if (s_ytVidInfo) {
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube) {
 		searchParam.hash = EMPVAUtils::GetHash("player_fav_button");
 		commonWidget = s_playerPlane->GetChildByHash(&searchParam, 0);
 		commonWidget->PlayAnimationReverse(0.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
@@ -870,7 +880,7 @@ SceVoid menu::audioplayer::Audioplayer::GetMusicList(menu::displayfiles::File *s
 {
 	SceInt32 i = 0;
 
-	if (s_ytVidInfo) {
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube) {
 
 		if (s_ytVidInfo->playlist.videos.size()) {
 			for (SceInt32 j = 0; j < s_ytVidInfo->playlist.videos.size(); j++) {
@@ -1080,7 +1090,7 @@ SceVoid menu::audioplayer::AudioplayerCore::SetMetadata(const char *file)
 	searchParam.hash = EMPVAUtils::GetHash("text_player_artist");
 	textArtist = g_player_page->GetChildByHash(&searchParam, 0);
 
-	if (s_ytVidInfo) {
+	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube) {
 
 		WString title;
 		WString album;
