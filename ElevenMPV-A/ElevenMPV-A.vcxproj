@@ -51,14 +51,14 @@
       <OptimizationLevel>Level3</OptimizationLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceVideodec_stub;-lSceJpegEnc_stub;-lSceFpu;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lnestegg;-lShellAudio;-lSceSysmem_stub;-lSceKernelForMono_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceDisplay_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceShellUtil_stub;-lSceSysmodule_stub;-lSceMotion_stub;-lSceDbg_stub;-lSceAudiocodec_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceNet_stub;-lSceNetCtl_stub;-lSceHttp_stub;-lSceSsl_stub;-lSceAppSettings_stub;-lScebXCe_stub;-lSceIniFileProcessor_stub;-lSceCommonDialog_stub;-lSceIpmi_stub;-lNetMedia_stub;-lLocalMedia_stub;-lThirdTube_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <AdditionalOptions>--no-standard-libraries</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
-"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubsfo.exe" "$(ProjectDir)param.sfx" "$(OutDir)param.sfo"
+"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubsfo.exe" "$(ProjectDir)param_for_debug.sfx" "$(OutDir)param.sfo"
 "$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/module" module  --file "$(ProjectDir)CONTENTS/empva_plugin.rco" empva_plugin.rco "$(OutDir)$(ProjectName).vpk"
 copy /Y "$(OutDir)eboot.bin" "$(ProjectDir)CONTENTS/eboot.bin"
 copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
@@ -77,7 +77,7 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     </ClCompile>
     <Link>
       <InfoStripping>StripSymsAndDebug</InfoStripping>
-      <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceVideodec_stub;-lSceJpegEnc_stub;-lSceFpu;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lnestegg;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceDisplay_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceShellUtil_stub;-lSceSysmodule_stub;-lSceMotion_stub;-lSceDbg_stub;-lSceAudiocodec_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceNet_stub;-lSceNetCtl_stub;-lSceHttp_stub;-lSceSsl_stub;-lSceAppSettings_stub;-lScebXCe_stub;-lSceIniFileProcessor_stub;-lSceCommonDialog_stub;-lSceIpmi_stub;-lNetMedia_stub;-lLocalMedia_stub;-lThirdTube_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>--no-standard-libraries %(AdditionalOptions)</AdditionalOptions>
       <DataStripping>StripFuncsAndData</DataStripping>
@@ -103,12 +103,19 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     <ClCompile Include="source\audio\opus.cpp" />
     <ClCompile Include="source\audio\sh_common.cpp" />
     <ClCompile Include="source\audio\vitaaudiolib.cpp" />
+    <ClCompile Include="source\audio\webm_opus.cpp" />
     <ClCompile Include="source\audio\xm.cpp" />
-    <ClCompile Include="source\config.cpp" />
+    <ClCompile Include="source\audio\youtube_opus.cpp" />
+    <ClCompile Include="source\debug.cpp" />
+    <ClCompile Include="source\downloader.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\menus\menu_audioplayer.cpp" />
     <ClCompile Include="source\menus\menu_displayfiles.cpp" />
     <ClCompile Include="source\menus\menu_settings.cpp" />
+    <ClCompile Include="source\menus\youtube\menu_youtube_base.cpp" />
+    <ClCompile Include="source\menus\youtube\menu_youtube_fav.cpp" />
+    <ClCompile Include="source\menus\youtube\menu_youtube_search.cpp" />
+    <ClCompile Include="source\menus\youtube\menu_youtube_history.cpp" />
     <ClCompile Include="source\motion.cpp" />
     <ClCompile Include="source\paf_libc_bridge.cpp" />
     <ClCompile Include="source\paf_libc_bridge_asm.cpp">
@@ -116,6 +123,7 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     </ClCompile>
     <ClCompile Include="source\paf_runtime.cpp" />
     <ClCompile Include="source\utils.cpp" />
+    <ClCompile Include="source\yt_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ElevenMPV-A-Common\include\ipc.h" />
@@ -123,12 +131,16 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     <ClInclude Include="include\audio\id3.h" />
     <ClInclude Include="include\audio\vitaaudiolib.h" />
     <ClInclude Include="include\common.h" />
-    <ClInclude Include="include\config.h" />
+    <ClInclude Include="include\debug.h" />
+    <ClInclude Include="include\downloader.h" />
+    <ClInclude Include="include\main.h" />
     <ClInclude Include="include\menus\menu_audioplayer.h" />
     <ClInclude Include="include\menus\menu_displayfiles.h" />
     <ClInclude Include="include\menus\menu_settings.h" />
+    <ClInclude Include="include\menus\menu_youtube.h" />
     <ClInclude Include="include\motion_e.h" />
     <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\yt_utils.h" />
   </ItemGroup>
   <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

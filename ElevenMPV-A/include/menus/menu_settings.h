@@ -2,13 +2,140 @@
 #define _ELEVENMPV_MENU_SETTINGS_H_
 
 #include <paf.h>
+#include <app_settings.h>
 
 using namespace paf;
 
 namespace menu {
 	namespace settings {
 
-		class SettingsBackButtonCB : public widget::Widget::EventCallback
+		class Settings
+		{
+		public:
+
+			enum PageMode
+			{
+				PageMode_Normal,
+				PageMode_YouTube
+			};
+
+			enum Hash
+			{
+				Hash_Device = 0xd3d05f84,
+				Hash_Sort = 0xbc47f234,
+				Hash_AudioEq = 0x7c296cc5,
+				Hash_AudioAlc = 0xa1f24c03,
+				Hash_AudioLimitVolume = 0xf18da3ee,
+				Hash_PowerFps = 0xb86f7b54,
+				Hash_PowerSuspend = 0xa9538556,
+				Hash_PowerTimer = 0x1f178760,
+				Hash_ControlsSkip = 0x9af3a9e9,
+				Hash_ControlsMotion = 0xe165ed76,
+				Hash_ControlsTimeout = 0x4e96f7bc,
+				Hash_ControlsAngle = 0x21112208,
+				Hash_YoutubeCleanHistory = 0x26dd8c17,
+				Hash_YoutubeCleanFav = 0xe79d8bdc,
+				Hash_YoutubeDownload = 0x15fb99aa
+			};
+
+			Settings();
+
+			~Settings();
+
+			static Settings *GetInstance();
+
+			static sce::AppSettings *GetAppSetInstance();
+
+			SceVoid Open(SceUInt32 mode);
+
+			SceVoid SetLastDirectory(const char *cwd);
+
+			SceVoid GetLastDirectory(String *cwd);
+
+			SceInt32 device;
+			SceInt32 sort;
+			SceInt32 eq_mode;
+			SceInt32 eq_volume;
+			SceInt32 alc_mode;
+			SceInt32 power_saving;
+			SceInt32 power_timer;
+			SceInt32 stick_skip;
+			SceInt32 motion_mode;
+			SceInt32 motion_timer;
+			SceInt32 motion_degree;
+			SceInt32 last_pagemode;
+			SceInt32 fps_limit;
+
+			const SceUInt32 k_safeMemIniLimit = 0x400;
+			const SceInt32 k_settingsVersion = 4;
+
+		private:
+
+			static SceVoid CBListChange(const char *elementId);
+
+			static SceVoid CBListForwardChange(const char *elementId);
+
+			static SceVoid CBListBackChange(const char *elementId);
+
+			static SceInt32 CBIsVisible(const char *elementId, SceBool *pIsVisible);
+
+			static SceInt32 CBElemInit(const char *elementId);
+
+			static SceInt32 CBElemAdd(const char *elementId, paf::ui::Widget *widget);
+
+			static SceInt32 CBValueChange(const char *elementId, const char *newValue);
+
+			static SceInt32 CBValueChange2(const char *elementId, const char *newValue);
+
+			static SceVoid CBTerm();
+
+			static SceWChar16 *CBGetString(const char *elementId);
+
+			static SceInt32 CBGetTex(graphics::Texture *tex, const char *elementId);
+
+			sce::AppSettings *appSet;
+			SceBool settingsReset;
+			char rootPath[8];
+
+			const SceInt32 k_defSort = 0;
+			const SceInt32 k_defAlcMode = 0;
+			const SceInt32 k_defEqMode = 0;
+			const SceInt32 k_defEqVolume = 0;
+			const SceInt32 k_defMotionMode = 0;
+			const SceInt32 k_defMotionTimer = 3;
+			const SceInt32 k_defMotionDeg = 45;
+			const SceInt32 k_defStickSkip = 0;
+			const SceInt32 k_defPowerSaving = 1;
+			const SceInt32 k_defPowerTimer = 5;
+			const SceInt32 k_defDevice = 0;
+			const SceInt32 k_defLastPagemode = 0;
+			const SceInt32 k_defFpsLimit = 1;
+		};
+
+		class SettingsButtonCB : public ui::Widget::EventCallback
+		{
+		public:
+
+			enum Parent
+			{
+				Parent_Displayfiles,
+				Parent_Player
+			};
+
+			SettingsButtonCB()
+			{
+				eventHandler = SettingsButtonCBFun;
+			};
+
+			virtual ~SettingsButtonCB()
+			{
+
+			};
+
+			static SceVoid SettingsButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
+		};
+
+		/*class SettingsBackButtonCB : public widget::Widget::EventCallback
 		{
 		public:
 
@@ -121,7 +248,7 @@ namespace menu {
 
 			static SceVoid CloseButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
-		};
+		};*/
 	}
 }
 

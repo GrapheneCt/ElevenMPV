@@ -4,21 +4,26 @@
 #include <libsysmodule.h>
 #include <libdbg.h>
 #include <shellaudio.h>
+#include <net.h>
+#include <libnetctl.h>
+#include <libhttp.h>
 #include <paf.h>
 
 #include "common.h"
-#include "config.h"
+#include "main.h"
+#include "debug.h"
 #include "utils.h"
 #include "menu_displayfiles.h"
 #include "menu_settings.h"
 #include "menu_audioplayer.h"
+#include "menu_youtube.h"
 
 using namespace paf;
 
 extern "C" {
 	SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
 
-	unsigned int sceLibcHeapSize = 6 * 1024 * 1024;
+	unsigned int sceLibcHeapSize = 4 * 1024 * 1024;
 }
 
 SceUID g_eventFlagUid;
@@ -26,48 +31,127 @@ SceUID g_eventFlagUid;
 SceBool g_isPlayerActive = SCE_FALSE;
 
 Plugin *g_empvaPlugin;
-widget::Widget *g_root;
-widget::Widget *g_root_page;
-widget::Widget *g_settings_page;
-widget::Widget *g_player_page;
-widget::Widget *g_settings_option;
-widget::Widget *g_top_text;
+ui::Widget *g_root;
+ui::Widget *g_rootPage;
+ui::Widget *g_player_page;
+ui::Widget *g_topText;
 graphics::Texture *g_commonBgTex = SCE_NULL;
 graphics::Texture *g_coverBgTex = SCE_NULL;
-widget::BusyIndicator *g_commonBusyInidcator;
-widget::Widget *g_commonOptionDialog;
+graphics::Texture *g_YtVitaIconTex = SCE_NULL;
+graphics::Texture *g_YtNetIconTex = SCE_NULL;
+ui::BusyIndicator *g_commonBusyInidcator;
 
 graphics::Texture *g_texCheckMark;
 graphics::Texture *g_texTransparent;
 
+thread::JobQueue *g_coverJobQueue = SCE_NULL;
+
 menu::audioplayer::Audioplayer *g_currentPlayerInstance = SCE_NULL;
 menu::displayfiles::Page *g_currentDispFilePage;
 menu::settings::SettingsButtonCB *g_settingsButtonCB;
-config::Config *g_config;
 
-static SceInt32 s_memGrown = 0;
-
-SceVoid getMemStatus()
+SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
-	SceInt32 ret = -1;
+	Plugin::TemplateInitParam tmpParam;
+	Resource::Element searchParam;
+	ui::Widget *commonWidget;
+	menu::settings::Settings *config = menu::settings::Settings::GetInstance();
+	SceUInt32 currentPagemode = EMPVAUtils::GetPagemode();
+	ui::Widget::Animation animMode = ui::Widget::Animation_SlideFromBottom1;
 
-	SceAppMgrBudgetInfo budgetInfo;
-	sce_paf_memset(&budgetInfo, 0, sizeof(SceAppMgrBudgetInfo));
-	budgetInfo.size = sizeof(SceAppMgrBudgetInfo);
-
-	ret = sceAppMgrGetBudgetInfo(&budgetInfo);
-	if (ret < 0) {
-		SCE_DBG_LOG_ERROR("[EMPVA_MAIN]  sceAppMgrGetBudgetInfo failed with code 0x%X\n", ret);
+	if (eventId == 0) {
+		currentPagemode = menu::settings::Settings::PageMode_Normal;
+		animMode = ui::Widget::Animation_Reset;
 	}
 
-	if (budgetInfo.budgetMain > 17 * 1024 * 1024) {
-		if (budgetInfo.budgetMain < 33 * 1024 * 1024)
-			s_memGrown = 1;
-		else
-			s_memGrown = 2;
-	}
+	if (currentPagemode == menu::settings::Settings::PageMode_Normal) {
 
-	SCE_DBG_LOG_DEBUG("[EMPVA_DEBUG] Memory grow state: %u\n", s_memGrown);
+		if (sceSysmoduleIsLoaded(SCE_SYSMODULE_HTTPS)) {
+			if (EMPVAUtils::GetMemStatus() > EMPVAUtils::MemState_Mid) {
+				menu::youtube::Base::FirstTimeInit();
+			}
+		}
+
+		if (g_currentDispFilePage->coverState) {
+			g_currentDispFilePage->coverLoader = new menu::displayfiles::CoverLoaderJob("EMPVA::CoverLoaderJob");
+			g_currentDispFilePage->coverLoader->workPage = g_currentDispFilePage;
+			g_currentDispFilePage->coverLoader->workFile = SCE_NULL;
+
+			CleanupHandler *req = new CleanupHandler();
+			req->userData = g_currentDispFilePage->coverLoader;
+			req->refCount = 0;
+			req->unk_08 = 1;
+			req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
+
+			ObjectWithCleanup itemParam;
+			itemParam.object = g_currentDispFilePage->coverLoader;
+			itemParam.cleanup = req;
+			g_coverJobQueue->Enqueue(&itemParam);
+		}
+
+		menu::displayfiles::Page::ResetBgPlaneTex();
+
+		if (g_currentDispFilePage != SCE_NULL) {
+			if (g_currentDispFilePage->prev != SCE_NULL) {
+				g_currentDispFilePage->prev->root->PlayAnimationReverse(0.0f, animMode);
+				if (g_currentDispFilePage->prev->root->animationStatus & 0x80)
+					g_currentDispFilePage->prev->root->animationStatus &= ~0x80;
+			}
+			g_currentDispFilePage->root->PlayAnimationReverse(0.0f, animMode);
+			if (g_currentDispFilePage->root->animationStatus & 0x80)
+				g_currentDispFilePage->root->animationStatus &= ~0x80;
+		}
+
+		menu::youtube::Base::InitCommon();
+
+		menu::youtube::Base::InitSearch();
+
+		self->SetTextureBase(g_YtVitaIconTex);
+		config->last_pagemode = menu::settings::Settings::PageMode_YouTube;
+		config->GetAppSetInstance()->SetInt("last_pagemode", config->last_pagemode);
+		EMPVAUtils::SetPagemode(config->last_pagemode);
+	}
+	else {
+
+		if (g_currentDispFilePage->coverState) {
+
+			g_currentDispFilePage->coverLoader = new menu::displayfiles::CoverLoaderJob("EMPVA::CoverLoaderJob");
+			g_currentDispFilePage->coverLoader->workPage = g_currentDispFilePage;
+			g_currentDispFilePage->coverLoader->workFile = g_currentDispFilePage->coverWork;
+
+			CleanupHandler *req = new CleanupHandler();
+			req->userData = g_currentDispFilePage->coverLoader;
+			req->refCount = 0;
+			req->unk_08 = 1;
+			req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
+
+			ObjectWithCleanup itemParam;
+			itemParam.object = g_currentDispFilePage->coverLoader;
+			itemParam.cleanup = req;
+
+			g_coverJobQueue->Enqueue(&itemParam);
+		}
+
+		menu::youtube::Base::TermCommon();
+
+		menu::youtube::Base::TermCurrentMode();
+
+		if (g_currentDispFilePage != SCE_NULL) {
+			if (g_currentDispFilePage->prev != SCE_NULL) {
+				g_currentDispFilePage->prev->root->PlayAnimation(0.0f, ui::Widget::Animation_SlideFromBottom1);
+				if (g_currentDispFilePage->prev->root->animationStatus & 0x80)
+					g_currentDispFilePage->prev->root->animationStatus &= ~0x80;
+			}
+			g_currentDispFilePage->root->PlayAnimation(0.0f, ui::Widget::Animation_SlideFromBottom1);
+			if (g_currentDispFilePage->root->animationStatus & 0x80)
+				g_currentDispFilePage->root->animationStatus &= ~0x80;
+		}
+
+		self->SetTextureBase(g_YtNetIconTex);
+		config->last_pagemode = menu::settings::Settings::PageMode_Normal;
+		config->GetAppSetInstance()->SetInt("last_pagemode", config->last_pagemode);
+		EMPVAUtils::SetPagemode(config->last_pagemode);
+	}
 }
 
 SceVoid pluginLoadCB(Plugin *plugin)
@@ -79,47 +163,74 @@ SceVoid pluginLoadCB(Plugin *plugin)
 
 	g_empvaPlugin = plugin;
 
+	ui::Widget *buttonPagemode = SCE_NULL;
 	Resource::Element searchParam;
 	Plugin::SceneInitParam rwiParam;
+	Plugin::TemplateInitParam tmpParam;
 	String initCwd;
+	SceUInt32 pagemode = menu::settings::Settings::PageMode_Normal;
 
-	g_config = new config::Config();
-	g_config->GetLastDirectory(&initCwd);
+	new menu::settings::Settings();
+	menu::settings::Settings *config = menu::settings::Settings::GetInstance();
+	config->GetLastDirectory(&initCwd);
+	pagemode = config->last_pagemode;
+
+	SCE_DBG_LOG_DEBUG("[EMPVA_DEBUG] pagemode set to %u\n", pagemode);
+
+	if (pagemode == menu::settings::Settings::PageMode_YouTube) {
+		if (EMPVAUtils::GetMemStatus() < EMPVAUtils::MemState_Full) {
+			SCE_DBG_LOG_DEBUG("[EMPVA_DEBUG] Failed to grow memory: resetting pagemode to NORMAL\n");
+			pagemode = menu::settings::Settings::PageMode_Normal;
+		}
+	}
+
+	EMPVAUtils::SetPagemode(pagemode);
+
+	if (EMPVAUtils::GetMemStatus() > EMPVAUtils::MemState_Mid) {
+		g_YtVitaIconTex = new graphics::Texture();
+		searchParam.hash = EMPVAUtils::GetHash("tex_yt_icon_vita");
+		Plugin::LoadTexture(g_YtVitaIconTex, g_empvaPlugin, &searchParam);
+
+		g_YtNetIconTex = new graphics::Texture();
+		searchParam.hash = EMPVAUtils::GetHash("tex_yt_icon_net");
+		Plugin::LoadTexture(g_YtNetIconTex, g_empvaPlugin, &searchParam);
+	}
+
+	thread::JobQueue::Opt queueOpt;
+	queueOpt.workerNum = 1;
+	queueOpt.workerOpt = SCE_NULL;
+	queueOpt.workerPriority = SCE_KERNEL_HIGHEST_PRIORITY_USER + 20;
+	queueOpt.workerStackSize = SCE_KERNEL_16KiB;
+
+	g_coverJobQueue = new thread::JobQueue("EMPVA::CoverLoaderJobQueue", &queueOpt);
 
 	g_commonBgTex = new graphics::Texture();
 
-	if (s_memGrown == 2) {
+	if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Full) {
 		g_coverBgTex = new graphics::Texture();
 		searchParam.hash = EMPVAUtils::GetHash("tex_common_bg_full");
-		Plugin::LoadTexture(g_commonBgTex, plugin, &searchParam);
+		Plugin::LoadTexture(g_commonBgTex, g_empvaPlugin, &searchParam);
 		searchParam.hash = EMPVAUtils::GetHash("tex_common_bg");
 		Plugin::LoadTexture(g_coverBgTex, g_empvaPlugin, &searchParam);
 	}
 	else {
 		searchParam.hash = EMPVAUtils::GetHash("tex_common_bg");
-		Plugin::LoadTexture(g_commonBgTex, plugin, &searchParam);
+		Plugin::LoadTexture(g_commonBgTex, g_empvaPlugin, &searchParam);
 		g_coverBgTex = g_commonBgTex;
 	}
 
 	searchParam.hash = EMPVAUtils::GetHash("page_common");
-	g_root_page = g_empvaPlugin->CreateScene(&searchParam, &rwiParam);
-
-	searchParam.hash = EMPVAUtils::GetHash("page_settings_option");
-	g_settings_option = g_empvaPlugin->CreateScene(&searchParam, &rwiParam);
-
-	searchParam.hash = EMPVAUtils::GetHash("plane_settings_dialog_bg");
-	g_commonOptionDialog = g_settings_option->GetChildByHash(&searchParam, 0);
-	g_commonOptionDialog->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
+	g_rootPage = g_empvaPlugin->CreateScene(&searchParam, &rwiParam);
 
 	searchParam.hash = EMPVAUtils::GetHash("busyindicator_common");
-	g_commonBusyInidcator = (widget::BusyIndicator *)g_root_page->GetChildByHash(&searchParam, 0);
+	g_commonBusyInidcator = (ui::BusyIndicator *)g_rootPage->GetChildByHash(&searchParam, 0);
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_common_bg");
-	g_root = g_root_page->GetChildByHash(&searchParam, 0);
+	g_root = g_rootPage->GetChildByHash(&searchParam, 0);
 	g_root->SetTextureBase(g_commonBgTex);
 
 	searchParam.hash = EMPVAUtils::GetHash("text_top_title");
-	g_top_text = g_root_page->GetChildByHash(&searchParam, 0);
+	g_topText = g_rootPage->GetChildByHash(&searchParam, 0);
 
 	g_texCheckMark = new graphics::Texture();
 	searchParam.hash = EMPVAUtils::GetHash("_common_texture_check_mark");
@@ -129,67 +240,74 @@ SceVoid pluginLoadCB(Plugin *plugin)
 	searchParam.hash = EMPVAUtils::GetHash("_common_texture_transparent");
 	Plugin::LoadTexture(g_texTransparent, Plugin::Find("__system__common_resource"), &searchParam);
 
+	if (EMPVAUtils::GetMemStatus() > EMPVAUtils::MemState_Mid) {
+
+		searchParam.hash = EMPVAUtils::GetHash("yt_menu_template_corner_switch");
+		g_empvaPlugin->TemplateOpen(g_rootPage, &searchParam, &tmpParam);
+
+		searchParam.hash = EMPVAUtils::GetHash("displayfiles_pagemode_button");
+		buttonPagemode = g_rootPage->GetChildByHash(&searchParam, 0);
+
+		buttonPagemode->RegisterEventCallback(0x10000008, new menu::main::PagemodeButtonCB(), 0);
+	}
+	else {
+
+		SceFVector4 topTextSize;
+		topTextSize.x = 920.0f;
+		topTextSize.y = 0.0f;
+		topTextSize.z = 0.0f;
+		topTextSize.w = 0.0f;
+
+		g_topText->SetSize(&topTextSize);
+	}
+
 	menu::displayfiles::Page::Init();
+
 	new menu::displayfiles::Page(initCwd.data);
 
-	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-	widget::Widget *backButton = g_root_page->GetChildByHash(&searchParam, 0);
-	auto backButtonCB = new menu::displayfiles::BackButtonCB();
-	backButton->RegisterEventCallback(0x10000008, backButtonCB, 0);
-
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_settings_button");
-	widget::Widget *settingsButton = g_root_page->GetChildByHash(&searchParam, 0);
+	ui::Widget *settingsButton = g_rootPage->GetChildByHash(&searchParam, 0);
 	g_settingsButtonCB = new menu::settings::SettingsButtonCB();
 	settingsButton->RegisterEventCallback(0x10000008, g_settingsButtonCB, 0);
 	g_settingsButtonCB->pUserData = sce_paf_malloc(sizeof(SceUInt32));
 	*(SceUInt32 *)g_settingsButtonCB->pUserData = menu::settings::SettingsButtonCB::Parent_Displayfiles;
-}
 
-#ifdef _DEBUG
-
-static SceInt32 s_oldMemSize = 0;
-
-SceVoid leakTestTask(ScePVoid pUserData)
-{
-	SceInt32 memsize = 0;
-	Allocator *glAlloc = Allocator::GetGlobalAllocator();
-	SceInt32 sz = glAlloc->GetFreeSize();
-	String *str = new String();
-	str->MemsizeFormat(sz);
-	sceClibPrintf("[EMPVA_DEBUG] Free heap memory: %s\n", str->data);
-	memsize = sz;
-	SceInt32 delta = s_oldMemSize - memsize;
-	delta = -delta;
-	if (delta) {
-		sceClibPrintf("[EMPVA_DEBUG] Memory delta: %d bytes\n", delta);
+	if (pagemode == menu::settings::Settings::PageMode_YouTube) {
+		menu::main::PagemodeButtonCB::PagemodeButtonCBFun(0, buttonPagemode, 0, SCE_NULL);
 	}
-	s_oldMemSize = sz;
-	delete str;
+
+	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
+	ui::Widget *backButton = g_rootPage->GetChildByHash(&searchParam, 0);
+	auto backButtonCB = new menu::displayfiles::BackButtonCB();
+	backButton->RegisterEventCallback(0x10000008, backButtonCB, 0);
+
+	searchParam.hash = EMPVAUtils::GetHash("displayfiles_player_button");
+	ui::Widget *playerButton = g_rootPage->GetChildByHash(&searchParam, 0);
+	auto playerButtonCB = new menu::displayfiles::PlayerButtonCB();
+	playerButton->RegisterEventCallback(0x10000008, playerButtonCB, 0);
+	playerButton->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
+
+	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 }
-#endif
 
-int main() {
+int main()
+{
 
-	SceInt32 ret = -1;
+	sceShellUtilInitEvents(0);
+	sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
-#ifdef _DEBUG
-	sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_TRACE);
-#else
-	sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_ERROR);
-#endif
-
-	getMemStatus();
+	EMPVAUtils::SetMemStatus();
 
 	Framework::InitParam fwParam;
 	fwParam.LoadDefaultParams();
-	fwParam.applicationMode = Framework::Mode_ApplicationA;
+	fwParam.applicationMode = Framework::Mode_Application;
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
-	if (s_memGrown == 2) {
-		fwParam.defaultSurfacePoolSize = 17 * 1024 * 1024 + 512 * 1024;
+	if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Full) {
+		fwParam.defaultSurfacePoolSize = 18 * 1024 * 1024 + 512 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
-	else if (s_memGrown == 1) {
+	else if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Mid) {
 		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024 + 512 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
@@ -205,6 +323,13 @@ int main() {
 
 	fw->LoadCommonResourceAsync();
 
+#ifdef _DEBUG
+	sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_TRACE);
+	InitDebug();
+#else
+	sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_ERROR);
+#endif
+
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;
 	sce_paf_memset(&init, 0, sizeof(SceAppUtilInitParam));
@@ -213,31 +338,29 @@ int main() {
 
 	EMPVAUtils::Init();
 
-#ifdef _DEBUG
-	sceAppMgrSetInfobarState(SCE_TRUE, 0, 0); // In .sfo for release
-	//common::Utils::AddMainThreadTask(leakTestTask, SCE_NULL);
-#endif
-
 	//Reset repeat state
 	sceMusicPlayerServiceInitialize(0);
 	sceMusicPlayerServiceSetRepeatMode(SCE_MUSIC_REPEAT_DISABLE);
 	sceMusicPlayerServiceTerminate();
 
 	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_AUDIOCODEC);
+	new Module("app0:module/libLocalMedia.suprx", 0, 0, 0);
 
 	g_eventFlagUid = sceKernelCreateEventFlag("EMPVA::GlobalEvf", SCE_KERNEL_ATTR_MULTI, FLAG_ELEVENMPVA_IS_FG | FLAG_ELEVENMPVA_IS_DECODER_USED, SCE_NULL);
 
 	Framework::PluginInitParam pluginParam;
 
-	pluginParam.pluginName.Set("empva_plugin");
-	pluginParam.resourcePath.Set("app0:empva_plugin.rco");
-	pluginParam.scopeName.Set("__main__");
+	pluginParam.pluginName = "empva_plugin";
+	pluginParam.resourcePath = "app0:empva_plugin.rco";
+	pluginParam.scopeName = "__main__";
 
 	pluginParam.pluginStartCB = pluginLoadCB;
 
 	fw->LoadPluginAsync(&pluginParam);
 
 	fw->EnterRenderingLoop();
+
+	sceKernelExitProcess(0);
 
 	return 0;
 }

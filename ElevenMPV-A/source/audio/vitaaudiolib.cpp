@@ -6,7 +6,6 @@
 #include "vitaaudiolib.h"
 #include "utils.h"
 #include "audio.h"
-#include "config.h"
 
 static const SceUInt32 k_defaultGrain = 960;
 
@@ -26,14 +25,13 @@ SceVoid audio::DecoderCore::SetDecoder(audio::GenericDecoder *decoder, ScePVoid 
 
 SceVoid audio::DecoderCore::DecoderCoreThread::EntryFunction()
 {
-	int ret = 0;
 	SceInt32 vol[2];
 
 	while (!s_audioTerminate) {
 
 		if (s_vitaAudioStatus.decoder) {
 			while (s_vitaAudioStatus.decoder->isPaused) {
-				thread::Thread::Sleep(100);
+				thread::Sleep(100);
 			}
 		}
 
@@ -50,7 +48,7 @@ SceVoid audio::DecoderCore::DecoderCoreThread::EntryFunction()
 		if (s_audioReady) {
 			sceAppUtilSystemParamGetInt(9, &vol[0]);
 
-			if (g_config->GetConfigLocation()->eq_volume && g_config->GetConfigLocation()->eq_mode != 0) {
+			if (menu::settings::Settings::GetInstance()->eq_volume && menu::settings::Settings::GetInstance()->eq_mode != 0) {
 				vol[0] = vol[0] / 2;
 				vol[1] = vol[0];
 				sceAudioOutSetVolume(s_vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
@@ -77,7 +75,7 @@ SceInt32 audio::DecoderCore::Init(SceUInt32 frequency, SceUInt32 mode)
 	s_vitaAudioStatus.handle = -1;
 	s_vitaAudioStatus.threadhandle = SCE_NULL;
 
-	s_vitaAudioSoundBuffer = (SceInt16 *)sce_paf_malloc(sizeof(SceInt16) * s_grain * (mode + 1));
+	s_vitaAudioSoundBuffer = (SceInt16 *)sce_paf_calloc(1, sizeof(SceInt16) * s_grain * (mode + 1));
 
 	if ((s_vitaAudioStatus.handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, s_grain, frequency, mode)) < 0) {
 		ret = -1;

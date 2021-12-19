@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application_settings version="1.0" bg_color="0.0, 2.0, 72.0, 255.0">
+	<setting_list id="empva_setting" title="msg_settings">
+		<list id="list_device" title="msg_settings_device" error_dialog_message="msg_settings_device_not_found" key="device" default_value="0">
+			<list_item id="list_device_00" title="msg_option_device_0" value="0" />
+			<list_item id="list_device_01" title="msg_option_device_1" value="1" />
+			<list_item id="list_device_02" title="msg_option_device_2" value="2" />
+			<list_item id="list_device_03" title="msg_option_device_3" value="3" />
+			<list_item id="list_device_04" title="msg_option_device_4" value="4" />
+			<list_item id="list_device_05" title="msg_option_device_5" value="5" />
+		</list>
+		<list id="list_sort" title="msg_settings_sort" key="sort" default_value="0">
+			<list_item id="list_sort_00" title="msg_option_sort_0" value="0" />
+			<list_item id="list_sort_01" title="msg_option_sort_1" value="1" />
+			<list_item id="list_sort_02" title="msg_option_sort_2" value="2" />
+			<list_item id="list_sort_03" title="msg_option_sort_3" value="3" />
+		</list>		
+		<setting_list id="setting_list_audio" title="msg_settings_audio">
+			<list id="list_audio_eq" title="msg_settings_audio_eq" key="eq_mode" default_value="0">
+				<list_item id="list_audio_eq_00" title="msg_option_audio_eq_0" value="0" />
+				<list_item id="list_audio_eq_01" title="msg_option_audio_eq_1" value="1" />
+				<list_item id="list_audio_eq_02" title="msg_option_audio_eq_2" value="2" />
+				<list_item id="list_audio_eq_03" title="msg_option_audio_eq_3" value="3" />
+				<list_item id="list_audio_eq_04" title="msg_option_audio_eq_4" value="4" />
+			</list>			
+			<toggle_switch id="toggle_audio_alc" title="msg_settings_audio_alc" key="alc_mode" default_value="0"/>
+			<toggle_switch id="toggle_audio_eqvol" title="msg_settings_audio_limit" key="eq_volume" default_value="0"/>
+		</setting_list>
+		<setting_list id="setting_list_power" title="msg_settings_power" style="edit">
+			<toggle_switch id="toggle_power_fps" title="msg_settings_power_fps" key="fps_limit" default_value="1"/>
+			<toggle_switch id="toggle_power_save" title="msg_settings_power_save" key="power_saving" default_value="1"/>
+			<text_field id="text_field_power_timer" title="msg_settings_power_time" max_length="2" min_length="1" keyboard_type="numeral" key="power_timer" default_value="5"/>
+		</setting_list>
+		<setting_list id="setting_list_controls" title="msg_settings_control" style="edit">		
+			<toggle_switch id="toggle_controls_stick" title="msg_settings_control_stick" key="stick_skip" default_value="0"/>
+			<toggle_switch id="toggle_controls_motion" title="msg_settings_control_motion" key="motion_mode" default_value="0"/>
+			<text_field id="text_field_controls_timeout" title="msg_settings_control_time" max_length="2" min_length="1" keyboard_type="numeral" key="motion_timer" default_value="3"/>
+			<text_field id="text_field_controls_angle" title="msg_settings_control_angle" max_length="2" min_length="1" keyboard_type="numeral" key="motion_degree" default_value="45"/>
+		</setting_list>
+		<setting_list id="setting_list_youtube" title="msg_settings_youtube">
+			<button id="button_youtube_clean_history" title="msg_settings_youtube_clean_history" success_dialog_message="msg_settings_youtube_clean_history_done" confirm="msg_settings_youtube_clean_history_confirm" />
+			<button id="button_youtube_clean_fav" title="msg_settings_youtube_clean_fav" success_dialog_message="msg_settings_youtube_clean_fav_done" confirm="msg_settings_youtube_clean_fav_confirm" />
+			<button id="button_youtube_download" title="msg_settings_youtube_download" success_dialog_message="msg_settings_youtube_download_begin" />
+		</setting_list>
+	</setting_list>
+</application_settings>

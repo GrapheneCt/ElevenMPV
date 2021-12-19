@@ -6,9 +6,15 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ElevenMPV-A", "ElevenMPV-A\ElevenMPV-A.vcxproj", "{C1CA520F-B824-44D0-91F4-33EE6287D6EB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{08427615-73E3-4334-B91C-89425EFCA190} = {08427615-73E3-4334-B91C-89425EFCA190}
+		{D9477093-D1DF-4A70-B333-C114DDF9EC04} = {D9477093-D1DF-4A70-B333-C114DDF9EC04}
+		{584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D} = {584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ElevenMPV-A-ShellPlugin", "ElevenMPV-A-ShellPlugin\ElevenMPV-A-ShellPlugin.vcxproj", "{08427615-73E3-4334-B91C-89425EFCA190}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ElevenMPV-A-DE", "ElevenMPV-A-DE\ElevenMPV-A-DE.vcxproj", "{D9477093-D1DF-4A70-B333-C114DDF9EC04}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libScePafPreload", "ElevenMPV-A-libScePafPreload\libScePafPreload.vcxproj", "{584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,6 +30,14 @@ Global
 		{08427615-73E3-4334-B91C-89425EFCA190}.Debug|PSVita.Build.0 = Debug|PSVita
 		{08427615-73E3-4334-B91C-89425EFCA190}.Release|PSVita.ActiveCfg = Release|PSVita
 		{08427615-73E3-4334-B91C-89425EFCA190}.Release|PSVita.Build.0 = Release|PSVita
+		{D9477093-D1DF-4A70-B333-C114DDF9EC04}.Debug|PSVita.ActiveCfg = Debug|PSVita
+		{D9477093-D1DF-4A70-B333-C114DDF9EC04}.Debug|PSVita.Build.0 = Debug|PSVita
+		{D9477093-D1DF-4A70-B333-C114DDF9EC04}.Release|PSVita.ActiveCfg = Release|PSVita
+		{D9477093-D1DF-4A70-B333-C114DDF9EC04}.Release|PSVita.Build.0 = Release|PSVita
+		{584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D}.Debug|PSVita.ActiveCfg = Debug|PSVita
+		{584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D}.Debug|PSVita.Build.0 = Debug|PSVita
+		{584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D}.Release|PSVita.ActiveCfg = Release|PSVita
+		{584C4FE4-880C-4EF6-9E2A-22BBE98EBA2D}.Release|PSVita.Build.0 = Release|PSVita
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

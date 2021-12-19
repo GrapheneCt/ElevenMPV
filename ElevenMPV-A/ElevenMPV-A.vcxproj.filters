@@ -21,6 +21,9 @@
     <Filter Include="Header Files\menus">
       <UniqueIdentifier>{c3baaaeb-6690-40f1-9e98-88b5e91479ed}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\menus\youtube">
+      <UniqueIdentifier>{cf655e4d-8cf4-4dbd-a485-d601805ba8b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -37,9 +40,6 @@
     </ClCompile>
     <ClCompile Include="source\menus\menu_settings.cpp">
       <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="source\config.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\audio\vitaaudiolib.cpp">
       <Filter>Source Files\audio</Filter>
@@ -83,6 +83,33 @@
     <ClCompile Include="source\paf_libc_bridge_asm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\audio\webm_opus.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="source\debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menus\youtube\menu_youtube_base.cpp">
+      <Filter>Source Files\menus\youtube</Filter>
+    </ClCompile>
+    <ClCompile Include="source\yt_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menus\youtube\menu_youtube_history.cpp">
+      <Filter>Source Files\menus\youtube</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menus\youtube\menu_youtube_search.cpp">
+      <Filter>Source Files\menus\youtube</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menus\youtube\menu_youtube_fav.cpp">
+      <Filter>Source Files\menus\youtube</Filter>
+    </ClCompile>
+    <ClCompile Include="source\audio\youtube_opus.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="source\downloader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\common.h">
@@ -112,10 +139,22 @@
     <ClInclude Include="include\motion_e.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\config.h">
+    <ClInclude Include="..\ElevenMPV-A-Common\include\ipc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ElevenMPV-A-Common\include\ipc.h">
+    <ClInclude Include="include\menus\menu_youtube.h">
+      <Filter>Header Files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="include\main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\yt_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\downloader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

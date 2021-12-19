@@ -11,39 +11,41 @@
 
 using namespace paf;
 
-menu::displayfiles::CoverLoaderThread *g_currentCoverLoader = SCE_NULL;
 graphics::Surface *g_currentCoverSurf = SCE_NULL;
 
-SceVoid menu::displayfiles::CoverLoaderThread::EntryFunction()
+SceVoid menu::displayfiles::CoverLoaderJob::Run()
 {
 	Resource::Element searchParam;
-	widget::Widget *playerCover;
-	widget::Widget::Color col;
-	SceFVector4 wsize;
-	Misc::OpenResult fres;
+	ObjectWithCleanup fres;
 	graphics::Texture tex;
+	ui::Widget::Color col;
+	SceFVector4 wsize;
 	SceInt32 res;
 	String fullPath;
-	fullPath.Set(workPage->cwd->data, workPage->cwd->length);
-	fullPath.Append(workFile->name->string.data, workFile->name->string.length);
-	Misc::OpenFile(&fres, fullPath.data, SCE_O_RDONLY, 0, &res);
-	fullPath.Clear();
 
-	if (res < 0) {
-		sceKernelExitDeleteThread(0);
+	if (!workFile) {
+		menu::displayfiles::Page::ResetBgPlaneTex();
 		return;
 	}
-
-	g_currentCoverLoader = this;
 
 	if (g_currentCoverSurf != SCE_NULL)
 		menu::displayfiles::Page::ResetBgPlaneTex();
 
 	if (g_currentDispFilePage != workPage) {
-		g_currentCoverLoader = SCE_NULL;
-		sceKernelExitDeleteThread(0);
-		delete fres.localFile;
-		sce_paf_free(fres.unk_04);
+		return;
+	}
+
+	fullPath.Append(workPage->cwd->data, workPage->cwd->length);
+	fullPath.Append(workFile->name->string.data, workFile->name->string.length);
+	LocalFile::Open(&fres, fullPath.data, SCE_O_RDONLY, 0, &res);
+
+	if (res < 0) {
+		return;
+	}
+
+	if (g_currentDispFilePage != workPage) {
+		fres.cleanup->cb(fres.object);
+		delete fres.cleanup;
 		return;
 	}
 
@@ -51,23 +53,19 @@ SceVoid menu::displayfiles::CoverLoaderThread::EntryFunction()
 	g_currentCoverSurf = tex.texSurface;
 
 	if (g_currentDispFilePage != workPage) {
-		g_currentCoverLoader = SCE_NULL;
-		sceKernelExitDeleteThread(0);
-		delete fres.localFile;
-		sce_paf_free(fres.unk_04);
+		fres.cleanup->cb(fres.object);
+		delete fres.cleanup;
 		return;
 	}
 
 	if (tex.texSurface == SCE_NULL) {
-		delete fres.localFile;
-		sce_paf_free(fres.unk_04);
-		g_currentCoverLoader = SCE_NULL;
-		sceKernelExitDeleteThread(0);
+		fres.cleanup->cb(fres.object);
+		delete fres.cleanup;
 		return;
 	}
 
-	delete fres.localFile;
-	sce_paf_free(fres.unk_04);
+	fres.cleanup->cb(fres.object);
+	delete fres.cleanup;
 
 	col.r = 0.207;
 	col.g = 0.247;
@@ -79,17 +77,24 @@ SceVoid menu::displayfiles::CoverLoaderThread::EntryFunction()
 	wsize.z = 0.0f;
 	wsize.w = 0.0f;
 
-	if (g_currentDispFilePage == workPage && !g_isPlayerActive) {
-		g_root->SetFilterColor(&col);
+	if (!g_isPlayerActive) {
+		g_root->SetColor(&col);
 		g_root->SetSize(&wsize);
 		g_root->SetTextureBase(&tex);
 	}
-
-	g_currentCoverLoader = SCE_NULL;
-	sceKernelExitDeleteThread(0);
 }
 
-SceVoid menu::displayfiles::BackButtonCB::BackButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+SceVoid menu::displayfiles::PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
+{
+	menu::audioplayer::Audioplayer::Return();
+}
+
+SceVoid menu::displayfiles::CoverLoaderJob::Finish()
+{
+
+}
+
+SceVoid menu::displayfiles::BackButtonCB::BackButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	Resource::Element searchParam;
 	Page *tmpCurr = g_currentDispFilePage;
@@ -97,17 +102,38 @@ SceVoid menu::displayfiles::BackButtonCB::BackButtonCBFun(SceInt32 eventId, paf:
 	delete tmpCurr;
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-	widget::Widget *backButton = g_root_page->GetChildByHash(&searchParam, 0);
+	ui::Widget *backButton = g_rootPage->GetChildByHash(&searchParam, 0);
 	if (!EMPVAUtils::IsRootDevice(g_currentDispFilePage->cwd->data))
-		backButton->PlayAnimation(600.0f, widget::Widget::Animation_Reset);
+		backButton->PlayAnimation(600.0f, ui::Widget::Animation_Reset);
 	else
-		backButton->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset);
-
-	if (g_currentCoverSurf != SCE_NULL)
-		menu::displayfiles::Page::ResetBgPlaneTex();
+		backButton->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
 }
 
-SceVoid menu::displayfiles::ButtonCB::ButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+SceVoid menu::displayfiles::ButtonCB::StartNewPlayer(menu::displayfiles::File *startFile)
+{
+	g_currentDispFilePage->coverLoader = new CoverLoaderJob("EMPVA::CoverLoaderJob");
+	g_currentDispFilePage->coverLoader->workPage = g_currentDispFilePage;
+	if (g_currentDispFilePage->coverState)
+		g_currentDispFilePage->coverLoader->workFile = g_currentDispFilePage->coverWork;
+	else
+		g_currentDispFilePage->coverLoader->workFile = SCE_NULL;
+
+	CleanupHandler *req = new CleanupHandler();
+	req->userData = g_currentDispFilePage->coverLoader;
+	req->refCount = 0;
+	req->unk_08 = 1;
+	req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
+
+	ObjectWithCleanup itemParam;
+	itemParam.object = g_currentDispFilePage->coverLoader;
+	itemParam.cleanup = req;
+
+	g_coverJobQueue->Enqueue(&itemParam);
+
+	new menu::audioplayer::Audioplayer::Audioplayer(g_currentDispFilePage->cwd->data, startFile, menu::audioplayer::Audioplayer::Mode_Normal);
+}
+
+SceVoid menu::displayfiles::ButtonCB::ButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	File *file = (File *)pUserData;
 
@@ -123,7 +149,17 @@ SceVoid menu::displayfiles::ButtonCB::ButtonCBFun(SceInt32 eventId, paf::widget:
 			Page *newPage = new menu::displayfiles::Page(tempCwd->data);
 		}
 		else if (file->type == File::Type_Music) {
-			auto *player = new menu::audioplayer::Audioplayer::Audioplayer(g_currentDispFilePage->cwd->data, file);
+			if (g_isPlayerActive) {
+				if (!sce_paf_strncasecmp(g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->data, tempCwd->data, g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->length)) {
+					menu::audioplayer::Audioplayer::Return();
+				}
+				else {
+					StartNewPlayer(file);
+				}
+			}
+			else {
+				StartNewPlayer(file);
+			}
 		}
 		tempCwd->Clear();
 	}
@@ -132,7 +168,7 @@ SceVoid menu::displayfiles::ButtonCB::ButtonCBFun(SceInt32 eventId, paf::widget:
 }
 
 
-SceVoid menu::displayfiles::BusyCB::BusyCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+SceVoid menu::displayfiles::BusyCB::BusyCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	g_commonBusyInidcator->Stop();
 	self->UnregisterEventCallback(0x100004, 0, 0);
@@ -148,6 +184,7 @@ menu::displayfiles::Page::Page(const char* path)
 	// Using widget pointer value as hash is unreliable, but good enough for now
 
 	coverWork = SCE_NULL;
+	coverState = SCE_FALSE;
 
 	char tmpPath[0x256];
 	SceInt32 slashPos = 0;
@@ -179,10 +216,9 @@ menu::displayfiles::Page::Page(const char* path)
 
 	WString topText;
 	String topText8;
-	topText8.Set(cwd->data);
+	topText8 = cwd->data;
 	topText8.ToWString(&topText);
-	g_top_text->SetLabel(&topText);
-	topText8.Clear();
+	g_topText->SetLabel(&topText);
 	coverLoader = SCE_NULL;
 
 	if (PopulateFiles(cwd->data) < 0)
@@ -197,22 +233,21 @@ menu::displayfiles::Page::Page(const char* path)
 		prev = g_currentDispFilePage;
 
 	searchParam.hash = EMPVAUtils::GetHash("menu_template_displayfiles");
-	g_empvaPlugin->AddWidgetFromTemplate(g_root, &searchParam, &tmpParam);
+	g_empvaPlugin->TemplateOpen(g_root, &searchParam, &tmpParam);
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_displayfiles_bg");
-	root = (widget::Plane *)g_root->GetChildByHash(&searchParam, 0);
+	root = (ui::Plane *)g_root->GetChildByHash(&searchParam, 0);
 	root->hash = (SceUInt32)root;
-	root->SetLimitedFpsMode(SCE_TRUE);
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-	widget::Widget *backButton = g_root_page->GetChildByHash(&searchParam, 0);
+	ui::Widget *backButton = g_rootPage->GetChildByHash(&searchParam, 0);
 	if (!EMPVAUtils::IsRootDevice(cwd->data))
-		backButton->PlayAnimation(300.0f, widget::Widget::Animation_Reset);
+		backButton->PlayAnimation(300.0f, ui::Widget::Animation_Reset);
 	else
-		backButton->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset);
+		backButton->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_scroll_box");
-	box = (widget::Box *)root->GetChildByHash(&searchParam, 0);
+	box = (ui::Box *)root->GetChildByHash(&searchParam, 0);
 	box->hash = (SceUInt32)box;
 
 	Resource::Element searchParamMusic;
@@ -234,31 +269,28 @@ menu::displayfiles::Page::Page(const char* path)
 
 		switch (file->type) {
 		case File::Type_Unsupported:
-			g_empvaPlugin->AddWidgetFromTemplate(box, &searchParam, &tmpParam);
+			g_empvaPlugin->TemplateOpen(box, &searchParam, &tmpParam);
 			break;
 		case File::Type_Dir:
-			g_empvaPlugin->AddWidgetFromTemplate(box, &searchParamDir, &tmpParam);
+			g_empvaPlugin->TemplateOpen(box, &searchParamDir, &tmpParam);
 			break;
 		case File::Type_Music:
-			g_empvaPlugin->AddWidgetFromTemplate(box, &searchParamMusic, &tmpParam);
+			g_empvaPlugin->TemplateOpen(box, &searchParamMusic, &tmpParam);
 			break;
 		}
 
-		file->button = (widget::ImageButton *)box->GetChildByNum(box->childNum - 1);
+		file->button = (ui::ImageButton *)box->GetChildByNum(box->childNum - 1);
 		file->button->hash = (SceUInt32)file->button;
 		file->button->SetLabel(&file->name->wstring);
 		if (file->type == File::Type_Unsupported)
 			file->button->Disable(0);
 		file->buttonCB = new ButtonCB;
 		file->buttonCB->pUserData = file;
-		file->button->RegisterEventCallback(widget::Widget::EventMain_Pressed, file->buttonCB, 0);
+		file->button->RegisterEventCallback(ui::Widget::EventMain_Pressed, file->buttonCB, 0);
 		if (i == fileNum - 1)
 			lastFile = file;
 		file = file->next;
 	}
-
-	if (coverLoader != SCE_NULL)
-		coverLoader->Start();
 
 	if (fileNum > k_busyIndicatorFileLimit) {
 		if (lastFile) {
@@ -269,70 +301,71 @@ menu::displayfiles::Page::Page(const char* path)
 
 	if (fileNum == 0) {
 		searchParam.hash = EMPVAUtils::GetHash("menu_template_displayfiles_text_empty_dir");
-		g_empvaPlugin->AddWidgetFromTemplate(root, &searchParam, &tmpParam);
+		g_empvaPlugin->TemplateOpen(root, &searchParam, &tmpParam);
 	}
 
 	if (g_currentDispFilePage != SCE_NULL) {
 		if (g_currentDispFilePage->prev != SCE_NULL) {
-			g_currentDispFilePage->prev->root->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset);
+			g_currentDispFilePage->prev->root->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
 			if (g_currentDispFilePage->prev->root->animationStatus & 0x80)
 				g_currentDispFilePage->prev->root->animationStatus &= ~0x80;
 		}
-		g_currentDispFilePage->root->PlayAnimation(0.0f, widget::Widget::Animation_3D_SlideToBack1);
+		g_currentDispFilePage->root->PlayAnimation(0.0f, ui::Widget::Animation_3D_SlideToBack1);
 		if (g_currentDispFilePage->root->animationStatus & 0x80)
 			g_currentDispFilePage->root->animationStatus &= ~0x80;
 	}
-	root->PlayAnimation(-5000.0f, widget::Widget::Animation_3D_SlideFromFront);
+	root->PlayAnimation(-5000.0f, ui::Widget::Animation_3D_SlideFromFront);
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
-	g_config->SetLastDirectory(path);
+	menu::settings::Settings::GetInstance()->SetLastDirectory(path);
 
 	g_currentDispFilePage = this;
 }
 
 menu::displayfiles::Page::~Page()
 {
-	menu::displayfiles::Page *tCoverPage;
-	menu::displayfiles::File *tCoverFile;
 	String topText8;
 	WString topText;
 	char tmpPath[SCE_IO_MAX_PATH_LENGTH];
 
 	sce_paf_memset(tmpPath, 0, SCE_IO_MAX_PATH_LENGTH);
 	sce_paf_strncpy(tmpPath, prev->cwd->data, sce_paf_strlen(prev->cwd->data));
-	topText8.Set(tmpPath);
+	topText8 = tmpPath;
 	topText8.ToWString(&topText);
-	g_top_text->SetLabel(&topText);
-	topText8.Clear();
+	g_topText->SetLabel(&topText);
 
-	if (prev != SCE_NULL) {
-		if (prev->coverState && prev->coverLoader != SCE_NULL) {
+	if (prev != SCE_NULL && !g_isPlayerActive) {
 
-			tCoverPage = prev->coverLoader->workPage;
-			tCoverFile = prev->coverLoader->workFile;
-			delete prev->coverLoader;
+		coverLoader = new CoverLoaderJob("EMPVA::CoverLoaderJob");
+		coverLoader->workPage = prev;
+		if (prev->coverState)
+			coverLoader->workFile = prev->coverWork;
+		else
+			coverLoader->workFile = SCE_NULL;
 
-			prev->coverLoader = new menu::displayfiles::CoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY - 20, 0x1000, "EMPVA::CoverLoader");
-			prev->coverLoader->workPage = tCoverPage;
-			prev->coverLoader->workFile = tCoverFile;
-			coverWork = tCoverFile;
+		CleanupHandler *req = new CleanupHandler();
+		req->userData = coverLoader;
+		req->refCount = 0;
+		req->unk_08 = 1;
+		req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
 
-			if (g_currentCoverLoader != SCE_NULL)
-				g_currentCoverLoader->Join();
+		ObjectWithCleanup itemParam;
+		itemParam.object = coverLoader;
+		itemParam.cleanup = req;
 
-			prev->coverLoader->Start();
-		}
+		g_coverJobQueue->Enqueue(&itemParam);
+
 	}
 
-	common::Utils::WidgetStateTransition(-100.0f, root, widget::Widget::Animation_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
+	common::Utils::WidgetStateTransition(-100.0f, root, ui::Widget::Animation_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
 	if (prev != SCE_NULL) {
-		prev->root->PlayAnimationReverse(0.0f, widget::Widget::Animation_3D_SlideToBack1);
-		prev->root->PlayAnimation(0.0f, widget::Widget::Animation_Reset);
+		prev->root->PlayAnimationReverse(0.0f, ui::Widget::Animation_3D_SlideToBack1);
+		prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
 		if (prev->root->animationStatus & 0x80)
 			prev->root->animationStatus &= ~0x80;
 		if (prev->prev != SCE_NULL) {
-			prev->prev->root->PlayAnimation(0.0f, widget::Widget::Animation_Reset);
+			prev->prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
 			if (prev->prev->root->animationStatus & 0x80)
 				prev->prev->root->animationStatus &= ~0x80;
 		}
@@ -341,22 +374,22 @@ menu::displayfiles::Page::~Page()
 	if (files != SCE_NULL)
 		ClearFiles(files);
 
-	g_config->SetLastDirectory(prev->cwd->data);
+	menu::settings::Settings::GetInstance()->SetLastDirectory(prev->cwd->data);
 
 	delete cwd;
-	delete coverLoader;
 }
 
 SceVoid menu::displayfiles::Page::ResetBgPlaneTex()
 {
-	widget::Widget::Color col;
+	ui::Widget::Color col;
 	SceFVector4 wsize;
+	Resource::Element searchParam;
 
 	col.r = 1;
 	col.g = 1;
 	col.b = 1;
 	col.a = 1;
-	g_root->SetFilterColor(&col);
+	g_root->SetColor(&col);
 
 	wsize.x = 960.0;
 	wsize.y = 544.0;
@@ -365,6 +398,13 @@ SceVoid menu::displayfiles::Page::ResetBgPlaneTex()
 	g_root->SetSize(&wsize);
 
 	g_root->SetTextureBase(g_commonBgTex);
+
+	if (g_player_page) {
+		searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
+		ui::Widget *playerCover = g_player_page->GetChildByHash(&searchParam, 0);
+		if (playerCover)
+			playerCover->SetTextureBase(g_coverBgTex);
+	}
 
 	if (g_currentCoverSurf)
 		delete g_currentCoverSurf;
@@ -389,7 +429,7 @@ SceInt32 menu::displayfiles::Page::Cmpstringp(const ScePVoid p1, const ScePVoid 
 	else if ((entryA->type != io::Type_Dir) && (entryB->type == io::Type_Dir))
 		return 1;
 	else {
-		switch (g_config->GetConfigLocation()->sort) {
+		switch (menu::settings::Settings::GetInstance()->sort) {
 		case 0: // Sort alphabetically (ascending - A to Z)
 			return sce_paf_strcasecmp(entryA->name.data, entryB->name.data);
 			break;
@@ -414,7 +454,6 @@ SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath)
 	File *coverWorkItem = SCE_NULL;
 	files = SCE_NULL;
 	fileNum = 0;
-	coverState = SCE_FALSE;
 
 	if (dir.Open(rootPath) >= 0) {
 
@@ -460,6 +499,7 @@ SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath)
 			}
 
 			item->name = new SWString(entries[i].name.data);
+
 			item->name->string.ToWString(&item->name->wstring);
 
 			fileNum++;
@@ -479,14 +519,28 @@ SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath)
 			}
 		}
 
-		if (coverState) {
-			coverLoader = new menu::displayfiles::CoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY - 20, 0x1000, "EMPVA::CoverLoader");
+		coverWork = coverWorkItem;
+
+		if (!g_isPlayerActive) {
+			coverLoader = new CoverLoaderJob("EMPVA::CoverLoaderJob");
 			coverLoader->workPage = this;
-			coverLoader->workFile = coverWorkItem;
-			coverWork = coverWorkItem;
+			if (coverState)
+				coverLoader->workFile = coverWorkItem;
+			else
+				coverLoader->workFile = SCE_NULL;
+
+			CleanupHandler *req = new CleanupHandler();
+			req->userData = coverLoader;
+			req->refCount = 0;
+			req->unk_08 = 1;
+			req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
+
+			ObjectWithCleanup itemParam;
+			itemParam.object = coverLoader;
+			itemParam.cleanup = req;
+
+			g_coverJobQueue->Enqueue(&itemParam);
 		}
-		else
-			menu::displayfiles::Page::ResetBgPlaneTex();
 
 		delete[] entries;
 	}

@@ -33,7 +33,7 @@ namespace audio {
 			SceInt32 handle;
 			audio::GenericDecoder *decoder;
 			ScePVoid userdata;
-		};
+		} VITA_audio_channelinfo;
 
 		static SceInt32 Init(SceUInt32 frequency, SceUInt32 mode);
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <paf.h>
 
 using namespace paf;
@@ -22,7 +23,7 @@ public:
 	virtual SceVoid EntryFunction();
 };
 
-class PlayerButtonCB : public widget::Widget::EventCallback
+class PlayerButtonCB : public ui::Widget::EventCallback
 {
 public:
 
@@ -43,6 +44,6 @@ public:
 
 	};
 
-	static SceVoid PlayerButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
+	static SceVoid PlayerButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
 };

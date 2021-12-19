@@ -11,19 +11,32 @@ namespace menu {
 		class Page;
 		class File;
 
-		class CoverLoaderThread : public thread::Thread
+		class CoverLoaderJob : public paf::thread::JobQueue::Item
 		{
 		public:
 
-			using thread::Thread::Thread;
+			using thread::JobQueue::Item::Item;
 
-			SceVoid EntryFunction();
+			~CoverLoaderJob()
+			{
+
+			}
+
+			SceVoid Run();
+
+			SceVoid Finish();
+
+			static SceVoid JobKiller(thread::JobQueue::Item *job)
+			{
+				if (job)
+					delete job;
+			}
 
 			Page *workPage;
 			File *workFile;
 		};
 
-		class BackButtonCB : public widget::Widget::EventCallback
+		class BackButtonCB : public ui::Widget::EventCallback
 		{
 		public:
 
@@ -37,11 +50,29 @@ namespace menu {
 
 			};
 
-			static SceVoid BackButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
+			static SceVoid BackButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
 		};
 
-		class ButtonCB : public widget::Widget::EventCallback
+		class PlayerButtonCB : public ui::Widget::EventCallback
+		{
+		public:
+
+			PlayerButtonCB()
+			{
+				eventHandler = PlayerButtonCBFun;
+			};
+
+			virtual ~PlayerButtonCB()
+			{
+
+			};
+
+			static SceVoid PlayerButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
+
+		};
+
+		class ButtonCB : public ui::Widget::EventCallback
 		{
 		public:
 
@@ -55,11 +86,12 @@ namespace menu {
 
 			};
 
-			static SceVoid ButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
+			static SceVoid ButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
+			static SceVoid StartNewPlayer(menu::displayfiles::File *startFile);
 		};
 
-		class BusyCB : public widget::Widget::EventCallback
+		class BusyCB : public ui::Widget::EventCallback
 		{
 		public:
 
@@ -73,7 +105,7 @@ namespace menu {
 
 			};
 
-			static SceVoid BusyCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
+			static SceVoid BusyCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
 		};
 
@@ -106,7 +138,7 @@ namespace menu {
 			SWString *name;
 			char ext[5];
 			Type type;
-			widget::ImageButton *button;
+			ui::ImageButton *button;
 			ButtonCB *buttonCB;
 		};
 
@@ -122,13 +154,13 @@ namespace menu {
 
 			static SceVoid Init();
 
-			widget::Plane *root;
-			widget::Box *box;
+			ui::Plane *root;
+			ui::Box *box;
 			String *cwd;
 			Page *prev;
 			File *files;
 			BusyCB *busyCB;
-			CoverLoaderThread *coverLoader;
+			CoverLoaderJob *coverLoader;
 			SceUInt32 fileNum;
 			SceBool coverState;
 			File *coverWork;

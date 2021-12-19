@@ -2,714 +2,339 @@
 #include <appmgr.h>
 #include <stdlib.h>
 #include <string.h>
-#include <shellaudio.h>
+#include <paf.h>
 #include <audioout.h>
+#include <shellaudio.h>
+#include <libsysmodule.h>
+#include <libdbg.h>
+#include <bxce.h>
+#include <app_settings.h>
+#include <ini_file_processor.h>
 
-#include "config.h"
 #include "motion_e.h"
 #include "common.h"
 #include "menu_settings.h"
 #include "utils.h"
+#include "yt_utils.h"
+#include "downloader.h"
 
 using namespace paf;
+using namespace sce;
 
 static SceUInt32 s_callerMode = 0;
 
-static SceBool s_isBtCbRegistered = SCE_FALSE;
+static menu::settings::Settings *s_settingsInstance = SCE_NULL;
+
 static SceBool s_needPageReload = SCE_FALSE;
 static SceBool s_needCwdReload = SCE_FALSE;
-static SceBool s_needBackButtonShow = SCE_FALSE;
+static SceInt32 s_lastError = SCE_OK;
 
-static widget::Widget *s_currPlane = SCE_NULL;
-static widget::Widget *s_prevPlane = SCE_NULL;
-
-static widget::Widget *s_settingsButtonDevice = SCE_NULL;
-static widget::Widget *s_settingsButtonSort = SCE_NULL;
-static widget::Widget *s_settingsButtonAudio = SCE_NULL;
-static widget::Widget *s_settingsButtonPower = SCE_NULL;
-static widget::Widget *s_settingsButtonControl = SCE_NULL;
-
-static widget::Widget *s_settingsButtonAudioEq = SCE_NULL;
-static widget::CheckBox *s_settingsCheckboxAudioAlc = SCE_NULL;
-static widget::CheckBox *s_settingsCheckboxAudioLimit = SCE_NULL;
-static widget::CheckBox *s_settingsCheckboxPowerSave = SCE_NULL;
-static widget::Widget *s_settingsImePowerTime = SCE_NULL;
-static widget::CheckBox *s_settingsCheckboxControlStick = SCE_NULL;
-static widget::CheckBox *s_settingsCheckboxControlMotion = SCE_NULL;
-static widget::Widget *s_settingsImeControlTime = SCE_NULL;
-static widget::Widget *s_settingsImeControlAngle = SCE_NULL;
-
-static SceUInt32 s_callerButtonHash = 0;
-
-const SceUInt32 k_deviceItemNum = 6;
-const SceUInt32 k_sortItemNum = 4;
-const SceUInt32 k_audioEqItemNum = 5;
-
-SceVoid menu::settings::SettingsOptionSelectionButtonCB::SettingsOptionSelectionButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+menu::settings::Settings::Settings()
 {
-	SceBool needBgButtonReset = SCE_TRUE;
-	String *text8 = SCE_NULL;
-	Resource::Element searchParam;
-	config::Config::EMPVAConfig *config = g_config->GetConfigLocation();
+	SceInt32 ret;
+	Framework::PluginInitParam pluginParam;
+	AppSettings::InitParam sparam;
 
-	searchParam.hash = EMPVAUtils::GetHash("settings_option_box");
-	widget::Widget *settingsOptionBox = g_settings_option->GetChildByHash(&searchParam, 0);
+	settingsReset = SCE_FALSE;
 
-	widget::Widget *targetOption = settingsOptionBox->GetChildByNum(self->hash - 1);
-	targetOption->SetTextureBase(g_texCheckMark);
+	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_BXCE);
+	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_INI_FILE_PROCESSOR);
+	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
 
-	for (int i = 0; i < settingsOptionBox->childNum; i++) {
-		if (i != self->hash - 1) {
-			targetOption = settingsOptionBox->GetChildByNum(i);
-			targetOption->SetTextureBase(g_texTransparent);
-		}
+	pluginParam.pluginName = "app_settings_plugin";
+	pluginParam.resourcePath = "vs0:vsh/common/app_settings_plugin.rco";
+	pluginParam.scopeName = "__main__";
+
+	pluginParam.pluginCreateCB = AppSettings::PluginCreateCB;
+	pluginParam.pluginInitCB = AppSettings::PluginInitCB;
+	pluginParam.pluginStartCB = AppSettings::PluginStartCB;
+	pluginParam.pluginStopCB = AppSettings::PluginStopCB;
+	pluginParam.pluginExitCB = AppSettings::PluginExitCB;
+	pluginParam.pluginPath = "vs0:vsh/common/app_settings.suprx";
+	pluginParam.unk_58 = 0x96;
+
+	Framework::s_frameworkInstance->LoadPlugin(&pluginParam);
+
+	LocalFile::Open(&sparam.xmlFile, "app0:empva_settings.xml", SCE_O_RDONLY, 0, &ret);
+
+	sparam.allocCB = sce_paf_malloc;
+	sparam.freeCB = sce_paf_free;
+	sparam.reallocCB = sce_paf_realloc;
+	sparam.safeMemoryOffset = 0;
+	sparam.safeMemorySize = k_safeMemIniLimit;
+
+	ret = sce::AppSettings::GetInstance(&sparam, &appSet);
+
+	ret = -1;
+	appSet->GetInt("settings_version", &ret, 0);
+	if (ret != k_settingsVersion) {
+		ret = appSet->Initialize();
+
+		appSet->SetInt("device", k_defDevice);
+		appSet->SetInt("sort", k_defSort);
+		appSet->SetInt("eq_mode", k_defEqMode);
+		appSet->SetInt("alc_mode", k_defAlcMode);
+		appSet->SetInt("eq_volume", k_defEqVolume);
+		appSet->SetInt("power_saving", k_defPowerSaving);
+		appSet->SetInt("power_timer", k_defPowerTimer);
+		appSet->SetInt("stick_skip", k_defStickSkip);
+		appSet->SetInt("motion_mode", k_defMotionMode);
+		appSet->SetInt("motion_timer", k_defMotionTimer);
+		appSet->SetInt("motion_degree", k_defMotionDeg);
+		appSet->SetInt("last_pagemode", k_defLastPagemode);
+		appSet->SetInt("fps_limit", k_defFpsLimit);
+
+		ret = appSet->SetInt("settings_version", k_settingsVersion);
+
+		settingsReset = SCE_TRUE;
 	}
 
-	switch (s_callerButtonHash) {
-	case menu::settings::SettingsOptionButtonCB::ButtonHash_Device:
+	appSet->GetInt("eq_mode", &eq_mode, k_defEqMode);
+	appSet->GetInt("eq_volume", &eq_volume, k_defEqVolume);
+	appSet->GetInt("power_saving", &power_saving, k_defPowerSaving);
+	appSet->GetInt("power_timer", &power_timer, k_defPowerTimer);
+	appSet->GetInt("stick_skip", &stick_skip, k_defStickSkip);
+	appSet->GetInt("motion_mode", &motion_mode, k_defMotionMode);
+	appSet->GetInt("motion_timer", &motion_timer, k_defMotionTimer);
+	appSet->GetInt("motion_degree", &motion_degree, k_defMotionDeg);
+	appSet->GetInt("alc_mode", &alc_mode, k_defAlcMode);
+	appSet->GetInt("sort", &sort, k_defSort);
+	appSet->GetInt("device", &device, k_defDevice);
+	appSet->GetInt("last_pagemode", &last_pagemode, k_defLastPagemode);
+	appSet->GetInt("fps_limit", &fps_limit, k_defFpsLimit);
 
-		text8 = String::WCharToNewString(EMPVAUtils::GetStringWithNum("msg_option_device_", self->hash - 1), text8);
-
-		if (io::Misc::Exists(text8->data)) {
-			if (config->device != self->hash - 1) {
-				s_needPageReload = SCE_TRUE;
-				s_needCwdReload = SCE_TRUE;
-			}
-			config->device = self->hash - 1;
-		}
-
-		text8->Clear();
-		delete text8;
-
-		break;
-	case menu::settings::SettingsOptionButtonCB::ButtonHash_Sort:
-
-		if (config->sort != self->hash - 1)
-			s_needPageReload = SCE_TRUE;
-		config->sort = self->hash - 1;
-
-		break;
-	case menu::settings::SettingsOptionButtonCB::ButtonHash_Audio_Eq:
-
-		config->eq_mode = self->hash - 1;
-
-		if (g_isPlayerActive) {
-			if (EMPVAUtils::IsDecoderUsed())
-				sceAudioOutSetEffectType(config->eq_mode);
-			else
-				sceMusicPlayerServiceSetEQ(config->eq_mode);
-		}
-
-		needBgButtonReset = SCE_FALSE;
-
-		break;
-	default:
-		break;
-	}
-
-	g_config->Save();
-
-	g_commonOptionDialog->PlayAnimationReverse(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
-	common::Utils::WidgetStateTransition(0.0f, settingsOptionBox, widget::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE); // TODO find nice looking delay
-
-	if (needBgButtonReset) {
-		searchParam.hash = EMPVAUtils::GetHash("settings_scroll_view");
-		widget::Widget *settingsScrollView = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsScrollView->SetAlpha(1.0f);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_close_button");
-		widget::Widget *settingsCloseButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsCloseButton->SetAlpha(1.0f);
-	}
-	else {
-		searchParam.hash = EMPVAUtils::GetHash("plane_settings_audio_bg");
-		widget::Widget *settingsAudioPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_audio_scroll_view");
-		widget::Widget *settingsScrollView = settingsAudioPlane->GetChildByHash(&searchParam, 0);
-		settingsScrollView->SetAlpha(1.0f);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-		widget::Widget *settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsBackButton->SetAlpha(1.0f);
-	}
-
-	menu::settings::SettingsButtonCB::RefreshButtonText();
+	s_settingsInstance = this;
 }
 
-SceVoid menu::settings::SettingsOptionButtonCB::SettingsOptionButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+menu::settings::Settings::~Settings()
 {
-	SceBool needOptionDialog = SCE_FALSE;
-	WString text16;
-	Resource::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
-	config::Config::EMPVAConfig *config = g_config->GetConfigLocation();
-	widget::ImageButton *currButton;
-	menu::settings::SettingsOptionSelectionButtonCB *selectionBtCb;
-	widget::Widget *settingsOptionBox;
-	widget::Widget *settingsAudioPlane;
-	widget::Widget *settingsPowerPlane;
-	widget::Widget *settingsControlPlane;
-	widget::Widget *settingsBackButton;
-	widget::Widget *settingsScrollView;
+	SCE_DBG_LOG_ERROR("[EMPVA_SETTINGS] invalid function call\n");
+	sceKernelExitProcess(0);
+}
 
-	switch (self->hash) {
-	case ButtonHash_Device:
-	case ButtonHash_Sort:
-	case ButtonHash_Audio_Eq:
-		needOptionDialog = SCE_TRUE;
+SceVoid menu::settings::Settings::Open(SceUInt32 mode)
+{
+	s_callerMode = mode;
+
+	AppSettings::InterfaceCallbacks ifCb;
+
+	ifCb.listChangeCb = CBListChange;
+	ifCb.listForwardChangeCb = CBListForwardChange;
+	ifCb.listBackChangeCb = CBListBackChange;
+	ifCb.isVisibleCb = CBIsVisible;
+	ifCb.elemInitCb = CBElemInit;
+	ifCb.elemAddCb = CBElemAdd;
+	ifCb.valueChangeCb = CBValueChange;
+	ifCb.valueChangeCb2 = CBValueChange2;
+	ifCb.termCb = CBTerm;
+	ifCb.getStringCb = CBGetString;
+	ifCb.getTexCb = CBGetTex;
+
+	Plugin *appSetPlug = paf::Plugin::Find("app_settings_plugin");
+	AppSettings::Interface *appSetIf = (sce::AppSettings::Interface *)appSetPlug->GetInterface(1);
+	appSetIf->Show(&ifCb);
+}
+
+SceVoid menu::settings::Settings::CBListChange(const char *elementId)
+{
+
+}
+
+SceVoid menu::settings::Settings::CBListForwardChange(const char *elementId)
+{
+
+}
+
+SceVoid menu::settings::Settings::CBListBackChange(const char *elementId)
+{
+
+}
+
+SceInt32 menu::settings::Settings::CBIsVisible(const char *elementId, SceBool *pIsVisible)
+{
+	*pIsVisible = SCE_TRUE;
+
+	switch (s_callerMode) {
+	case menu::settings::SettingsButtonCB::Parent_Player:
+		if (!sce_paf_strcmp(elementId, "list_device") || !sce_paf_strcmp(elementId, "list_sort")) {
+			*pIsVisible = SCE_FALSE;
+		}
 		break;
 	default:
 		break;
 	}
 
-	searchParam.hash = EMPVAUtils::GetHash("settings_scroll_view");
-	settingsScrollView = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsScrollView->SetAlpha(0.39f);
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_close_button");
-	widget::Widget *settingsCloseButton = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsCloseButton->SetAlpha(0.39f);
-	
-	if (needOptionDialog) {
-		g_commonOptionDialog->PlayAnimation(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
-
-		searchParam.hash = EMPVAUtils::GetHash("dialog_settings_option");
-		widget::Widget *settingsOptionDialog = g_settings_option->GetChildByHash(&searchParam, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_template_option_box");
-		g_empvaPlugin->AddWidgetFromTemplate(settingsOptionDialog, &searchParam, &tmpParam);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_option_box");
-		settingsOptionBox = settingsOptionDialog->GetChildByHash(&searchParam, 0);
-
-		selectionBtCb = new menu::settings::SettingsOptionSelectionButtonCB();
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_template_option_button");
+	if (EMPVAUtils::GetPagemode() != menu::settings::Settings::PageMode_YouTube) {
+		if (!sce_paf_strcmp(elementId, "setting_list_youtube")) {
+			*pIsVisible = SCE_FALSE;
+		}
 	}
 
-	switch (self->hash) {
-	case ButtonHash_Device:
-		
-		for (int i = 0; i < k_deviceItemNum; i++) {
-			g_empvaPlugin->AddWidgetFromTemplate(settingsOptionBox, &searchParam, &tmpParam);
-
-			currButton = (widget::ImageButton *)settingsOptionBox->GetChildByNum(settingsOptionBox->childNum - 1);
-			currButton->hash = i + 1;
-			currButton->RegisterEventCallback(0x10000008, selectionBtCb, 0);
-
-			text16.Set(EMPVAUtils::GetStringWithNum("msg_option_device_", i));
-			currButton->SetLabel(&text16);
-			text16.Clear();
-
-			if (i == config->device)
-				currButton->SetTextureBase(g_texCheckMark);
+	if (s_callerMode != menu::settings::SettingsButtonCB::Parent_Player || EMPVAUtils::GetPagemode() != menu::settings::Settings::PageMode_YouTube) {
+		if (!sce_paf_strcmp(elementId, "button_youtube_download")) {
+			*pIsVisible = SCE_FALSE;
 		}
+	}
 
-		break;
-	case ButtonHash_Sort:
-
-		for (int i = 0; i < k_sortItemNum; i++) {
-			g_empvaPlugin->AddWidgetFromTemplate(settingsOptionBox, &searchParam, &tmpParam);
-
-			currButton = (widget::ImageButton *)settingsOptionBox->GetChildByNum(settingsOptionBox->childNum - 1);
-			currButton->hash = i + 1;
-			currButton->RegisterEventCallback(0x10000008, selectionBtCb, 0);
-
-			text16.Set(EMPVAUtils::GetStringWithNum("msg_option_sort_", i));
-			currButton->SetLabel(&text16);
-			text16.Clear();
-
-			if (i == config->sort)
-				currButton->SetTextureBase(g_texCheckMark);
+	// Check if PSTV to disable unsupported settings lists
+#ifdef NDEBUG
+	if (Misc::IsDolce()) {
+		if (!sce_paf_strcmp(elementId, "setting_list_power") || !sce_paf_strcmp(elementId, "setting_list_controls")) {
+			*pIsVisible = SCE_FALSE;
 		}
+	}
+#endif
 
-		break;
-	case ButtonHash_Audio:
-		
-		searchParam.hash = EMPVAUtils::GetHash("plane_settings_audio_bg");
-		settingsAudioPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsAudioPlane->PlayAnimation(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
+	return SCE_OK;
+}
 
-		searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-		settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsBackButton->PlayAnimation(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
+SceInt32 menu::settings::Settings::CBElemInit(const char *elementId)
+{
+	return SCE_OK;
+}
 
-		s_prevPlane = s_currPlane;
-		s_currPlane = settingsAudioPlane;
+SceInt32 menu::settings::Settings::CBElemAdd(const char *elementId, paf::ui::Widget *widget)
+{
+	return SCE_OK;
+}
 
-		break;
-	case ButtonHash_Power:
+SceInt32 menu::settings::Settings::CBValueChange(const char *elementId, const char *newValue)
+{
+	char *end;
+	SceInt32 ret = SCE_OK;
+	SceUInt32 elemHash = EMPVAUtils::GetHash(elementId);
+	SceInt32 value = sce_paf_strtol(newValue, &end, 10);
+	String *text8 = SCE_NULL;
+	WString label16;
+	String label8;
+	char entry[SCE_INI_FILE_PROCESSOR_KEY_BUFFER_SIZE];
+	YTUtils::Log *log;
+	Resource::Element searchParam;
 
-		searchParam.hash = EMPVAUtils::GetHash("plane_settings_power_bg");
-		settingsPowerPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsPowerPlane->PlayAnimation(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-		settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsBackButton->PlayAnimation(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-		s_prevPlane = s_currPlane;
-		s_currPlane = settingsPowerPlane;
-
-		break;
-	case ButtonHash_Control:
-
-		searchParam.hash = EMPVAUtils::GetHash("plane_settings_control_bg");
-		settingsControlPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsControlPlane->PlayAnimation(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-		settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsBackButton->PlayAnimation(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-		s_prevPlane = s_currPlane;
-		s_currPlane = settingsControlPlane;
-
-		break;
-
-	case ButtonHash_Audio_Eq:
-
-		for (int i = 0; i < k_audioEqItemNum; i++) {
-			g_empvaPlugin->AddWidgetFromTemplate(settingsOptionBox, &searchParam, &tmpParam);
-
-			currButton = (widget::ImageButton *)settingsOptionBox->GetChildByNum(settingsOptionBox->childNum - 1);
-			currButton->hash = i + 1;
-			currButton->RegisterEventCallback(0x10000008, selectionBtCb, 0);
-
-			text16.Set(EMPVAUtils::GetStringWithNum("msg_option_audio_eq_", i));
-			currButton->SetLabel(&text16);
-			text16.Clear();
-
-			if (i == config->eq_mode)
-				currButton->SetTextureBase(g_texCheckMark);
+	switch (elemHash) {
+	case Hash_Device:
+		text8 = String::WCharToNewString(EMPVAUtils::GetStringWithNum("msg_option_device_", value), text8);
+		if (io::Misc::Exists(text8->data)) {
+			s_needPageReload = SCE_TRUE;
+			s_needCwdReload = SCE_TRUE;
+			GetInstance()->device = value;
 		}
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-		settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsBackButton->SetAlpha(0.39f);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_audio_scroll_view");
-		settingsScrollView = s_currPlane->GetChildByHash(&searchParam, 0);
-		settingsScrollView->SetAlpha(0.39f);
-
+		else
+			ret = SCE_ERROR_ERRNO_ENOENT;
 		break;
-	case ButtonHash_Audio_Alc:
-
-		config->alc_mode = s_settingsCheckboxAudioAlc->checked;
-		g_config->Save();
-
+	case Hash_Sort:
+		s_needPageReload = SCE_TRUE;
+		GetInstance()->sort = value;
+		break;
+	case Hash_AudioEq:
+		GetInstance()->eq_mode = value;
 		if (g_isPlayerActive) {
 			if (EMPVAUtils::IsDecoderUsed())
-				sceAudioOutSetAlcMode(config->alc_mode);
+				sceAudioOutSetEffectType(value);
 			else
-				sceMusicPlayerServiceSetALC(config->alc_mode);
+				sceMusicPlayerServiceSetEQ(value);
 		}
-
 		break;
-	case ButtonHash_Audio_Limit:
-
-		config->eq_volume = s_settingsCheckboxAudioLimit->checked;
-		g_config->Save();
-
+	case Hash_AudioLimitVolume:
+		GetInstance()->eq_volume = value;
 		break;
-	case ButtonHash_Power_Save:
-
-		config->power_saving = s_settingsCheckboxPowerSave->checked;
-		g_config->Save();
-
-		if (config->power_saving)
-			s_settingsImePowerTime->SetAlpha(1.0f);
-		else
-			s_settingsImePowerTime->SetAlpha(0.39f);
-
-		break;
-	case ButtonHash_Control_Stick:
-
-		config->stick_skip = s_settingsCheckboxControlStick->checked;
-		g_config->Save();
-
-		break;
-	case ButtonHash_Control_Motion:
-
-		config->motion_mode = s_settingsCheckboxControlMotion->checked;
-		g_config->Save();
-
-		if (config->motion_mode) {
-			s_settingsImeControlTime->SetAlpha(1.0f);
-			s_settingsImeControlAngle->SetAlpha(1.0f);
+	case Hash_AudioAlc:
+		if (g_isPlayerActive) {
+			if (EMPVAUtils::IsDecoderUsed())
+				sceAudioOutSetAlcMode(value);
+			else
+				sceMusicPlayerServiceSetALC(value);
 		}
-		else {
-			s_settingsImeControlTime->SetAlpha(0.39f);
-			s_settingsImeControlAngle->SetAlpha(0.39f);
-		}
-
+		GetInstance()->alc_mode = value;
+		break;
+	case Hash_PowerFps:
+		GetInstance()->fps_limit = value;
+		break;
+	case Hash_PowerSuspend:
+		GetInstance()->power_saving = value;
+		break;
+	case Hash_PowerTimer:
+		GetInstance()->power_timer = value;
+		break;
+	case Hash_ControlsSkip:
+		GetInstance()->stick_skip = value;
+		break;
+	case Hash_ControlsMotion:
 		if (g_isPlayerActive)
 			motion::Motion::SetState(SCE_TRUE);
-
+		GetInstance()->motion_mode = value;
 		break;
-	case ButtonHash_Power_Time:
-
-		s_settingsImePowerTime->GetLabel(&text16);
-		if (text16.data[0] == 0) {
-			text16.Clear();
-			text16.Set((SceWChar16 *)L"1");
-			s_settingsImePowerTime->SetLabel(&text16);
-		}
-		if (text16.length > 1) {
-			char *tmpRef = (char *)text16.data;
-			tmpRef[1] = tmpRef[2];
-			tmpRef[2] = 0;
-		}
-		config->power_timer = sce_paf_atoi((char *)text16.data);
-		text16.Clear();
-		g_config->Save();
-
-		break;
-	case ButtonHash_Control_Time:
-
-		s_settingsImeControlTime->GetLabel(&text16);
-		if (text16.data[0] == 0) {
-			text16.Clear();
-			text16.Set((SceWChar16 *)L"1");
-			s_settingsImeControlTime->SetLabel(&text16);
-		}
-		if (text16.length > 1) {
-			char *tmpRef = (char *)text16.data;
-			tmpRef[1] = tmpRef[2];
-			tmpRef[2] = 0;
-		}
-		config->motion_timer = sce_paf_atoi((char *)text16.data);
-		text16.Clear();
-		g_config->Save();
-
+	case Hash_ControlsTimeout:
 		if (g_isPlayerActive)
-			motion::Motion::SetReleaseTimer(config->motion_timer);
-
+			motion::Motion::SetReleaseTimer(value);
+		GetInstance()->motion_timer = value;
 		break;
-	case ButtonHash_Control_Angle:
-
-		s_settingsImeControlAngle->GetLabel(&text16);
-		if (text16.data[0] == 0) {
-			text16.Clear();
-			text16.Set((SceWChar16 *)L"1");
-			s_settingsImeControlAngle->SetLabel(&text16);
-		}
-		if (text16.length > 1) {
-			char *tmpRef = (char *)text16.data;
-			tmpRef[1] = tmpRef[2];
-			tmpRef[2] = 0;
-		}
-		config->motion_degree = sce_paf_atoi((char *)text16.data);
-		text16.Clear();
-		g_config->Save();
-
+	case Hash_ControlsAngle:
 		if (g_isPlayerActive)
-			motion::Motion::SetAngleThreshold(config->motion_degree);
+			motion::Motion::SetAngleThreshold(value);
+		GetInstance()->motion_degree = value;
+		break;
+	case Hash_YoutubeCleanHistory:
+		YTUtils::HistLog::Clean();
+		break;
+	case Hash_YoutubeCleanFav:
+		YTUtils::FavLog::Clean();
+		break;
+	case Hash_YoutubeDownload:
+		if (g_currentPlayerInstance->GetCore()) {
+			if (g_currentPlayerInstance->GetCore()->GetDecoder()) {
+				if (g_currentPlayerInstance->GetCore()->GetDecoder()->IsValid()) {
+					searchParam.hash = EMPVAUtils::GetHash("text_player_title");
+					ui::Widget *textTitle = g_player_page->GetChildByHash(&searchParam, 0);
+					textTitle->GetLabel(&label16);
+					label16.ToString(&label8);
+					label8.Append(".webmyt", 8);
 
+					ret = YTUtils::GetDownloader()->Enqueue(g_currentPlayerInstance->GetCore()->GetDecoder()->dataPath.data, label8.data);
+
+					break;
+				}
+			}
+		}
+
+		ret = SCE_ERROR_ERRNO_ENXIO;
+
+		break;
+	default:
 		break;
 	}
 
-	s_callerButtonHash = self->hash;
+
+	if (text8) {
+		text8->Clear();
+		delete text8;
+	}
+
+	s_lastError = ret;
+	return ret;
 }
 
-SceVoid menu::settings::SettingsButtonCB::RefreshButtonText()
+SceInt32 menu::settings::Settings::CBValueChange2(const char *elementId, const char *newValue)
 {
-	SceWChar16 buf16[10];
-	WString text16;
-	Resource::Element searchParam;
-	widget::Widget *buttonValue;
-	config::Config::EMPVAConfig *config = g_config->GetConfigLocation();
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_device_button_text_value");
-	buttonValue = s_settingsButtonDevice->GetChildByHash(&searchParam, 0);
-	text16.Set(EMPVAUtils::GetStringWithNum("msg_option_device_", config->device));
-	buttonValue->SetLabel(&text16);
-	text16.Clear();
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_sort_button_text_value");
-	buttonValue = s_settingsButtonSort->GetChildByHash(&searchParam, 0);
-	text16.Set(EMPVAUtils::GetStringWithNum("msg_option_sort_", config->sort));
-	buttonValue->SetLabel(&text16);
-	text16.Clear();
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_audio_eq_button_text_value");
-	buttonValue = s_settingsButtonAudioEq->GetChildByHash(&searchParam, 0);
-	text16.Set(EMPVAUtils::GetStringWithNum("msg_option_audio_eq_", config->eq_mode));
-	buttonValue->SetLabel(&text16);
-	text16.Clear();
-
-	s_settingsCheckboxAudioAlc->SetChecked(0.0f, config->alc_mode, 0);
-
-	s_settingsCheckboxAudioLimit->SetChecked(0.0f, config->eq_volume, 0);
-
-	s_settingsCheckboxPowerSave->SetChecked(0.0f, config->power_saving, 0);
-
-	s_settingsCheckboxControlStick->SetChecked(0.0f, config->stick_skip, 0);
-
-	s_settingsCheckboxControlMotion->SetChecked(0.0f, config->motion_mode, 0);
-
-	sce_paf_swprintf((wchar_t *)buf16, 10, L"%u", config->power_timer);
-	text16.Set(buf16);
-	s_settingsImePowerTime->SetLabel(&text16);
-	text16.Clear();
-
-	sce_paf_swprintf((wchar_t *)buf16, 10, L"%u", config->motion_timer);
-	text16.Set(buf16);
-	s_settingsImeControlTime->SetLabel(&text16);
-	text16.Clear();
-
-	sce_paf_swprintf((wchar_t *)buf16, 10, L"%u", config->motion_degree);
-	text16.Set(buf16);
-	s_settingsImeControlAngle->SetLabel(&text16);
-	text16.Clear();
+	return SCE_OK;
 }
 
-SceVoid menu::settings::SettingsBackButtonCB::SettingsBackButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+SceVoid menu::settings::Settings::CBTerm()
 {
 	Resource::Element searchParam;
-
-	s_currPlane->PlayAnimationReverse(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
-	s_prevPlane->PlayAnimation(0.0f, widget::Widget::Animation_3D_SlideFromFront, SCE_NULL);
-	s_currPlane = s_prevPlane;
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-	widget::Widget *settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsBackButton->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_scroll_view");
-	widget::Widget *settingsScrollView = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsScrollView->SetAlpha(1.0f);
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_close_button");
-	widget::Widget *settingsCloseButton = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsCloseButton->SetAlpha(1.0f);
-}
-
-SceVoid menu::settings::SettingsButtonCB::SettingsButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
-{
-	SceFVector4 pos;
-	Resource::Element searchParam;
-	Plugin::SceneInitParam rwiParam;
-	widget::Button *settingsButton;
-	widget::Button *backButton;
-	widget::Widget *rootPlane;
-	widget::Widget *settingsScrollView;
-	config::Config::EMPVAConfig *config = g_config->GetConfigLocation();
-
-	s_callerMode = *(SceUInt32 *)pUserData;
-
-	switch (s_callerMode) {
-	case Parent_Displayfiles:
-
-		// Hide (disable) back/settings displayfiles buttons
-		searchParam.hash = EMPVAUtils::GetHash("displayfiles_settings_button");
-		settingsButton = (widget::Button *)g_root_page->GetChildByHash(&searchParam, 0);
-		settingsButton->PlayAnimationReverse(1000.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-
-		searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-		backButton = (widget::Button *)g_root_page->GetChildByHash(&searchParam, 0);
-		if (backButton->animationStatus != 0x10) { // Check if back button is actually on screen
-			backButton->PlayAnimationReverse(1000.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-			s_needBackButtonShow = SCE_TRUE;
-		}
-
-		searchParam.hash = EMPVAUtils::GetHash("plane_common_bg");
-		rootPlane = g_root_page->GetChildByHash(&searchParam, 0);
-		rootPlane->PlayAnimationReverse(1000.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-
-		break;
-	case Parent_Player:
-		
-		// Hide (disable) player plane
-		searchParam.hash = EMPVAUtils::GetHash("plane_player_bg");
-		rootPlane = g_player_page->GetChildByHash(&searchParam, 0);
-		rootPlane->PlayAnimationReverse(1000.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-
-		break;
-	}
-
-	// Get hashes for animations and play them
-	searchParam.hash = EMPVAUtils::GetHash("page_settings");
-	g_settings_page = g_empvaPlugin->CreateScene(&searchParam, &rwiParam);
-
-	searchParam.hash = EMPVAUtils::GetHash("plane_settings_audio_bg");
-	widget::Widget *settingsAudioPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsAudioPlane->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-	searchParam.hash = EMPVAUtils::GetHash("plane_settings_power_bg");
-	widget::Widget *settingsPowerPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsPowerPlane->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-	searchParam.hash = EMPVAUtils::GetHash("plane_settings_control_bg");
-	widget::Widget *settingsControlPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsControlPlane->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-	searchParam.hash = EMPVAUtils::GetHash("settings_back_button");
-	widget::Widget *settingsBackButton = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsBackButton->PlayAnimationReverse(0.0f, widget::Widget::Animation_Reset, SCE_NULL);
-
-	searchParam.hash = EMPVAUtils::GetHash("plane_settings_bg");
-	widget::Widget *settingsPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsPlane->PlayAnimation(0.0f, widget::Widget::Animation_SlideFromBottom1, SCE_NULL);
-
-	// Register settings plane button callbacks (one time per app lifetime)
-	if (!s_isBtCbRegistered) {
-
-		auto settingsCloseButtonCB = new CloseButtonCB();
-		searchParam.hash = EMPVAUtils::GetHash("settings_close_button");
-		widget::Widget *settingsCloseButton = g_settings_page->GetChildByHash(&searchParam, 0);
-		settingsCloseButton->RegisterEventCallback(0x10000008, settingsCloseButtonCB, 0);
-
-		auto settingsBackButtonCB = new SettingsBackButtonCB();
-		settingsBackButton->RegisterEventCallback(0x10000008, settingsBackButtonCB, 0);
-
-		auto settingsOptionButtonCB = new SettingsOptionButtonCB();
-		searchParam.hash = EMPVAUtils::GetHash("settings_device_button");
-		s_settingsButtonDevice = settingsPlane->GetChildByHash(&searchParam, 0);
-		s_settingsButtonDevice->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_sort_button");
-		s_settingsButtonSort = settingsPlane->GetChildByHash(&searchParam, 0);
-		s_settingsButtonSort->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_audio_button");
-		s_settingsButtonAudio = settingsPlane->GetChildByHash(&searchParam, 0);
-		s_settingsButtonAudio->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_power_button");
-		s_settingsButtonPower = settingsPlane->GetChildByHash(&searchParam, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_control_button");
-		s_settingsButtonControl = settingsPlane->GetChildByHash(&searchParam, 0);
-		// Check if PSTV to disable unsupported settings buttons
-#ifdef NDEBUG
-		if (Misc::IsDolce()) {
-			common::Utils::WidgetStateTransition(0.0f, s_settingsButtonPower, widget::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-			common::Utils::WidgetStateTransition(0.0f, s_settingsButtonControl, widget::Widget::Animation_Reset, SCE_TRUE, SCE_TRUE);
-
-			pos.x = 0.0f;
-			pos.y = -14.0f;
-			pos.z = 0.0f;
-			pos.w = 0.0f;
-
-			searchParam.hash = EMPVAUtils::GetHash("settings_scroll_view");
-			settingsScrollView = g_settings_page->GetChildByHash(&searchParam, 0);
-			settingsScrollView->SetPosition(&pos);
-		}
-		else
-#endif
-		{
-			s_settingsButtonPower->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-			s_settingsButtonControl->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-		}
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_audio_eq_button");
-		s_settingsButtonAudioEq = settingsAudioPlane->GetChildByHash(&searchParam, 0);
-		s_settingsButtonAudioEq->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_audio_eq_checkbox");
-		s_settingsCheckboxAudioAlc = (widget::CheckBox *)settingsAudioPlane->GetChildByHash(&searchParam, 0);
-		s_settingsCheckboxAudioAlc->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_audio_limit_checkbox");
-		s_settingsCheckboxAudioLimit = (widget::CheckBox *)settingsAudioPlane->GetChildByHash(&searchParam, 0);
-		s_settingsCheckboxAudioLimit->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_power_save_checkbox");
-		s_settingsCheckboxPowerSave = (widget::CheckBox *)settingsPowerPlane->GetChildByHash(&searchParam, 0);
-		s_settingsCheckboxPowerSave->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_power_limit_ime");
-		s_settingsImePowerTime = settingsPowerPlane->GetChildByHash(&searchParam, 0);
-		s_settingsImePowerTime->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_control_stick_checkbox");
-		s_settingsCheckboxControlStick = (widget::CheckBox *)settingsControlPlane->GetChildByHash(&searchParam, 0);
-		s_settingsCheckboxControlStick->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_control_motion_checkbox");
-		s_settingsCheckboxControlMotion = (widget::CheckBox *)settingsControlPlane->GetChildByHash(&searchParam, 0);
-		s_settingsCheckboxControlMotion->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_control_time_ime");
-		s_settingsImeControlTime = settingsControlPlane->GetChildByHash(&searchParam, 0);
-		s_settingsImeControlTime->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		searchParam.hash = EMPVAUtils::GetHash("settings_control_angle_ime");
-		s_settingsImeControlAngle = settingsControlPlane->GetChildByHash(&searchParam, 0);
-		s_settingsImeControlAngle->RegisterEventCallback(0x10000008, settingsOptionButtonCB, 0);
-
-		s_isBtCbRegistered = SCE_TRUE;
-	}
-
-	if (config->motion_mode) {
-		s_settingsImeControlTime->SetAlpha(1.0f);
-		s_settingsImeControlAngle->SetAlpha(1.0f);
-	}
-	else {
-		s_settingsImeControlTime->SetAlpha(0.39f);
-		s_settingsImeControlAngle->SetAlpha(0.39f);
-	}
-
-	if (config->power_saving)
-		s_settingsImePowerTime->SetAlpha(1.0f);
-	else
-		s_settingsImePowerTime->SetAlpha(0.39f);
-
-	if (s_callerMode == Parent_Player) {
-		s_settingsButtonDevice->Disable(SCE_FALSE);
-		s_settingsButtonSort->Disable(SCE_FALSE);
-	}
-
-	RefreshButtonText();
-
-	s_currPlane = settingsPlane;
-}
-
-SceVoid menu::settings::CloseButtonCB::CloseButtonCBFun(SceInt32 eventId, paf::widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
-{
 	String *text8 = SCE_NULL;
-	Resource::Element searchParam;
-	widget::Widget *rootPlane;
-	widget::Button *settingsButton;
+	SceInt32 value = 0;
 
 	switch (s_callerMode) {
-	case menu::settings::SettingsButtonCB::Parent_Displayfiles:
-		// Show (enable) back/settings displayfiles buttons
-		searchParam.hash = EMPVAUtils::GetHash("displayfiles_settings_button");
-		settingsButton = (widget::Button *)g_root_page->GetChildByHash(&searchParam, 0);
-		settingsButton->PlayAnimation(0.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-
-		if (s_needBackButtonShow) {
-			searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-			widget::Button *backButton = (widget::Button *)g_root_page->GetChildByHash(&searchParam, 0);
-			backButton->PlayAnimation(0.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-			s_needBackButtonShow = SCE_FALSE;
-		}
-
-		// Get hashes for animations and play them in reverse
-		searchParam.hash = EMPVAUtils::GetHash("plane_common_bg");
-		rootPlane = g_root_page->GetChildByHash(&searchParam, 0);
-		rootPlane->PlayAnimation(-1000.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-
-		break;
 	case menu::settings::SettingsButtonCB::Parent_Player:
-
-		s_settingsButtonDevice->Enable(SCE_FALSE);
-		s_settingsButtonSort->Enable(SCE_FALSE);
-
-		// Get hashes for animations and play them in reverse
-		searchParam.hash = EMPVAUtils::GetHash("plane_player_bg");
-		rootPlane = g_player_page->GetChildByHash(&searchParam, 0);
-		rootPlane->PlayAnimation(-1000.0f, widget::Widget::Animation_Fadein1, SCE_NULL);
-
+		// Show (enable) player page
+		g_player_page->PlayAnimation(-1000.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		break;
+	case menu::settings::SettingsButtonCB::Parent_Displayfiles:
+		// Show (enable) displayfiles page
+		g_rootPage->PlayAnimation(-1000.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
 		break;
 	}
-
-	searchParam.hash = EMPVAUtils::GetHash("plane_settings_bg");
-	widget::Widget *settingsPlane = g_settings_page->GetChildByHash(&searchParam, 0);
-	settingsPlane->PlayAnimationReverse(0.0f, widget::Widget::Animation_SlideFromBottom1, SCE_NULL);
 
 	// Reset file browser pages if needed
 	if (s_needPageReload) {
@@ -724,7 +349,8 @@ SceVoid menu::settings::CloseButtonCB::CloseButtonCBFun(SceInt32 eventId, paf::w
 				delete tmpCurr;
 			}
 
-			text8 = String::WCharToNewString(EMPVAUtils::GetStringWithNum("msg_option_device_", g_config->GetConfigLocation()->device), text8);
+			GetAppSetInstance()->GetInt("device", &value, 0);
+			text8 = String::WCharToNewString(EMPVAUtils::GetStringWithNum("msg_option_device_", value), text8);
 
 			menu::displayfiles::Page *newPage = new menu::displayfiles::Page(text8->data);
 
@@ -750,4 +376,100 @@ SceVoid menu::settings::CloseButtonCB::CloseButtonCBFun(SceInt32 eventId, paf::w
 
 		s_needPageReload = SCE_FALSE;
 	}
+}
+
+SceWChar16 *menu::settings::Settings::CBGetString(const char *elementId)
+{
+	Resource::Element searchParam;
+	searchParam.hash = EMPVAUtils::GetHash(elementId);
+
+	return g_empvaPlugin->GetString(&searchParam);
+}
+
+SceInt32 menu::settings::Settings::CBGetTex(graphics::Texture *tex, const char *elementId)
+{
+	return SCE_OK;
+}
+
+menu::settings::Settings *menu::settings::Settings::GetInstance()
+{
+	return s_settingsInstance;
+}
+
+AppSettings *menu::settings::Settings::GetAppSetInstance()
+{
+	return s_settingsInstance->appSet;
+}
+
+SceVoid menu::settings::Settings::SetLastDirectory(const char *cwd)
+{
+	SceInt32 len = sce_paf_strlen(cwd);
+	sceAppUtilSaveSafeMemory((ScePVoid)&len, sizeof(SceInt32), k_safeMemIniLimit);
+	sceAppUtilSaveSafeMemory((ScePVoid)cwd, len, k_safeMemIniLimit + sizeof(SceInt32));
+}
+
+SceVoid menu::settings::Settings::GetLastDirectory(String *cwd)
+{
+	SceInt32 ret = 0;
+	const char *root_paths[] = {
+		"ux0:/",
+		"ur0:/",
+		"uma0:/",
+		"xmc0:/",
+		"imc0:/",
+		"grw0:/"
+	};
+
+	SceInt32 len;
+	sceAppUtilLoadSafeMemory((ScePVoid)&len, sizeof(SceInt32), k_safeMemIniLimit);
+
+	if (!len || settingsReset) {
+
+		ret = sce_paf_snprintf(rootPath, 8, "ux0:/");
+
+		sceAppUtilSaveSafeMemory((ScePVoid)&ret, sizeof(SceInt32), k_safeMemIniLimit);
+		sceAppUtilSaveSafeMemory((ScePVoid)cwd, ret, k_safeMemIniLimit + sizeof(SceInt32));
+
+		cwd->Clear();
+		cwd->Append(rootPath, ret);
+
+		settingsReset = SCE_FALSE;
+	}
+	else {
+
+		sce_paf_strncpy(rootPath, root_paths[device], 8);
+
+		char *buf = (char *)sce_paf_malloc(len + 1);
+
+		sceAppUtilLoadSafeMemory((ScePVoid)buf, len, k_safeMemIniLimit + sizeof(SceInt32));
+
+		buf[len] = '\0';
+
+		if (io::Misc::Exists(buf))
+			*cwd = buf;
+		else
+			*cwd = rootPath;
+
+		sce_paf_free(buf);
+	}
+}
+
+SceVoid menu::settings::SettingsButtonCB::SettingsButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
+{
+	Resource::Element searchParam;
+	Plugin::SceneInitParam rwiParam;
+	SceUInt32 callerMode = *(SceUInt32 *)pUserData;
+
+	switch (callerMode) {
+	case Parent_Player:
+		// Hide (disable) player page
+		g_player_page->PlayAnimationReverse(100.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		break;
+	case Parent_Displayfiles:
+		// Hide (disable) displayfiles page
+		g_rootPage->PlayAnimationReverse(100.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		break;
+	}
+
+	menu::settings::Settings::GetInstance()->Open(callerMode);
 }

@@ -5,25 +5,40 @@
 
 extern "C" {
 
-	static int s_fakeErrno = 0;
-
-	void* memcpy(void* dest, const void* src, size_t count)
+	void *memmove(void *str1, const void *str2, size_t n)
 	{
-		return sce_paf_memcpy(dest, src, count);
+		return sce_paf_memmove(str1, str2, n);
+	}
+
+	int memcmp(const void *str1, const void *str2, size_t n)
+	{
+		return sce_paf_memcmp(str1, str2, n);
+	}
+
+	size_t strlen(const char *str)
+	{
+		return sce_paf_strlen(str);
 	}
 
 	double ldexp(double x, int y)
 	{
 		return (float)ldexpf((float)x, y);
 	}
+}
 
-	double sqrt(double x)
+namespace std {
+	int _Xout_of_range(char const*)
 	{
-		return (float)sqrtf((float)x);
+		return 0;
 	}
 
-	int *_sceLibcErrnoLoc()
+	int _Xlength_error(char const*)
 	{
-		return &s_fakeErrno;
+		return 0;
+	}
+
+	int _Syserror_map(int)
+	{
+		return 0;
 	}
 }

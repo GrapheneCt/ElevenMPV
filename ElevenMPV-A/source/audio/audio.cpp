@@ -17,39 +17,22 @@ enum Audio_BgmMode
 
 static SceUInt32 s_bgmMode = BgmMode_Normal;
 
-SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
+SceVoid audio::PlayerCoverLoaderJob::Run()
 {
 	coverTex.texSurface = SCE_NULL;
 	Resource::Element searchParam;
-	widget::Widget *playerCover;
-	widget::BusyIndicator *playerBusyInd;
-	widget::Widget::Color col;
+	ui::Widget *playerCover;
+	ui::BusyIndicator *playerBusyInd;
+	ui::Widget::Color col;
 	SceFVector4 wsize;
-	Misc::OpenResult fres;
+	ObjectWithCleanup fres;
 	SceInt32 res;
-
-	searchParam.hash = EMPVAUtils::GetHash("busyindicator_player");
-	playerBusyInd = (widget::BusyIndicator *)g_player_page->GetChildByHash(&searchParam, 0);
-	playerBusyInd->Start();
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
 	playerCover = g_player_page->GetChildByHash(&searchParam, 0);
 
-	if (g_currentDispFilePage->coverWork != SCE_NULL) {
-
-		if (g_currentCoverLoader != SCE_NULL) {
-			g_currentCoverLoader->Join();
-		}
-		else {
-			menu::displayfiles::CoverLoaderThread *coverLoader = new menu::displayfiles::CoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY - 20, 0x1000, "EMPVA::CoverLoader");
-			coverLoader->workPage = g_currentDispFilePage;
-			coverLoader->workFile = g_currentDispFilePage->coverWork;
-			coverLoader->Start();
-			coverLoader->Join();
-			delete coverLoader;
-		}
-
-		if(g_currentCoverSurf != SCE_NULL) {
+	if (g_currentDispFilePage->coverState) {
+		if (g_currentCoverSurf != SCE_NULL) {
 			coverTex.texSurface = g_currentCoverSurf;
 			playerCover->SetTextureBase(&coverTex);
 
@@ -57,7 +40,7 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 			col.g = 0.247;
 			col.b = 0.286;
 			col.a = 1;
-			g_root->SetFilterColor(&col);
+			g_root->SetColor(&col);
 
 			wsize.x = 960.0;
 			wsize.y = 960.0;
@@ -68,39 +51,38 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 			g_root->SetTextureBase(&coverTex);
 		}
 
-		playerBusyInd->Stop();
-		sceKernelExitDeleteThread(0);
 		return;
 	}
 
-	if ((g_currentDispFilePage->coverWork == SCE_NULL) && (workptr == SCE_NULL)) {
+	searchParam.hash = EMPVAUtils::GetHash("busyindicator_player");
+	playerBusyInd = (ui::BusyIndicator *)g_player_page->GetChildByHash(&searchParam, 0);
+	playerBusyInd->Start();
+
+	if (g_currentCoverSurf != SCE_NULL)
+		menu::displayfiles::Page::ResetBgPlaneTex();
+
+	if (!g_currentDispFilePage->coverState && (workptr == SCE_NULL)) {
 		playerBusyInd->Stop();
-		sceKernelExitDeleteThread(0);
 		return;
 	}
 
-	Misc::OpenMem(&fres, workptr, size, &res);
+	MemFile::Open(&fres, workptr, size, &res);
 
 	if (res < 0) {
 		if (isExtMem)
 			sce_paf_free(workptr);
 		playerBusyInd->Stop();
-		sceKernelExitDeleteThread(0);
 		return;
 	}
-
-	if (g_currentCoverSurf != SCE_NULL)
-		menu::displayfiles::Page::ResetBgPlaneTex();
 
 	graphics::Texture::CreateFromFile(&coverTex, g_empvaPlugin->memoryPool, &fres);
 
 	if (coverTex.texSurface == SCE_NULL) {
-		delete fres.localFile;
-		sce_paf_free(fres.unk_04);
+		fres.cleanup->cb(fres.object);
+		delete fres.cleanup;
 		if (isExtMem)
 			sce_paf_free(workptr);
 		playerBusyInd->Stop();
-		sceKernelExitDeleteThread(0);
 		return;
 	}
 
@@ -109,14 +91,14 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 	if (isExtMem)
 		sce_paf_free(workptr);
 
-	delete fres.localFile;
-	sce_paf_free(fres.unk_04);
+	fres.cleanup->cb(fres.object);
+	delete fres.cleanup;
 
 	col.r = 0.207;
 	col.g = 0.247;
 	col.b = 0.286;
 	col.a = 1;
-	g_root->SetFilterColor(&col);
+	g_root->SetColor(&col);
 
 	wsize.x = 960.0;
 	wsize.y = 960.0;
@@ -129,19 +111,82 @@ SceVoid audio::PlayerCoverLoaderThread::EntryFunction()
 	playerCover->SetTextureBase(&coverTex);
 
 	playerBusyInd->Stop();
+}
 
-	sceKernelExitDeleteThread(0);
+SceVoid audio::YoutubePlayerCoverLoaderJob::Run()
+{
+	coverTex.texSurface = SCE_NULL;
+	Resource::Element searchParam;
+	ui::Widget *playerCover;
+	ui::BusyIndicator *playerBusyInd;
+	ui::Widget::Color col;
+	SceFVector4 wsize;
+	ObjectWithCleanup fres;
+	SceInt32 res;
+	SceUInt32 retryCount = 0;
+
+	searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
+	playerCover = g_player_page->GetChildByHash(&searchParam, 0);
+
+	searchParam.hash = EMPVAUtils::GetHash("busyindicator_player");
+	playerBusyInd = (ui::BusyIndicator *)g_player_page->GetChildByHash(&searchParam, 0);
+	playerBusyInd->Start();
+
+	if (g_currentCoverSurf != SCE_NULL)
+		menu::displayfiles::Page::ResetBgPlaneTex();
+
+	HttpFile::Open(&fres, url.data, &res, 0);
+
+	while (res < 0 && retryCount != 3) {
+		HttpFile::Open(&fres, url.data, &res, 0);
+		retryCount++;
+	}
+
+	if (res < 0) {
+		playerBusyInd->Stop();
+		return;
+	}
+
+	graphics::Texture::CreateFromFile(&coverTex, g_empvaPlugin->memoryPool, &fres);
+
+	fres.cleanup->cb(fres.object);
+	delete fres.cleanup;
+
+	if (coverTex.texSurface == SCE_NULL) {
+		playerBusyInd->Stop();
+		return;
+	}
+
+	g_currentCoverSurf = coverTex.texSurface;
+
+	playerCover->SetTextureBase(&coverTex);
+
+	playerBusyInd->Stop();
+}
+
+SceVoid audio::YoutubePlayerCoverLoaderJob::Finish()
+{
+
+}
+
+SceVoid audio::PlayerCoverLoaderJob::Finish()
+{
+
 }
 
 audio::GenericDecoder::GenericDecoder(const char *path, SceBool isSwDecoderUsed)
 {
+	isValid = SCE_FALSE;
 	isPlaying = SCE_TRUE;
 	isPaused = SCE_FALSE;
-	coverLoader = SCE_NULL;
 
 	metadata = new audio::GenericDecoder::Metadata();
 	metadata->hasCover = SCE_FALSE;
 	metadata->hasMeta = SCE_FALSE;
+
+	if (path) {
+		dataPath = path;
+	}
 
 	if (isSwDecoderUsed)
 		sceKernelSetEventFlag(g_eventFlagUid, FLAG_ELEVENMPVA_IS_DECODER_USED);
@@ -163,7 +208,7 @@ audio::GenericDecoder::GenericDecoder(const char *path, SceBool isSwDecoderUsed)
 audio::GenericDecoder::~GenericDecoder()
 {
 	Resource::Element searchParam;
-	widget::Widget *playerCover;
+	ui::Widget *playerCover;
 
 	audio::DecoderCore::SetDecoder(SCE_NULL, SCE_NULL); // Clear channel callback
 
@@ -173,18 +218,6 @@ audio::GenericDecoder::~GenericDecoder()
 	metadata->album.Clear();
 	metadata->artist.Clear();
 	delete metadata;
-
-	if (coverLoader != SCE_NULL) {
-		coverLoader->Join();
-
-		if (coverLoader->coverTex.texSurface != SCE_NULL) {
-			searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
-			playerCover = g_player_page->GetChildByHash(&searchParam, 0);
-			playerCover->SetTextureBase(g_coverBgTex);
-		}
-
-		delete coverLoader;
-	}
 }
 
 SceUInt64 audio::GenericDecoder::Seek(SceFloat32 percent)
@@ -220,6 +253,11 @@ SceUInt64 audio::GenericDecoder::GetLength()
 SceBool audio::GenericDecoder::IsPaused()
 {
 	return isPaused;
+}
+
+SceBool audio::GenericDecoder::IsValid()
+{
+	return isValid;
 }
 
 SceVoid audio::GenericDecoder::Pause()

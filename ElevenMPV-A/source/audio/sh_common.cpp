@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #include "audio.h"
-#include "config.h"
 #include "utils.h"
 #include "vitaaudiolib.h"
 #include "menu_audioplayer.h"
@@ -40,12 +39,13 @@ audio::ShellCommonDecoder::ShellCommonDecoder(const char *path, SceBool isSwDeco
 	while (pbStat.currentState == SCE_MUSIC_EVENTID_STOP && timeoutIter < 1000) {
 		timeoutIter++;
 		sceMusicPlayerServiceGetPlayStatusExtension(&pbStat);
-		thread::Thread::Sleep(10);
+		thread::Sleep(10);
 	}
 
 	SceMusicPlayerServiceTrackInfo data;
 	sceMusicPlayerServiceGetTrackInfo(&data);
 	totalTime = data.duration;
+	isValid = SCE_TRUE;
 }
 
 SceUInt32 audio::ShellCommonDecoder::GetSampleRate()
@@ -96,7 +96,7 @@ SceUInt64 audio::ShellCommonDecoder::Seek(SceFloat32 percent)
 	sceMusicPlayerServiceSetSeekTime(seekFrame);
 	sceMusicPlayerServiceSendEvent(SCE_MUSIC_EVENTID_SEEK, 0);
 
-	return -1;
+	return 0;
 }
 
 audio::ShellCommonDecoder::~ShellCommonDecoder()
@@ -108,6 +108,6 @@ audio::ShellCommonDecoder::~ShellCommonDecoder()
 	sceMusicPlayerServiceTerminate();
 
 	audio::DecoderCore::EndPre();
-	thread::Thread::Sleep(100);
+	thread::Sleep(100);
 	audio::DecoderCore::End();
 }

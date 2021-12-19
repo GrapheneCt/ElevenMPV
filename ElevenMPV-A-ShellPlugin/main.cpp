@@ -13,18 +13,18 @@
 
 using namespace paf;
 
-static widget::Widget *imposeRoot = SCE_NULL;
+static ui::Widget *imposeRoot = SCE_NULL;
 static ImposeThread *mainThread = SCE_NULL;
 static RxThread *rxThread = SCE_NULL;
 
 static SceUID ipcPipeRX = SCE_UID_INVALID_UID;
 static SceUID ipcPipeTX = SCE_UID_INVALID_UID;
 
-static widget::Widget *buttonREW = SCE_NULL;
-static widget::Widget *buttonPLAY = SCE_NULL;
-static widget::Widget *buttonFF = SCE_NULL;
-static widget::Widget *textTop = SCE_NULL;
-static widget::Widget *textBottom = SCE_NULL;
+static ui::Widget *buttonREW = SCE_NULL;
+static ui::Widget *buttonPLAY = SCE_NULL;
+static ui::Widget *buttonFF = SCE_NULL;
+static ui::Widget *textTop = SCE_NULL;
+static ui::Widget *textBottom = SCE_NULL;
 
 static tai_hook_ref_t hookRef[1];
 static SceUID hookId[1];
@@ -38,23 +38,26 @@ static SceBool imposeIpcActive = SCE_FALSE;
 
 int setup_stage1()
 {
+	Plugin *imposePlugin = SCE_NULL;
+	ScePVoid powerRoot = SCE_NULL;
+
 	//Get power manage plugin object
-	Plugin *imposePlugin = Plugin::Find("power_manage_plugin");
+	imposePlugin = Plugin::Find("power_manage_plugin");
 	if (imposePlugin == NULL) {
 		SCE_DBG_LOG_ERROR("Power manage plugin not found\n");
 		goto setup_error_return;	
 	}
 
 	//Power manage plugin -> power manage root
-	widget::Widget *powerRoot = imposePlugin->GetInterface(1);
+	powerRoot = imposePlugin->GetInterface(1);
 	if (powerRoot == NULL) {
 		SCE_DBG_LOG_ERROR("Power root not found\n");
 		goto setup_error_return;
 	}
 
 	//Power manage root -> impose root (some virtual function)
-	widget::Widget *(*getImposeRoot)();
-	getImposeRoot = (widget::Widget *(*)()) *(int *)((void *)powerRoot + 0x54);
+	ui::Widget *(*getImposeRoot)();
+	getImposeRoot = (ui::Widget *(*)()) *(int *)((void *)powerRoot + 0x54);
 	imposeRoot = getImposeRoot();
 	if (imposeRoot == NULL) {
 		SCE_DBG_LOG_ERROR("Impose root not found\n");
@@ -77,11 +80,11 @@ void setup_stage2()
 	ipcPipeRX = sceKernelCreateMsgPipe("ElevenMPVA::ShellIPC_RX", SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, IPC_PIPE_ATTR, sizeof(IpcDataRX), SCE_NULL);
 	ipcPipeTX = sceKernelCreateMsgPipe("ElevenMPVA::ShellIPC_TX", SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, IPC_PIPE_ATTR, sizeof(IpcDataTX), SCE_NULL);
 
-	mainThread = new ImposeThread(250, 0x1000, "ElevenMPVA::ShellControl");
+	mainThread = new ImposeThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellControl");
 	mainThread->done = SCE_FALSE;
 	mainThread->Start();
 
-	rxThread = new RxThread(249, 0x1000, "ElevenMPVA::ShellRx");
+	rxThread = new RxThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellRx");
 	rxThread->Start();
 }
 
@@ -107,6 +110,9 @@ void cleanup()
 
 	if (ipcPipeTX > 0)
 		sceKernelDeleteMsgPipe(ipcPipeTX);
+
+	if (hookId[0] > 0)
+		taiHookRelease(hookId[0], hookRef[0]);
 }
 
 int findWidgets()
@@ -118,7 +124,7 @@ int findWidgets()
 	buttonREW = SCE_NULL;
 	while (buttonREW == NULL) {
 		buttonREW = imposeRoot->GetChildByHash(&widgetSearchResult, 0);
-		thread::Thread::Sleep(100);
+		thread::Sleep(100);
 	}
 
 	widgetSearchResult.hash = PlayerButtonCB::ButtonHash_Ff;
@@ -163,6 +169,8 @@ int resetWidgets()
 	buttonFF = SCE_NULL;
 	textTop = SCE_NULL;
 	textBottom = SCE_NULL;
+
+	return 0;
 }
 
 void setButtonState()
@@ -183,19 +191,19 @@ void setButtonState()
 
 void setText()
 {
-	widget::Widget::Color col;
+	ui::Widget::Color col;
 	col.r = 1.0f;
 	col.g = 1.0f;
 	col.b = 1.0f;
 	col.a = 1.0f;
-	textTop->SetFilterColor(&col);
-	textBottom->SetFilterColor(&col);
+	textTop->SetColor(&col);
+	textBottom->SetColor(&col);
 
 	textTop->SetLabel(topText);
 	textBottom->SetLabel(bottomText);
 }
 
-SceVoid PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData)
+SceVoid PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	IpcDataTX ipcDataTX;
 	ipcDataTX.cmd = 0;
@@ -226,7 +234,7 @@ SceVoid RxThread::EntryFunction()
 	IpcDataRX ipcDataRX;
 	WString text16;
 	SceUInt32 artLen, albLen;
-	widget::Widget::Color col;
+	ui::Widget::Color col;
 	col.r = 1.0f;
 	col.g = 1.0f;
 	col.b = 1.0f;
@@ -255,32 +263,30 @@ SceVoid RxThread::EntryFunction()
 
 			if ((ipcDataRX.flags & EMPVA_IPC_REFRESH_TEXT) == EMPVA_IPC_REFRESH_TEXT) {
 
-				text16.Set(ipcDataRX.title);
+				text16 = (wchar_t *)ipcDataRX.title;
 
 				if (textTop != SCE_NULL && impose) {
 					textTop->SetLabel(&text16);
-					textTop->SetFilterColor(&col);
+					textTop->SetColor(&col);
 				}
 
 				topText->Clear();
-				topText->Set(text16.data, text16.length);
-				text16.Clear();
+				topText->Append(text16.data, text16.length);
 
-				text16.Set(ipcDataRX.artist);
+				text16 = (wchar_t *)ipcDataRX.artist;
 				artLen = sce_paf_wcslen((wchar_t *)ipcDataRX.artist);
 				albLen = sce_paf_wcslen((wchar_t *)ipcDataRX.album);
 				if (artLen != 0 && albLen != 0)
-					text16.Append((SceWChar16 *)L" / ", 4);
-				text16.Append(ipcDataRX.album, albLen);
+					text16.Append(L" / ", 4);
+				text16.Append((wchar_t *)ipcDataRX.album, albLen);
 
 				if (textBottom != SCE_NULL && impose) {
 					textBottom->SetLabel(&text16);
-					textBottom->SetFilterColor(&col);
+					textBottom->SetColor(&col);
 				}
 
 				bottomText->Clear();
-				bottomText->Set(text16.data, text16.length);
-				text16.Clear();
+				bottomText->Append(text16.data, text16.length);
 			}
 
 			break;
@@ -301,7 +307,7 @@ SceVoid ImposeThread::EntryFunction()
 		if (impose != appState.isSystemUiOverlaid && appState.isSystemUiOverlaid == SCE_TRUE) {
 			SCE_DBG_LOG_INFO("Impose detected\n");
 			if (imposeIpcActive) {
-				thread::Thread::Sleep(100);
+				thread::Sleep(100);
 				findWidgets();
 				setButtonState();
 				setText();
@@ -312,7 +318,7 @@ SceVoid ImposeThread::EntryFunction()
 			resetWidgets();
 		}
 		impose = appState.isSystemUiOverlaid;
-		thread::Thread::Sleep(100);
+		thread::Sleep(100);
 	}
 
 	sceKernelExitDeleteThread(0);
@@ -350,14 +356,14 @@ extern "C" {
 
 		setup_stage2();
 
-		hookId[0] = taiHookFunctionImport(&hookRef[0], "SceShell", 0xA6605D6F, 0x62BEBD65, sceAppMgrGetCurrentBgmState2_patched);
+		hookId[0] = taiHookFunctionImport(&hookRef[0], "SceShell", 0xA6605D6F, 0x62BEBD65, (const void *)sceAppMgrGetCurrentBgmState2_patched);
+
+		return ret;
 	}
 
 	int module_stop(SceSize args, const void * argp)
 	{
 		cleanup();
-		if (hookId[0] > 0)
-			taiHookRelease(hookId[0], hookRef[0]);
 		return SCE_KERNEL_STOP_SUCCESS;
 	}
 

@@ -16,15 +16,16 @@
 	  <corner_button style="_common_style_corner_bottom_right" id="displayfiles_settings_button" />
 	  
 	  <!-- top title bar -->
-	  <plane style="plane_bg_style" id="plane_top">
+	  <plane style="plane_titlebar_style" id="plane_top">
         <layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
         <text auto_scroll="1" style="text_big_style" id="text_top_title">
-          <layout_hint size="920, 0" anchor="1, 1" align="1, 1" adjust="0, 2" pos="20, 12" />
+          <layout_hint size="844, 0" anchor="1, 1" align="1, 1" adjust="0, 2" pos="20, 12" />
         </text>
-        <plane style="plane_separator_style" id="plane_separator_top">
-          <layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
-        </plane>
       </plane>
+	  
+	  <corner_button style="menu_style_corner_button_player" id="displayfiles_player_button">
+	    <layout_hint pos="390, 240, 0" />
+	  </corner_button>
 	  
 	</page>
 	
@@ -94,277 +95,11 @@
 		<corner_button style="_common_style_corner_bottom_left" id="player_back_button" />
 	    <corner_button style="_common_style_corner_bottom_right" id="player_settings_button" />
 		
-      </plane>
-	  
-	</page>
-	
-	<!-- settings page -->
-	<page id="page_settings">
-	
-	 <plane style="plane_bg_style" id="plane_settings_bg">
-	    <layout_hint size="960, 544" pos="0, 0" />
-		
-		<!-- body -->
-		<plane style="_common_style_plane_transparent" id="settings_scroll_view">
-          <layout_hint align="0, 1" anchor="0, 1" size="960, 420" pos="0, -174" />
-		  <box id="settings_scroll_box">
-            <layout_box align="0, 1" anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
-			<button sound="_common_sound_button_enter" style="settings_style_button" id="settings_device_button">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <focus_hint focus_shape="3" focus_size="960, 80" />
-              <text style="text_normal_style" id="settings_device_button_text_title" label="msg_settings_device">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text style="text_mini_style" id="settings_device_button_text_value">
-                  <layout_hint align="2, 4" pos="602, -4" adjust="0, 2" anchor="1, 5" size="110, 0" />
-                </text>
-              </text>
-            </button>
-			<button sound="_common_sound_button_enter" style="settings_style_button" id="settings_sort_button">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <focus_hint focus_shape="3" focus_size="960, 80" />
-              <text style="text_normal_style" id="settings_sort_button_text_title" label="msg_settings_sort">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text style="text_mini_style" id="settings_sort_button_text_value">
-                  <layout_hint align="2, 4" pos="602, -4" adjust="0, 2" anchor="1, 5" size="300, 0" />
-                </text>
-              </text>
-            </button>
-			<button sound="_common_sound_button_enter" style="settings_style_button" id="settings_audio_button">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <focus_hint focus_shape="3" focus_size="960, 80" />
-              <text style="text_normal_style" id="settings_audio_button_text_title" label="msg_settings_audio">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-              </text>
-			  <plane style="settings_style_button_arrow" id="settings_audio_button_arrow">
-                 <layout_hint size="46, 46" align="2, 0" adjust="0, 0" pos="330, 0" />
-              </plane>
-            </button>
-			<button sound="_common_sound_button_enter" style="settings_style_button" id="settings_power_button">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <focus_hint focus_shape="3" focus_size="960, 80" />
-              <text style="text_normal_style" id="settings_power_button_text_title" label="msg_settings_power">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-              </text>
-			  <plane style="settings_style_button_arrow" id="settings_power_button_arrow">
-                 <layout_hint size="46, 46" align="2, 0" adjust="0, 0" pos="330, 0" />
-              </plane>
-            </button>
-			<button sound="_common_sound_button_enter" style="settings_style_button" id="settings_control_button">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <focus_hint focus_shape="3" focus_size="960, 80" />
-              <text style="text_normal_style" id="settings_control_button_text_title" label="msg_settings_control">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text style="text_mini_style" id="settings_control_button_text_value">
-                  <layout_hint align="2, 4" pos="602, -4" adjust="0, 2" anchor="1, 5" size="110, 0" />
-                </text>
-              </text>
-			  <plane style="settings_style_button_arrow" id="settings_control_button_arrow">
-                 <layout_hint size="46, 46" align="2, 0" adjust="0, 0" pos="330, 0" />
-              </plane>
-            </button>
-          </box>
-        </plane>
-		
-		<!-- top title bar -->
-		<plane style="plane_bg_style" id="plane_settings_top">
-          <layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
-          <text style="_common_style_text_popup_list_view_title" id="text_top_settings_title" label="msg_settings">
-            <layout_hint size="920, 0" anchor="0, 1" align="0, 1" adjust="0, 2" pos="0, 12" />
-          </text>
-          <plane style="plane_separator_style" id="plane_settings_separator_top">
-            <layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
-          </plane>
-        </plane>
-        <plane_button style="_common_style_close_button" id="settings_close_button">
+		<plane_button style="_common_style_close_button" id="player_close_button">
           <layout_hint size="46, 46" anchor="1, 2" pos="39, -64" />
         </plane_button>
 		
       </plane>
-	  
-	  <plane style="plane_bg_style" id="plane_settings_audio_bg">
-	    <layout_hint size="960, 544" pos="0, 0" />
-		
-		<!-- body -->
-		<plane style="_common_style_plane_transparent" id="settings_audio_scroll_view">
-          <layout_hint align="0, 1" anchor="0, 1" size="960, 420" pos="0, -14" />
-		  <box id="settings_audio_scroll_box">
-            <layout_box align="0, 1" anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
-			<button sound="_common_sound_button_enter" style="settings_style_button" id="settings_audio_eq_button">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <focus_hint focus_shape="3" focus_size="960, 80" />
-              <text style="text_normal_style" id="settings_audio_eq_button_text_title" label="msg_settings_audio_eq">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text style="text_mini_style" id="settings_audio_eq_button_text_value">
-                  <layout_hint align="2, 4" pos="602, -4" adjust="0, 2" anchor="1, 5" size="110, 0" />
-                </text>
-              </text>
-            </button>
-			<plane style="_common_style_plane_transparent" id="settings_audio_alc_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_audio_alc_text_title" label="msg_settings_audio_alc">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <check_box style="_common_default_style_check_box" id="settings_audio_eq_checkbox">
-                  <layout_hint align="2, 0" size="46, 46" pos="602, 0" anchor="1, 5" />
-                  <focus_hint focus_shape="0" focus_size="47, 47" />
-                </check_box>
-              </text>
-            </plane>
-			<plane style="_common_style_plane_transparent" id="settings_audio_limit_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_audio_limit_text_title" label="msg_settings_audio_limit">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <check_box style="_common_default_style_check_box" id="settings_audio_limit_checkbox">
-                  <layout_hint align="2, 0" size="46, 46" pos="602, 0" anchor="1, 5" />
-                  <focus_hint focus_shape="0" focus_size="47, 47" />
-                </check_box>
-              </text>
-            </plane>
-          </box>
-        </plane>
-		
-		<!-- top title bar -->
-		<plane style="plane_bg_style" id="plane_settings_audio_top">
-          <layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
-          <text style="_common_style_text_popup_list_view_title" id="text_top_settings_audio_title" label="msg_settings_audio">
-            <layout_hint size="920, 0" anchor="0, 1" align="0, 1" adjust="0, 2" pos="0, 12" />
-          </text>
-          <plane style="plane_separator_style" id="plane_settings_audio_separator_top">
-            <layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
-          </plane>
-        </plane>
-		
-      </plane>
-	  
-	  <plane style="plane_bg_style" id="plane_settings_power_bg">
-	    <layout_hint size="960, 544" pos="0, 0" />
-		
-		<!-- body -->
-		<plane style="_common_style_plane_transparent" id="settings_power_scroll_view">
-          <layout_hint align="0, 1" anchor="0, 1" size="960, 420" pos="0, 54" />
-		  <box id="settings_power_scroll_box">
-            <layout_box align="0, 1" anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
-			<plane style="_common_style_plane_transparent" id="settings_power_save_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_power_save_text_title" label="msg_settings_power_save">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <check_box style="_common_default_style_check_box" id="settings_power_save_checkbox">
-                  <layout_hint align="2, 0" size="46, 46" pos="602, 0" anchor="1, 5" />
-                  <focus_hint focus_shape="0" focus_size="47, 47" />
-                </check_box>
-              </text>
-            </plane>
-			<plane style="_common_style_plane_transparent" id="settings_power_limit_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_power_limit_text_title" label="msg_settings_power_time">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text_box ime_type="3" edit_mode="1" paste_mode="1" edit_auto_transition_mode="1" max_length="2" style="text_box_ime_style" id="settings_power_limit_ime" >
-                  <layout_hint align="2, 4" pos="602, 10" adjust="0, 2" anchor="1, 5" size="74, 0" />
-                  <focus_hint focus_shape="0" />
-                </text_box>
-              </text>
-            </plane>
-          </box>
-        </plane>
-		
-		<!-- top title bar -->
-		<plane style="plane_bg_style" id="plane_settings_audio_top">
-          <layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
-          <text style="_common_style_text_popup_list_view_title" id="text_top_settings_audio_title" label="msg_settings_power">
-            <layout_hint size="920, 0" anchor="0, 1" align="0, 1" adjust="0, 2" pos="0, 12" />
-          </text>
-          <plane style="plane_separator_style" id="plane_settings_audio_separator_top">
-            <layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
-          </plane>
-        </plane>
-		
-      </plane>
-	  
-	  <plane style="plane_bg_style" id="plane_settings_control_bg">
-	    <layout_hint size="960, 544" pos="0, 0" />
-		
-		<!-- body -->
-		<plane style="_common_style_plane_transparent" id="settings_control_scroll_view">
-          <layout_hint align="0, 1" anchor="0, 1" size="960, 420" pos="0, -106" />
-		  <box id="settings_control_scroll_box">
-            <layout_box align="0, 1" anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
-			<plane style="_common_style_plane_transparent" id="settings_control_stick_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_control_stick_text_title" label="msg_settings_control_stick">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <check_box style="_common_default_style_check_box" id="settings_control_stick_checkbox">
-                  <layout_hint align="2, 0" size="46, 46" pos="602, 0" anchor="1, 5" />
-                  <focus_hint focus_shape="0" focus_size="47, 47" />
-                </check_box>
-              </text>
-            </plane>
-			<plane style="_common_style_plane_transparent" id="settings_control_motion_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_control_motion_text_title" label="msg_settings_control_motion">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <check_box style="_common_default_style_check_box" id="settings_control_motion_checkbox">
-                  <layout_hint align="2, 0" size="46, 46" pos="602, 0" anchor="1, 5" />
-                  <focus_hint focus_shape="0" focus_size="47, 47" />
-                </check_box>
-              </text>
-            </plane>
-			<plane style="_common_style_plane_transparent" id="settings_control_time_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_control_time_text_title" label="msg_settings_control_time">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text_box ime_type="3" edit_mode="1" edit_auto_transition_mode="1" max_length="2" style="text_box_ime_style" id="settings_control_time_ime" >
-                  <layout_hint align="2, 4" pos="602, 10" adjust="0, 2" anchor="1, 5" size="74, 0" />
-                  <focus_hint focus_shape="0" />
-                </text_box>
-              </text>
-            </plane>
-			<plane style="_common_style_plane_transparent" id="settings_control_angle_bg">
-              <layout_hint size="840, 80" adjust="0, 0" pos="0, 0" />
-              <text style="text_normal_style" id="settings_control_angle_text_title" label="msg_settings_control_angle">
-                <layout_hint size="462, 0" align="1, 4" adjust="0, 2" pos="-330, 0" />
-                <text_box ime_type="3" edit_mode="1" edit_auto_transition_mode="1" max_length="2" style="text_box_ime_style" id="settings_control_angle_ime" >
-                  <layout_hint align="2, 4" pos="602, 10" adjust="0, 2" anchor="1, 5" size="74, 0" />
-                  <focus_hint focus_shape="0" />
-                </text_box>
-              </text>
-            </plane>
-          </box>
-        </plane>
-		
-		<!-- top title bar -->
-		<plane style="plane_bg_style" id="plane_settings_audio_top">
-          <layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
-          <text style="_common_style_text_popup_list_view_title" id="text_top_settings_audio_title" label="msg_settings_power">
-            <layout_hint size="920, 0" anchor="0, 1" align="0, 1" adjust="0, 2" pos="0, 12" />
-          </text>
-          <plane style="plane_separator_style" id="plane_settings_audio_separator_top">
-            <layout_hint anchor="0, 1" align="0, 2" size="960, 2" pos="0, 0" />
-          </plane>
-        </plane>
-		
-      </plane>
-	  
-	  <corner_button style="_common_style_corner_bottom_left" id="settings_back_button" />
-	  
-	</page>
-	
-	<!-- settings option page -->
-	<page id="page_settings_option">
-	
-	  <plane style="_common_style_plane_transparent" id="plane_settings_dialog_bg">
-	    <layout_hint size="960, 544" pos="0, 0" />
-		
-		<!-- size="760, 440" -->
-		<dialog style="_common_default_style_dialog" exclusive_list="base_frame,base_fill" id="dialog_settings_option">
-          <layout_dialog children_adjust_y="3" children_adjust_x="3" layout_type="0" anchor="2, 0" align="2, 0" adjust="0, 0" size="480, 600" pos="4, 0" />
-          <plane id="plane_dialog_scaling_frame" texture="_common_texture_dialog_frame">
-            <layout_hint adjust="1, 1" />
-          </plane>
-          <plane style="_common_style_plane_dialog" id="plane_dialog_scaling_fill" texture="_common_texture_dialog_fill_white">
-            <layout_hint adjust="1, 1" />
-          </plane>
-		</dialog>
-		
-	  </plane>
 	  
 	</page>
 	
@@ -373,121 +108,157 @@
   <styletable>
   
     <!-- generic base styles -->
-	<style_plane id="plane_separator_style" planeobj="planeobj_separator">
-      <planeobj texture0="_common_texture_ruled_line" id="planeobj_separator" />
+	<style_plane id="plane_titlebar_style" planeobj="plane_obj1">
+      <planeobj texture0="_common_texture_option_menu_button_middle" id="plane_obj1" />
+    </style_plane>
+	<style_plane color="0, 0, 0, 0.2" id="plane_dialog_bg_style" />
+	<style_plane color="0, 0.007, 0.282, 1" id="plane_bg_style" />
+	<style_plane id="plane_style_horizontal_separator" planeobj="plane_obj1">
+      <planeobj texture0="_common_texture_ruled_line" id="plane_obj1" />
+    </style_plane>
+	<style_plane id="plane_style_vertical_separator" planeobj="plane_obj1">
+      <planeobj texture0="tex_vertical_separator" id="plane_obj1" />
     </style_plane>
     <style_busyindicator color="1, 1, 1, 1" ball_size="24" id="base_style_busyindicator" />
-	<style_text textobj="text_normal_obj" id="text_normal_style">
-      <textobj font_size="28" bold="1" color="1, 1, 1, 1" max_line_count="2" enlarge_line_pitch="1" line_pitch="28" word_wrap="1" ellipsis="1" id="text_normal_obj" />
+	<style_text textobj="text_obj1" id="text_normal_style">
+      <textobj font_size="28" bold="1" color="1, 1, 1, 1" max_line_count="2" enlarge_line_pitch="1" line_pitch="28" word_wrap="1" ellipsis="1" id="text_obj1" />
     </style_text>
-	<style_text textobj="text_mini_obj" id="text_mini_style">
-      <textobj font_size="20" bold="1" color="1, 1, 1, 1" align_x="2" text_align="2" ellipsis="1" id="text_mini_obj" />
+	<style_text textobj="text_obj1" id="text_mini_style">
+      <textobj font_size="20" bold="1" color="1, 1, 1, 1" align_x="2" text_align="2" ellipsis="1" id="text_obj1" />
     </style_text>
-	<style_text textobj="text_big_obj" id="text_big_style">
-      <textobj font_size="32" bold="1" ellipsis="1" id="text_big_obj" />
+	<style_text textobj="text_obj1" id="text_big_style">
+      <textobj font_size="32" bold="1" ellipsis="1" id="text_obj1" />
     </style_text>
-	<style_text_box sound="_common_sound_text_box" bottom_margin="9" glowobj="text_ime_texglow_obj" planeobj="text_ime_texbg_obj" right_margin="16" top_margin="10" left_margin="16" textobj="text_ime_text_obj" id="text_box_ime_style">
-      <textobj color="1, 1, 1, 1" line_pitch="40" font_size="28" id="text_ime_text_obj" word_wrap="0" />
-	  <planeobj texture0="_common_texture_text_box" id="text_ime_texbg_obj" />
-      <planeobj texture0="_common_texture_checkbox_textbox_glow" blend="2" id="text_ime_texglow_obj" />
+	<style_text_box sound="_common_sound_text_box" bottom_margin="9" glowobj="plane_obj1" planeobj="plane_obj2" right_margin="16" top_margin="10" left_margin="16" textobj="text_obj1" id="text_box_ime_style">
+      <textobj color="1, 1, 1, 1" line_pitch="40" font_size="28" id="text_obj1" word_wrap="0" />
+	  <planeobj texture0="_common_texture_text_box" id="plane_obj2" />
+      <planeobj texture0="_common_texture_checkbox_textbox_glow" blend="2" id="plane_obj1" />
     </style_text_box>
   
     <!-- generic menu styles -->
-	<style_scroll_view color="0, 0, 0, 0" sound="_common_sound_scroll_view" id="menu_style_scroll_view" sbar_v_margin="6, 80, 9" />	
-	<style_image_button layout_type_x="1" glow_obj="menu_style_button_item_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="menu_style_button_item_label" bg_obj="menu_style_button_item_bg" image_obj="menu_style_button_item_image" image_margin="10" id="menu_style_button_item_unk">
-	  <planeobj texture0="_common_texture_list_70px" id="menu_style_button_item_bg" />
-      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="menu_style_button_item_label" />
-      <planeobj scale_mode_y="3" scale_mode_x="3" texture0="tex_icon_unk" size="80, 80" id="menu_style_button_item_image" pos="0, 0" />
-      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="menu_style_button_item_glow" />
+	<style_scroll_view color="0, 0, 0, 0" sound="_common_sound_scroll_view" id="menu_style_scroll_view" sbar_v_margin="6, 80, 9"/>	
+	<style_image_button layout_type_x="1" glow_obj="plane_obj1" color="1, 1, 1, 1" layout_type_y="0" label_obj="text_obj1" bg_obj="plane_obj2" image_obj="plane_obj3" image_margin="10" id="menu_style_button_item_unk">
+	  <planeobj texture0="_common_texture_list_70px" id="plane_obj2" />
+      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="text_obj1" />
+      <planeobj scale_mode_y="3" scale_mode_x="3" texture0="tex_icon_unk" size="80, 80" id="plane_obj3" pos="0, 0" />
+      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="plane_obj1" />
     </style_image_button>
-	<style_image_button layout_type_x="1" glow_obj="menu_style_button_item_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="menu_style_button_item_label" bg_obj="menu_style_button_item_bg" image_obj="menu_style_button_item_image" image_margin="10" id="menu_style_button_item_dir">
-	  <planeobj texture0="_common_texture_list_70px" id="menu_style_button_item_bg" />
-      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="menu_style_button_item_label" />
-      <planeobj scale_mode_y="3" scale_mode_x="3" texture0="tex_icon_dir" size="80, 80" id="menu_style_button_item_image" pos="0, 0" />
-      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="menu_style_button_item_glow" />
+	<style_image_button layout_type_x="1" glow_obj="plane_obj1" color="1, 1, 1, 1" layout_type_y="0" label_obj="text_obj1" bg_obj="plane_obj2" image_obj="plane_obj3" image_margin="10" id="menu_style_button_item_dir">
+	  <planeobj texture0="_common_texture_list_70px" id="plane_obj2" />
+      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="text_obj1" />
+      <planeobj scale_mode_y="3" scale_mode_x="3" texture0="tex_icon_dir" size="80, 80" id="plane_obj3" pos="0, 0" />
+      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="plane_obj1" />
     </style_image_button>
-	<style_image_button layout_type_x="1" glow_obj="menu_style_button_item_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="menu_style_button_item_label" bg_obj="menu_style_button_item_bg" image_obj="menu_style_button_item_image" image_margin="10" id="menu_style_button_item_mus">
-	  <planeobj texture0="_common_texture_list_70px" id="menu_style_button_item_bg" />
-      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="menu_style_button_item_label" />
-      <planeobj scale_mode_y="3" scale_mode_x="3" texture0="tex_icon_music" size="80, 80" id="menu_style_button_item_image" pos="0, 0" />
-      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="menu_style_button_item_glow" />
+	<style_image_button layout_type_x="1" glow_obj="plane_obj1" color="1, 1, 1, 1" layout_type_y="0" label_obj="text_obj1" bg_obj="plane_obj2" image_obj="plane_obj3" image_margin="10" id="menu_style_button_item_mus">
+	  <planeobj texture0="_common_texture_list_70px" id="plane_obj2" />
+      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="text_obj1" />
+      <planeobj scale_mode_y="3" scale_mode_x="3" texture0="tex_icon_music" size="80, 80" id="plane_obj3" pos="0, 0" />
+      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="plane_obj1" />
     </style_image_button>
-	
-	<!-- settings menu styles -->
-	<style_button id="settings_style_button" bg_obj="settings_style_button_bg" glow_obj="settings_style_button_glow">
-      <planeobj texture0="_common_texture_list_70px" id="settings_style_button_bg" />
-      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="settings_style_button_glow" />
-    </style_button>
-	<style_image_button layout_type_x="1" glow_obj="settings_option_style_button_item_glow" color="1, 1, 1, 1" layout_type_y="0" label_obj="settings_option_style_button_item_label" image_obj="settings_option_style_button_item_image" image_margin="10" id="settings_option_style_button">
-      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="settings_option_style_button_item_label" />
-      <planeobj scale_mode_y="3" scale_mode_x="3" size="80, 80" id="settings_option_style_button_item_image" pos="0, 0" />
-      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="settings_option_style_button_item_glow" />
-    </style_image_button>
-	<style_plane id="settings_style_button_arrow" planeobj="settings_style_button_arrow_obj">
-      <planeobj texture0="_common_texture_disclosure" id="settings_style_button_arrow_obj" />
-    </style_plane>
+	<style_corner_button corner_obj="plane_obj2" glow_obj="plane_obj4" color="1, 1, 1, 1" highlight_obj="plane_obj3" bg_obj="plane_obj1" layout_type="1" id="menu_style_corner_button_pagemode">
+      <planeobj color="0.16, 0.15, 0.22, 0.8" texture0="_common_texture_corner_button_base" id="plane_obj1" />
+      <planeobj size="64, 64, 0" texture0="tex_yt_icon_net" id="plane_obj2" pos="14, 8, 0" />
+      <planeobj texture0="_common_texture_corner_button_highlight" id="plane_obj3" />
+      <planeobj texture0="_common_texture_corner_button_glow" blend="2" id="plane_obj4" />
+    </style_corner_button>
+	<style_corner_button corner_obj="plane_obj2" glow_obj="plane_obj4" color="1, 1, 1, 1" highlight_obj="plane_obj3" bg_obj="plane_obj1" layout_type="1" id="menu_style_corner_button_player">
+      <planeobj color="0.16, 0.15, 0.22, 0.8" texture0="_common_texture_corner_button_base" id="plane_obj1" />
+      <planeobj size="64, 64, 0" texture0="tex_button_play" id="plane_obj2" pos="14, 8, 0" />
+      <planeobj texture0="_common_texture_corner_button_highlight" id="plane_obj3" />
+      <planeobj texture0="_common_texture_corner_button_glow" blend="2" id="plane_obj4" />
+    </style_corner_button>
 	
 	<!-- player menu styles -->
-	<style_progressbar_touch base_obj="player_style_progressbar_base" slider_obj="player_style_progressbar_slider" slider_glow_obj="player_style_progressbar_slider_glow" glow_obj="player_style_progressbar_glow" bar_shadow_obj="player_style_progressbar_bar_shadow" shadow_margin="0, 0" bar_fore_obj="player_style_progressbar_bar_front" shadow_offset="0, -5" bar_back_obj="player_style_progressbar_bar_back" signal_obj="player_style_progressbar_signal" base_shadow_obj="player_style_progressbar_shadow" id="player_style_progressbar">
-      <planeobj scale_mode_y="1" texture0="_common_texture_progressbar_base" id="player_style_progressbar_base" />
-      <planeobj color="0.659, 1, 0, 1" scale_mode_y="1" texture0="_common_texture_progressbar_bar" id="player_style_progressbar_bar_front" />
-      <planeobj scale_mode_y="1" texture0="_common_texture_progressbar_bar_back" id="player_style_progressbar_bar_back" />
-      <planeobj scale_mode_y="1" texture0="_common_texture_progressbar_signal" id="player_style_progressbar_signal" />
-      <planeobj texture0="_common_texture_progressbar_glow" color="0.75, 1, 0, 1" scale_mode_x="1" scale_mode_y="1" blend="2" id="player_style_progressbar_glow" scale_value="2.5" />
-      <planeobj color="1, 1, 1, 0.7" scale_mode_y="1" texture0="_common_texture_progressbar_shadow" id="player_style_progressbar_shadow" />
-      <planeobj color="0.612, 1, 0, 0.7" scale_mode_y="1" texture0="_common_texture_progressbar_shadow" id="player_style_progressbar_bar_shadow" />
-      <planeobj texture0="_common_texture_progressbar_slider_glow" color="0.659, 1, 0, 1" scale_mode_x="1" scale_mode_y="1" id="player_style_progressbar_slider_glow" scale_value="0.5, 0.5" />
-      <planeobj scale_mode_y="1" scale_mode_x="1" texture0="_common_texture_progressbar_slider" id="player_style_progressbar_slider" scale_value="0.5, 0.5" />
+	<style_progressbar_touch base_obj="plane_obj1" slider_obj="plane_obj2" slider_glow_obj="plane_obj3" glow_obj="plane_obj4" bar_shadow_obj="plane_obj5" shadow_margin="0, 0" bar_fore_obj="plane_obj6" shadow_offset="0, -5" bar_back_obj="plane_obj7" signal_obj="plane_obj8" base_shadow_obj="plane_obj9" id="player_style_progressbar">
+      <planeobj scale_mode_y="1" texture0="_common_texture_progressbar_base" id="plane_obj1" />
+      <planeobj color="0.659, 1, 0, 1" scale_mode_y="1" texture0="_common_texture_progressbar_bar" id="plane_obj6" />
+      <planeobj scale_mode_y="1" texture0="_common_texture_progressbar_bar_back" id="plane_obj7" />
+      <planeobj scale_mode_y="1" texture0="_common_texture_progressbar_signal" id="plane_obj8" />
+      <planeobj texture0="_common_texture_progressbar_glow" color="0.75, 1, 0, 1" scale_mode_x="1" scale_mode_y="1" blend="2" id="plane_obj4" scale_value="2.5" />
+      <planeobj color="1, 1, 1, 0.7" scale_mode_y="1" texture0="_common_texture_progressbar_shadow" id="plane_obj9" />
+      <planeobj color="0.612, 1, 0, 0.7" scale_mode_y="1" texture0="_common_texture_progressbar_shadow" id="plane_obj5" />
+      <planeobj texture0="_common_texture_progressbar_slider_glow" color="0.659, 1, 0, 1" scale_mode_x="1" scale_mode_y="1" id="plane_obj3" scale_value="0.5, 0.5" />
+      <planeobj scale_mode_y="1" scale_mode_x="1" texture0="_common_texture_progressbar_slider" id="plane_obj2" scale_value="0.5, 0.5" />
     </style_progressbar_touch>
-	<style_text textobj="player_style_font_obj" id="player_style_font">
-      <textobj color="1, 1, 1, 0.9" font_size="16" bold="1" id="player_style_font_obj" />
+	<style_text textobj="text_obj1" id="player_style_font">
+      <textobj color="1, 1, 1, 0.9" font_size="16" bold="1" id="text_obj1" />
     </style_text>
-	<style_image_button image_obj="player_style_image_button_rew_front" image_back_obj="player_style_image_button_rew_back" glow_obj="player_style_image_button_rew_glow" id="player_style_image_button_rew">
-      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1.05, 1.05" texture0="tex_button_rew" id="player_style_image_button_rew_front" />
-	  <planeobj texture0="_common_texture_button" id="player_style_image_button_rew_back" />
-	  <planeobj texture0="_common_texture_button_glow" blend="2" id="player_style_image_button_rew_glow" />
+	<style_image_button image_obj="plane_obj1" image_back_obj="plane_obj2" glow_obj="plane_obj3" id="player_style_image_button_rew">
+      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1.05, 1.05" texture0="tex_button_rew" id="plane_obj1" />
+	  <planeobj texture0="_common_texture_button" id="plane_obj2" />
+	  <planeobj texture0="_common_texture_button_glow" blend="2" id="plane_obj3" />
     </style_image_button>
-	<style_image_button image_obj="player_style_image_button_play_front" image_back_obj="player_style_image_button_play_back" glow_obj="player_style_image_button_play_glow" id="player_style_image_button_play">
-      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1.05, 1.05" texture0="tex_button_play" id="player_style_image_button_play_front" />
-	  <planeobj texture0="_common_texture_button" id="player_style_image_button_play_back" />
-	  <planeobj texture0="_common_texture_button_glow" blend="2" id="player_style_image_button_play_glow" />
+	<style_image_button image_obj="plane_obj1" image_back_obj="plane_obj2" glow_obj="plane_obj3" id="player_style_image_button_play">
+      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1.05, 1.05" texture0="tex_button_play" id="plane_obj1" />
+	  <planeobj texture0="_common_texture_button" id="plane_obj2" />
+	  <planeobj texture0="_common_texture_button_glow" blend="2" id="plane_obj3" />
     </style_image_button>
-	<style_image_button image_obj="player_style_image_button_ff_front" image_back_obj="player_style_image_button_ff_back" glow_obj="player_style_image_button_ff_glow" id="player_style_image_button_ff">
-      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1.05, 1.05" texture0="tex_button_ff" id="player_style_image_button_ff_front" />
-	  <planeobj texture0="_common_texture_button" id="player_style_image_button_ff_back" />
-	  <planeobj texture0="_common_texture_button_glow" blend="2" id="player_style_image_button_ff_glow" />
+	<style_image_button image_obj="plane_obj1" image_back_obj="plane_obj2" glow_obj="plane_obj3" id="player_style_image_button_ff">
+      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1.05, 1.05" texture0="tex_button_ff" id="plane_obj1" />
+	  <planeobj texture0="_common_texture_button" id="plane_obj2" />
+	  <planeobj texture0="_common_texture_button_glow" blend="2" id="plane_obj3" />
     </style_image_button>
-	<style_text textobj="player_style_title_text_obj" id="player_style_title_text">
-      <textobj font_size="20" color="1, 1, 1, 1" text_align="5" ellipsis="1" id="player_style_title_text_obj" />
+	<style_text textobj="text_obj1" id="player_style_title_text">
+      <textobj font_size="20" color="1, 1, 1, 1" text_align="5" ellipsis="1" id="text_obj1" />
     </style_text>
+	
+	<!-- youtube browser styles -->
+	<style_plane id="yt_style_plane_bottommenu" planeobj="plane_obj1">
+      <planeobj texture0="_common_texture_option_menu_button_top" id="plane_obj1" />
+    </style_plane>
+	<style_button bottom_margin="0" glow_obj="plane_obj1" right_margin="0" top_margin="0" left_margin="0" bg_obj="plane_obj2" id="yt_style_button_btmenu_search">
+      <planeobj texture0="tex_yt_icon_search" scale_mode_y="1" scale_mode_x="1" id="plane_obj2" />
+      <planeobj texture0="_common_texture_copy_paste_menu_button_middle_glow" blend="1" id="plane_obj1" />
+    </style_button>
+	<style_button bottom_margin="0" glow_obj="plane_obj1" right_margin="0" top_margin="0" left_margin="0" bg_obj="plane_obj2" id="yt_style_button_btmenu_history">
+      <planeobj texture0="tex_yt_icon_history" scale_mode_y="1" scale_mode_x="1" id="plane_obj2" />
+      <planeobj texture0="_common_texture_copy_paste_menu_button_middle_glow" blend="1" id="plane_obj1" />
+    </style_button>
+	<style_button bottom_margin="0" glow_obj="plane_obj1" right_margin="0" top_margin="0" left_margin="0" bg_obj="plane_obj2" id="yt_style_button_btmenu_favourite">
+      <planeobj texture0="tex_yt_icon_favourite" scale_mode_y="1" scale_mode_x="1" id="plane_obj2" />
+      <planeobj texture0="_common_texture_copy_paste_menu_button_middle_glow" blend="1" id="plane_obj1" />
+    </style_button>
+	<style_button bottom_margin="0" glow_obj="plane_obj1" right_margin="0" top_margin="0" left_margin="0" bg_obj="plane_obj2" id="yt_style_button_btmenu_left">
+      <planeobj texture0="tex_yt_icon_left" scale_mode_y="1" scale_mode_x="1" id="plane_obj2" />
+      <planeobj texture0="_common_texture_copy_paste_menu_button_middle_glow" blend="1" id="plane_obj1" />
+    </style_button>
+	<style_button bottom_margin="0" glow_obj="plane_obj1" right_margin="0" top_margin="0" left_margin="0" bg_obj="plane_obj2" id="yt_style_button_btmenu_right">
+      <planeobj texture0="tex_yt_icon_right" scale_mode_y="1" scale_mode_x="1" id="plane_obj2" />
+      <planeobj texture0="_common_texture_copy_paste_menu_button_middle_glow" blend="1" id="plane_obj1" />
+    </style_button>
+	<style_text_box sound="_common_sound_text_box" glowobj="plane_obj1" planeobj="plane_obj2" top_margin="8" right_margin="16" left_margin="16" textobj="text_obj1" id="yt_style_text_box_top_search">
+      <textobj color="1, 1, 1, 1" word_wrap="0" font_size="28" ellipsis="1" id="text_obj1" />
+	  <planeobj texture0="_common_texture_text_box" id="plane_obj2" />
+      <planeobj texture0="_common_texture_checkbox_textbox_glow" blend="2" id="plane_obj1" />
+    </style_text_box>
+	<style_image_button image_obj="plane_obj1" image_back_obj="plane_obj2" glow_obj="plane_obj3" id="yt_style_image_button_top_search">
+      <planeobj scale_mode_y="1" scale_mode_x="1" scale_value="1, 1" texture0="tex_yt_icon_search" id="plane_obj1" />
+	  <planeobj texture0="_common_texture_button" id="plane_obj2" />
+	  <planeobj texture0="_common_texture_button_glow" blend="2" id="plane_obj3" />
+    </style_image_button>
+	<style_text textobj="text_obj1" id="yt_style_button_subtext">
+      <textobj line_space="4" font_size="15" bold="1" align_y="1" ellipsis="1" color="1, 1, 1, 1" id="text_obj1" />
+    </style_text>
+	
+	<!-- youtube search styles -->
+	<style_image_button layout_type_x="1" glow_obj="plane_obj1" color="1, 1, 1, 1" layout_type_y="0" label_obj="text_obj1" bg_obj="plane_obj2" image_obj="plane_obj3" image_margin="10" id="menu_style_button_youtube_result">
+	  <planeobj texture0="_common_texture_list_70px" id="plane_obj2" />
+      <textobj line_space="4" font_size="28" bold="1" align_y="1" ellipsis="1" id="text_obj1" />
+      <planeobj texture0="_common_texture_transparent" size="120, 90" id="plane_obj3" pos="0, 0" />
+      <planeobj texture0="_common_texture_list_glow_70px" blend="2" id="plane_obj1" />
+    </style_image_button>
   
-	<style_plane color="0, 0.007, 0.282, 1" id="plane_bg_style" />
   </styletable>
   <templatetable>
-  
-    <!-- settings option side dialog button template -->
-	<template fast_open="1" id="settings_template_option_button">
-      <image_button sound="_common_sound_image_button" style="settings_option_style_button" id="settings_option_button" >
-        <layout_hint size="480, 70" align="1, 2" adjust="0, 0" />
-        <focus_hint focus_shape="3" focus_size="480, 70" />
-      </image_button>
-    </template>
-	
-	 <!-- settings option side dialog box template -->
-	<template fast_open="1" id="settings_template_option_box">
-      <box style="_common_default_style_dialog_box" id="settings_option_box">
-        <layout_box layout_type="1" bottom_margin="0" top_margin="0" />
-      </box>
-    </template>
   
     <!-- displayfiles menu template -->
 	<template fast_open="1" id="menu_template_displayfiles">
 	    <plane style="_common_style_plane_transparent" id="plane_displayfiles_bg">
           <layout_hint size="960, 544" pos="0, 0" />
           <scroll_view style="menu_style_scroll_view" id="displayfiles_scroll_view">
-            <layout_hint align="0, 1" anchor="0, 1" size="960, 420" pos="0, 0" />
+            <layout_hint align="0, 1" anchor="0, 1" size="960, 450" />
 		      <box id="displayfiles_scroll_box">
-                <layout_box anchor="0, 2" layout_type="1" bottom_margin="-200" top_margin="182" right_margin="0" left_margin="0" />
+                <layout_box adjust="0, 2" align="0, 2" layout_type="1" bottom_margin="26" top_margin="0" right_margin="0" left_margin="0" />
               </box>
           </scroll_view>
 		</plane>
@@ -520,29 +291,123 @@
       </text>
     </template>
 	
+	<!-- pagemode button template -->
+	<template id="yt_menu_template_corner_switch">
+	  <corner_button style="menu_style_corner_button_pagemode" id="displayfiles_pagemode_button">
+	    <layout_hint pos="390, 240, 0" />
+	  </corner_button>
+	</template>
+	
+	<!-- youtube base template -->
+	<template id="yt_menu_template_base">
+	  <plane style="yt_style_plane_bottommenu" id="yt_plane_bottommenu">
+        <layout_hint size="700, 56, 0" alpha="1" anchor="0, 1, 0" adjust="0, 0, 0" pos="0, 28, 0" />
+		<box style="_common_default_style_dialog_box" id="settings_option_box">
+          <layout_box layout_type="2" bottom_margin="0" top_margin="0" />
+		  <button style="yt_style_button_btmenu_left" id="yt_button_btmenu_left">
+            <layout_hint alpha="1" size="135, 44, 0" pos="0, -4.5, 0" />
+            <focus_hint focus_shape="2" right_id="yt_button_btmenu_search" />
+          </button>
+		  <plane style="plane_style_vertical_separator" id="yt_plane_bottommenu_sep0">
+            <layout_hint size="1, 50, 0" pos="0, -4.5, 0" />
+          </plane>
+          <button style="yt_style_button_btmenu_search" id="yt_button_btmenu_search">
+            <layout_hint alpha="1" size="135, 44, 0" pos="0, -4.5, 0" />
+            <focus_hint focus_shape="2" left_id="yt_button_btmenu_left" right_id="yt_button_btmenu_history" />
+          </button>
+          <plane style="plane_style_vertical_separator" id="yt_plane_bottommenu_sep1">
+            <layout_hint size="1, 50, 0" pos="0, -4.5, 0" />
+          </plane>
+          <button style="yt_style_button_btmenu_history" id="yt_button_btmenu_history">
+            <layout_hint alpha="1" size="135, 44, 0" pos="0, -4.5, 0" />
+            <focus_hint focus_shape="2" left_id="yt_button_btmenu_search" right_id="yt_button_btmenu_favourite" />
+          </button>
+          <plane style="plane_style_vertical_separator" id="yt_plane_bottommenu_sep2">
+            <layout_hint size="1, 50, 0" pos="0, -4.5, 0" />
+          </plane>
+          <button style="yt_style_button_btmenu_favourite" id="yt_button_btmenu_favourite">
+            <layout_hint alpha="1" size="135, 44, 0" pos="0, -4.5, 0" />
+            <focus_hint focus_shape="2" left_id="yt_button_btmenu_history" right_id="yt_button_btmenu_right" />
+          </button>
+          <plane style="plane_style_vertical_separator" id="yt_plane_bottommenu_sep5">
+            <layout_hint size="1, 50, 0" pos="0, -4.5, 0" />
+          </plane>
+		  <button style="yt_style_button_btmenu_right" id="yt_button_btmenu_right">
+            <layout_hint alpha="1" size="135, 44, 0" pos="0, -4.5, 0" />
+            <focus_hint focus_shape="2" left_id="yt_button_btmenu_favourite" />
+          </button>
+        </box>
+	  </plane>
+	  
+	  <plane style="_common_style_plane_transparent" id="yt_plane_top_search">
+        <layout_hint align="0, 2" anchor="0, 2" size="700, 96" pos="-130, 0" />
+		<text_box auto_scroll="1" ime_type="1" edit_mode="1" paste_mode="1" edit_auto_transition_mode="0" style="yt_style_text_box_top_search" id="yt_text_box_top_search" >
+          <layout_hint pos="122, 8" adjust="0, 0" anchor="1, 1" align="1, 1" size="740, 50" />
+          <focus_hint focus_shape="0" />
+        </text_box>
+		<image_button style="yt_style_image_button_top_search" id="yt_image_button_top_search">
+          <layout_hint size="102, 56, 0" pos="10, 5, 0" adjust="0, 0" anchor="1, 1" align="1, 1" />
+        </image_button>
+      </plane>
+	</template>
+	
+	<!-- youtube menu template -->
+	<template id="menu_template_youtube">
+	    <plane style="_common_style_plane_transparent" id="plane_youtube_bg">
+          <layout_hint size="960, 544" pos="0, 0" />
+          <scroll_view style="menu_style_scroll_view" id="youtube_scroll_view">
+            <layout_hint align="0, 1" anchor="0, 1" size="960, 450" />
+		    <box id="youtube_scroll_box">
+              <layout_box adjust="0, 2" align="0, 2" layout_type="1" bottom_margin="60" top_margin="0" right_margin="0" left_margin="0" />
+            </box>
+          </scroll_view>
+		</plane>
+	</template>
+	
+	 <!-- youtube result menu button template -->
+	<template id="menu_template_youtube_result_button">
+      <image_button sound="_common_sound_image_button" style="menu_style_button_youtube_result" enable_long_press_text_auto_scroll="1" id="menu_button_youtube_result" >
+        <layout_hint size="960, 90" adjust="0, 0" anchor="0, 1" pos="0, 0" />
+        <focus_hint focus_shape="3" focus_size="960, 90" />
+		<text style="yt_style_button_subtext" id="yt_text_button_subtext">
+          <layout_hint size="100, 0" align="1, 1" anchor="1, 1" adjust="2, 2" pos="130, 5" />
+        </text>
+      </image_button>
+    </template>
+	
+	<!-- youtube player UI extensions template -->
+	<template id="player_template_youtube">
+	  <button id="player_fav_button" texture="tex_yt_icon_favourite_for_player">
+        <layout_hint align="0, 0, 0" size="64, 64, 0" pos="680, -406, 0" anchor="1, 2, 0" />
+        <text style="player_style_font" id="text_player_fav" label="msg_player_fav">
+          <layout_hint size="100, 50, 0" align="0, 0, 0" adjust="2, 0, 0" pos="0, -58, 0" />
+        </text>
+      </button>
+	</template>
+	
   </templatetable>
   
   <stringtable>
-	<locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ja" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en-gb" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_fr.rcs.zlib" compress="on" id="fr" />
+	<locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ja" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en-gb" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_fr.rcs.zlib" compress="on" id="fr" />
     <locale origsize="3520" src="empva_files\locale\empva_locale_es.rcs.zlib" compress="on" id="es" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="de" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="it" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="nl" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt" />
-    <locale origsize="3504" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="de" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="it" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="nl" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
     <locale origsize="3456" src="empva_files\locale\empva_locale_ru.rcs.zlib" compress="on" id="ru" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ko" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ko" />
     <locale origsize="2784" src="empva_files\locale\empva_locale_zh-t.rcs.zlib" compress="on" id="zh-t" />
     <locale origsize="2800" src="empva_files\locale\empva_locale_zh-s.rcs.zlib" compress="on" id="zh-s" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="fi" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="sv" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="da" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="no" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pl" />
-    <locale origsize="3296" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="tr" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="fi" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="sv" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="da" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="no" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pl" />
+    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="tr" />
   </stringtable>
   
   <texturetable>
@@ -558,6 +423,16 @@
 	<texture origsize="5328" src="empva_files\texture\tex_button_repeat_glow.zlib" type="texture/gim" id="tex_button_repeat_glow" compress="on" />
 	<texture origsize="5328" src="empva_files\texture\tex_button_repeat_glow_one.zlib" type="texture/gim" id="tex_button_repeat_glow_one" compress="on" />
 	<texture origsize="5328" src="empva_files\texture\tex_button_repeat.zlib" type="texture/gim" id="tex_button_repeat" compress="on" />
+	<texture origsize="2032" src="empva_files\texture\tex_vertical_separator.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_vertical_separator" compress="on" />
+	<texture origsize="4432" src="empva_files\texture\tex_yt_icon_search.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_search" compress="on" />
+	<texture origsize="4432" src="empva_files\texture\tex_yt_icon_history.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_history" compress="on" />
+	<texture origsize="4432" src="empva_files\texture\tex_yt_icon_favourite.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_favourite" compress="on" />
+	<texture origsize="5328" src="empva_files\texture\tex_yt_icon_fav_for_player.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_favourite_for_player" compress="on" />
+	<texture origsize="5328" src="empva_files\texture\tex_yt_icon_fav_for_player_glow.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_favourite_for_player_glow" compress="on" />
+	<texture origsize="4432" src="empva_files\texture\tex_yt_icon_left.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_left" compress="on" />
+	<texture origsize="4432" src="empva_files\texture\tex_yt_icon_right.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_right" compress="on" />
+	<texture origsize="6832" src="empva_files\texture\tex_yt_icon_vita.zlib" ignore_make_surface_first="on" type="texture/gim" id="tex_yt_icon_vita" compress="on" />
+	<texture origsize="6832" src="empva_files\texture\tex_yt_icon_net.zlib" type="texture/gim" id="tex_yt_icon_net" compress="on" />
 	<texture src="empva_files\texture\tex_common_bg_full.png" ignore_make_surface_first="on" type="texture/png" id="tex_common_bg_full" />
 	<texture src="empva_files\texture\tex_common_bg.png" type="texture/png" id="tex_common_bg" />
   </texturetable>

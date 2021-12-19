@@ -11,7 +11,7 @@ using namespace paf;
 namespace menu {
 	namespace audioplayer {
 
-		class PlayerButtonCB : public widget::Widget::EventCallback
+		class PlayerButtonCB : public ui::Widget::EventCallback
 		{
 		public:
 
@@ -22,7 +22,9 @@ namespace menu {
 				ButtonHash_Ff = 0x373fc526,
 				ButtonHash_Repeat = 0x28bfa2c9,
 				ButtonHash_Shuffle = 0x46be756f,
-				ButtonHash_Progressbar = 0x354adaae
+				ButtonHash_Progressbar = 0x354adaae,
+				ButtonHash_Close = 0xf6ac8379,
+				ButtonHash_Favourite = 0xb59196e3
 			};
 
 			PlayerButtonCB()
@@ -35,11 +37,11 @@ namespace menu {
 
 			};
 
-			static SceVoid PlayerButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
+			static SceVoid PlayerButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
 		};
 
-		class BackButtonCB : public widget::Widget::EventCallback
+		class BackButtonCB : public ui::Widget::EventCallback
 		{
 		public:
 
@@ -53,7 +55,7 @@ namespace menu {
 
 			};
 
-			static SceVoid BackButtonCBFun(SceInt32 eventId, widget::Widget *self, SceInt32 a3, ScePVoid pUserData);
+			static SceVoid BackButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
 		};
 
@@ -71,14 +73,25 @@ namespace menu {
 
 			SceVoid SetMetadata(const char *file);
 
+			SceBool IsValid();
+
 		private:
 
+			static const SceUInt8 k_ytRetryAttemptNum = 3;
+
 			audio::GenericDecoder *decoder;
+			SceBool isValid;
 		};
 
 		class Audioplayer 
 		{
 		public:
+
+			enum Mode
+			{
+				Mode_Normal,
+				Mode_Youtube
+			};
 
 			class Playlist
 			{
@@ -88,13 +101,11 @@ namespace menu {
 				SceUInt8 isConsumed[1024];
 			};
 
-			Audioplayer(const char *cwd, menu::displayfiles::File *startFile);
+			Audioplayer(const char *cwd, menu::displayfiles::File *startFile, Mode mode);
 
 			~Audioplayer();
 
 			static SceVoid RegularTask(ScePVoid pUserData);
-
-			static SceVoid PowerOffTask(ScePVoid pUserData);
 
 			static SceVoid HandleNext(SceBool fromHandlePrev, SceBool fromFfButton);
 
@@ -102,17 +113,28 @@ namespace menu {
 
 			static SceVoid HandlePrev();
 
+			static SceVoid _HandleNext(SceBool fromHandlePrev, SceBool fromFfButton);
+
+			static SceVoid _HandlePrev();
+
+			static SceVoid YtJobFinishHandler();
+
 			static SceVoid ConvertSecondsToString(String *string, SceUInt64 seconds, SceBool needSeparator);
+
+			static SceVoid Return();
+
+			static SceVoid Close();
 			
 			SceVoid GetMusicList(menu::displayfiles::File *startFile);
 
 			AudioplayerCore *GetCore();
 
+			Playlist playlist;
+			SceInt32 playlistIdx;
+
 		private:
 
 			AudioplayerCore *core;
-			Playlist playlist;
-			SceInt32 playlistIdx;
 			SceUInt32 startIdx;
 			SceUInt32 totalIdx;
 			SceUInt32 totalConsumedIdx;
@@ -120,8 +142,5 @@ namespace menu {
 
 	}
 }
-
-/*void Menu_PlayAudio(char *path);
-void Menu_UnloadExternalCover(void);*/
 
 #endif

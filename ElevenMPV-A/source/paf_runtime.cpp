@@ -1,6 +1,4 @@
-
 extern "C" {
-
 	void __cxa_set_dso_handle_main(void *dso)
 	{
 
@@ -11,13 +9,8 @@ extern "C" {
 		return 0;
 	}
 
-	int __aeabi_unwind_cpp_pr0()
+	int __at_quick_exit()
 	{
-		return 9;
-	}
-
-	int __aeabi_unwind_cpp_pr1()
-	{
-		return 9;
+		return 0;
 	}
 }

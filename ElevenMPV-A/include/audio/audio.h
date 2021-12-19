@@ -3,10 +3,15 @@
 
 #include <paf.h>
 
+#include <opus/opus.h>
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 #include <shellaudio.h>
+#include <sceavplayer.h>
 
+#include "nestegg.h"
+#include "netmedia.h"
+#include "localmedia.h"
 #include "xmp.h"
 #include "audiocodec.h"
 
@@ -17,17 +22,56 @@ typedef SceInt64 ogg_int64_t;
 
 namespace audio {
 
-	class PlayerCoverLoaderThread : public thread::Thread
+	class PlayerCoverLoaderJob : public paf::thread::JobQueue::Item
 	{
 	public:
 
-		using thread::Thread::Thread;
+		using thread::JobQueue::Item::Item;
 
-		SceVoid EntryFunction();
+		~PlayerCoverLoaderJob()
+		{
+
+		}
+
+		SceVoid Run();
+
+		SceVoid Finish();
+
+		static SceVoid JobKiller(thread::JobQueue::Item *job)
+		{
+			if (job)
+				delete job;
+		}
 
 		ScePVoid workptr;
 		SceSize size;
 		SceBool isExtMem;
+		graphics::Texture coverTex;
+	};
+
+	class YoutubePlayerCoverLoaderJob : public paf::thread::JobQueue::Item
+	{
+	public:
+
+		using thread::JobQueue::Item::Item;
+
+		~YoutubePlayerCoverLoaderJob()
+		{
+
+		}
+
+		SceVoid Run();
+
+		SceVoid Finish();
+
+		static SceVoid JobKiller(thread::JobQueue::Item *job)
+		{
+			if (job)
+				delete job;
+		}
+
+		String url;
+
 		graphics::Texture coverTex;
 	};
 
@@ -36,6 +80,14 @@ namespace audio {
 	public:
 
 		static SceVoid ResetBgmMode();
+	};
+
+	class DualIo
+	{
+	public:
+
+		SceAvPlayerFileReplacement fio;
+		io::File *mio;
 	};
 
 	class GenericDecoder
@@ -77,10 +129,13 @@ namespace audio {
 
 		virtual Metadata *GetMetadataLocation();
 
+		SceBool IsValid();
+
 		SceBool isPlaying;
 		SceBool isPaused;
+		SceBool isValid;
 		Metadata *metadata;
-		PlayerCoverLoaderThread *coverLoader;
+		String dataPath;
 	};
 
 	class FlacDecoder : public GenericDecoder
@@ -109,19 +164,22 @@ namespace audio {
 
 		SceUInt64 GetLength();
 
+		DualIo io;
+
 	private:
 
+		SceNmHandle nmHandle;
 		ScePVoid flac;
 		drflac_uint64 framesRead;
 	};
 
-	class OpusDecoder : public GenericDecoder
+	class OpDecoder : public GenericDecoder
 	{
 	public:
 
-		OpusDecoder(const char *path, SceBool isSwDecoderUsed);
+		OpDecoder(const char *path, SceBool isSwDecoderUsed);
 
-		~OpusDecoder();
+		~OpDecoder();
 
 		SceUInt64 Seek(SceFloat32 percent);
 
@@ -135,11 +193,63 @@ namespace audio {
 
 		SceUInt64 GetLength();
 
+		DualIo io;
+
 	private:
 
+		static SceInt32 OpRead(ScePVoid _stream, SceUChar8 *_ptr, SceInt32 _nbytes);
+
+		static SceInt32 OpSeek(ScePVoid _stream, SceInt64 _offset, SceInt32 _whence);
+
+		static SceInt64 OpTell(ScePVoid _stream);
+
+		static SceInt32 OpClose(ScePVoid _stream);
+
+		SceNmHandle nmHandle;
 		ScePVoid opus;
 		ogg_int64_t samplesRead;
 		ogg_int64_t	maxSamples;
+	};
+
+	class WebmOpusDecoder : public GenericDecoder
+	{
+	public:
+
+		WebmOpusDecoder(const char *path, SceBool isSwDecoderUsed);
+
+		~WebmOpusDecoder();
+
+		SceUInt64 Seek(SceFloat32 percent);
+
+		SceVoid Decode(ScePVoid stream, SceUInt32 length, ScePVoid userdata);
+
+		SceUInt32 GetSampleRate();
+
+		SceUInt8 GetChannels();
+
+		SceUInt64 GetPosition();
+
+		SceUInt64 GetLength();
+
+		SceAvPlayerFileReplacement fio;
+
+	private:
+
+		static SceInt32 NeRead(ScePVoid buffer, SceSize length, ScePVoid userdata);
+
+		static SceInt32 NeSeek(SceInt64 offset, SceInt32 whence, ScePVoid userdata);
+
+		static SceInt64 NeTell(ScePVoid userdata);
+
+		nestegg *ne;
+		OpusDecoder *opusDec;
+		SceNmHandle nmHandle;
+		SceUInt64 totalTime;
+		SceUInt64 samplesRead;
+		SceUInt32 sampleRate;
+		SceInt32 maxSamples;
+		SceUInt8 channelNum;
+		SceBool isSeeking;
 	};
 
 	class OggDecoder : public GenericDecoder
@@ -162,10 +272,21 @@ namespace audio {
 
 		SceUInt64 GetLength();
 
+		SceAvPlayerFileReplacement fio;
+
 	private:
+
+		static SceUInt32 OggRead(ScePVoid ptr, SceUInt32 size, SceUInt32 nmemb, ScePVoid datasource);
+
+		static SceInt32 OggSeek(ScePVoid datasource, ogg_int64_t offset, SceInt32 whence);
+
+		static long OggTell(ScePVoid datasource);
+
+		static SceInt32 OggClose(ScePVoid datasource);
 
 		SceUInt64 FillBuffer(char *out);
 
+		SceNmHandle nmHandle;
 		OggVorbis_File ogg;
 		vorbis_info *oggInfo;
 		ogg_int64_t samplesRead;
@@ -228,6 +349,8 @@ namespace audio {
 
 		SceUInt64 GetLength();
 
+		SceAvPlayerFileReplacement fio;
+
 	private:
 
 		static SceInt32 sceAudiocodecGetAt3ConfigPSP2(SceUInt32 cmode, SceUInt32 nbytes);
@@ -238,17 +361,13 @@ namespace audio {
 
 		SceVoid InitCommon(const char *path, SceUInt8 type, SceUInt8 param1, SceUInt8 param2, SceSize dataOffset);
 
+		SceNmHandle nmHandle;
 		SceAudiocodecCtrl codecCtrl;
-		ScePVoid streamBuffer[2];
-		io::File *at3File;
+		ScePVoid esBuffer;
 		SceSize dataBeginOffset;
-		SceSize readOffset;
-		SceSize currentOffset;
 		SceUInt64 totalEsSamples;
 		SceUInt64 totalEsPlayed;
 		SceUInt32 codecType;
-		SceUInt32 bufindex;
-		SceUInt32 callCount;
 	};
 
 	class ShellCommonDecoder : public GenericDecoder
@@ -282,6 +401,47 @@ namespace audio {
 
 		Mp3Decoder(const char *path, SceBool isSwDecoderUsed);
 
+	};
+
+	class YoutubeDecoder : public GenericDecoder
+	{
+	public:
+
+		YoutubeDecoder(const char *path, SceBool isSwDecoderUsed);
+
+		~YoutubeDecoder();
+
+		SceUInt64 Seek(SceFloat32 percent);
+
+		SceVoid Decode(ScePVoid stream, SceUInt32 length, ScePVoid userdata);
+
+		SceUInt32 GetSampleRate();
+
+		SceUInt8 GetChannels();
+
+		SceUInt64 GetPosition();
+
+		SceUInt64 GetLength();
+
+		SceAvPlayerFileReplacement fio;
+
+	private:
+
+		static SceInt32 NeRead(ScePVoid buffer, SceSize length, ScePVoid userdata);
+
+		static SceInt32 NeSeek(SceInt64 offset, SceInt32 whence, ScePVoid userdata);
+
+		static SceInt64 NeTell(ScePVoid userdata);
+
+		nestegg *ne;
+		OpusDecoder *opusDec;
+		SceNmHandle nmHandle;
+		SceUInt64 totalTime;
+		SceUInt64 samplesRead;
+		SceUInt32 sampleRate;
+		SceInt32 maxSamples;
+		SceUInt8 channelNum;
+		SceBool isSeeking;
 	};
 }
 

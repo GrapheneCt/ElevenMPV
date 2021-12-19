@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <paf.h>
 
+#include "common.h"
 #include "audio.h"
-#include "config.h"
 #include "id3.h"
 #include "utils.h"
 #include "vitaaudiolib.h"
@@ -14,6 +14,8 @@
 #define GROUP_SIZE 64
 #define AT3P_ES_GRAIN 2048
 #define AT3_ES_GRAIN 1024
+
+static SceOff s_currPos = 0;
 
 SceInt32 audio::At3Decoder::sceAudiocodecGetAt3ConfigPSP2(SceUInt32 cmode, SceUInt32 nbytes)
 {
@@ -82,17 +84,15 @@ SceVoid audio::At3Decoder::InitCommon(const char *path, SceUInt8 type, SceUInt8 
 	}
 
 	//Allocate stream buffer, read first es streams to buffer, set output grain
-	at3File = new io::File();
-	at3File->Open(path, SCE_O_RDONLY, 0);
 
 	switch (type) {
 	case Type_AT3P:
-		streamBuffer[0] = sce_paf_malloc(codecCtrl.atx.inputEsSize * GROUP_SIZE);
-		streamBuffer[1] = sce_paf_malloc(codecCtrl.atx.inputEsSize * GROUP_SIZE);
-		at3File->Lseek((SceOff)dataOffset, SCE_SEEK_SET);
-		currentOffset = at3File->Read(streamBuffer[0], codecCtrl.atx.inputEsSize * GROUP_SIZE);
+		LOCALMediaInit(&nmHandle, &fio, SCE_NULL, codecCtrl.atx.inputEsSize * 128, 0, 0, SCE_NULL);
+		fio.open(fio.objectPointer, path);
+		esBuffer = sce_paf_malloc(codecCtrl.atx.inputEsSize);
+		s_currPos = dataOffset;
 		//Calculate total samples
-		atDataSize = (SceSize)at3File->GetSize() - dataOffset;
+		atDataSize = (SceSize)fio.size(fio.objectPointer) - dataOffset;
 		totalEsSamples = atDataSize / codecCtrl.atx.inputEsSize;
 		audio::DecoderCore::PreSetGrain(AT3P_ES_GRAIN);
 		break;
@@ -114,20 +114,19 @@ SceVoid audio::At3Decoder::InitCommon(const char *path, SceUInt8 type, SceUInt8 
 			return; //unsupported
 			break;
 		}
-		streamBuffer[0] = sce_paf_malloc(codecCtrl.inputEsSize * GROUP_SIZE);
-		streamBuffer[1] = sce_paf_malloc(codecCtrl.inputEsSize * GROUP_SIZE);
-		at3File->Lseek((SceOff)dataOffset, SCE_SEEK_SET);
-		currentOffset = at3File->Read(streamBuffer[0], codecCtrl.inputEsSize * GROUP_SIZE);
+		LOCALMediaInit(&nmHandle, &fio, SCE_NULL, codecCtrl.inputEsSize * 128, 0, 0, SCE_NULL);
+		fio.open(fio.objectPointer, path);
+		esBuffer = sce_paf_malloc(codecCtrl.inputEsSize);
+		s_currPos = dataOffset;
 		//Calculate total samples
-		atDataSize = (SceSize)at3File->GetSize() - dataOffset;
+		atDataSize = (SceSize)fio.size(fio.objectPointer) - dataOffset;
 		totalEsSamples = atDataSize / codecCtrl.inputEsSize;
 		audio::DecoderCore::PreSetGrain(AT3_ES_GRAIN);
 		break;
 	}
 
-	currentOffset += dataOffset;
 	dataBeginOffset = dataOffset;
-	bufindex = 0;
+	isValid = SCE_TRUE;
 }
 
 SceVoid audio::At3Decoder::InitOMA(const char *path)
@@ -138,7 +137,7 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 	SceUInt8 codecType;
 	SceUInt8 param1;
 	SceUInt8 param2;
-	String *text8 = new String();
+	String text8;
 	ID3Tag *ID3 = (ID3Tag *)sce_paf_malloc(sizeof(ID3Tag));
 
 	ParseID3(path, ID3);
@@ -153,37 +152,48 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 	}
 
 	if (metadata->hasMeta) {
-		text8->Set(ID3->ID3Title);
-		text8->ToWString(&metadata->title);
-		text8->Clear();
+		text8 = ID3->ID3Title;
+		text8.ToWString(&metadata->title);
 
-		text8->Set(ID3->ID3Artist);
-		text8->ToWString(&metadata->artist);
-		text8->Clear();
+		text8 = ID3->ID3Artist;
+		text8.ToWString(&metadata->artist);
 
-		text8->Set(ID3->ID3Album);
-		text8->ToWString(&metadata->album);
-		text8->Clear();
+		text8 = ID3->ID3Album;
+		text8.ToWString(&metadata->album);
 	}
-
-	delete text8;
 
 	if ((ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) && !metadata->hasCover) {
 
 		ret = file.Open(path, SCE_O_RDONLY, 0);
 		if (ret >= 0) {
-			coverLoader = new audio::PlayerCoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_HIGHEST_PRIORITY, SCE_KERNEL_4KiB, "EMPVA::PlayerCoverLoader");
+
+			auto coverLoader = new PlayerCoverLoaderJob("EMPVA::PlayerCoverLoaderJob");
 			coverLoader->workptr = sce_paf_malloc(ID3->ID3EncapsulatedPictureLength);
+
 			if (coverLoader->workptr != SCE_NULL) {
+
+				CleanupHandler *req = new CleanupHandler();
+				req->userData = coverLoader;
+				req->refCount = 0;
+				req->unk_08 = 1;
+				req->cb = (CleanupHandler::CleanupCallback)audio::PlayerCoverLoaderJob::JobKiller;
+
+				ObjectWithCleanup itemParam;
+				itemParam.object = coverLoader;
+				itemParam.cleanup = req;
+
 				coverLoader->isExtMem = SCE_TRUE;
 				file.Lseek(ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
 				file.Read(coverLoader->workptr, ID3->ID3EncapsulatedPictureLength);
 				file.Close();
 				coverLoader->size = ID3->ID3EncapsulatedPictureLength;
-				coverLoader->Start();
+
+				g_coverJobQueue->Enqueue(&itemParam);
 
 				metadata->hasCover = SCE_TRUE;
 			}
+			else
+				delete coverLoader;
 		}
 	}
 
@@ -329,13 +339,11 @@ SceVoid audio::At3Decoder::InitRIFF(const char *path)
 audio::At3Decoder::At3Decoder(const char *path, SceBool isSwDecoderUsed) : GenericDecoder::GenericDecoder(path, isSwDecoderUsed)
 {
 	dataBeginOffset = 0;
-	readOffset = 0;
-	currentOffset = 0;
 	totalEsSamples = 0;
 	totalEsPlayed = 0;
 	codecType = 0;
-	bufindex = 0;
-	callCount = 0;
+	s_currPos = 0;
+	esBuffer = SCE_NULL;
 
 	//Check ATRAC3 file header type
 	const char* ext = EMPVAUtils::GetFileExt(path);
@@ -362,7 +370,8 @@ SceUInt8 audio::At3Decoder::GetChannels()
 
 SceVoid audio::At3Decoder::Decode(ScePVoid stream, SceUInt32 length, ScePVoid userdata)
 {
-	io::AsyncResult res;
+	SceInt32 read = -2;
+	SceUInt32 readSize = 0;
 
 	if (isPlaying == SCE_FALSE || isPaused == SCE_TRUE) {
 		short *bufShort = (short *)stream;
@@ -371,42 +380,33 @@ SceVoid audio::At3Decoder::Decode(ScePVoid stream, SceUInt32 length, ScePVoid us
 			*(bufShort + count) = 0;
 	}
 	else {
-		if (callCount == GROUP_SIZE) {
-			bufindex ^= 1;
-			readOffset = 0;
-			callCount = 0;
+		//Read data
+		switch (codecType) {
+		case SCE_AUDIOCODEC_ATX:
+			read = fio.readOffset(fio.objectPointer, (uint8_t *)esBuffer, s_currPos, codecCtrl.atx.inputEsSize);
+			readSize = codecCtrl.atx.inputEsSize;
+			break;
+		case SCE_AUDIOCODEC_AT3:
+			read = fio.readOffset(fio.objectPointer, (uint8_t *)esBuffer, s_currPos, codecCtrl.inputEsSize);
+			readSize = codecCtrl.inputEsSize;
+			break;
 		}
 
-		//Wait until we are done with previous call, issue next read call
-		if (callCount == 0) {
-
-			at3File->WaitAsync(&res);
-
-			bufindex ^= 1;
-
-			switch (codecType) {
-			case SCE_AUDIOCODEC_ATX:
-				at3File->ReadAsync(streamBuffer[bufindex], codecCtrl.atx.inputEsSize * GROUP_SIZE);
-				break;
-			case SCE_AUDIOCODEC_AT3:
-				at3File->ReadAsync(streamBuffer[bufindex], codecCtrl.inputEsSize * GROUP_SIZE);
-				break;
-			}
-
-			bufindex ^= 1;
+		while (read == -2) {
+			read = fio.readOffset(fio.objectPointer, (uint8_t *)esBuffer, s_currPos, readSize);
+			thread::Sleep(10);
 		}
 
 		//Decode current ES samples
 
-		codecCtrl.pEs = streamBuffer[bufindex] + readOffset;
+		codecCtrl.pEs = esBuffer;
 		codecCtrl.pPcm = stream;
 
 		if (sceAudiocodecDecode(&codecCtrl, codecType) < 0)
 			isPlaying = SCE_FALSE;
 
-		readOffset += codecCtrl.inputEsSize;
+		s_currPos += codecCtrl.inputEsSize;
 
-		callCount++;
 		totalEsPlayed++;
 
 		if (totalEsPlayed >= totalEsSamples)
@@ -444,8 +444,6 @@ SceUInt64 audio::At3Decoder::GetLength()
 
 SceUInt64 audio::At3Decoder::Seek(SceFloat32 percent)
 {
-	io::AsyncResult res;
-
 	SceSize esGrain = AT3P_ES_GRAIN;
 	if (codecType == SCE_AUDIOCODEC_AT3)
 		esGrain = AT3_ES_GRAIN;
@@ -455,44 +453,27 @@ SceUInt64 audio::At3Decoder::Seek(SceFloat32 percent)
 	seekSamples = (SceUInt64)(seekEsNum * esGrain);
 
 	totalEsPlayed = seekEsNum;
-	bufindex = 0;
-	readOffset = 0;
-	callCount = 0;
 
-	SceSize newOffset = dataBeginOffset + (seekEsNum * codecCtrl.inputEsSize);
+	s_currPos = dataBeginOffset + (seekEsNum * codecCtrl.inputEsSize);
 
-	at3File->WaitAsync(&res);
-	at3File->Lseek(newOffset, SCE_SEEK_SET);
-
-	switch (codecType) {
-	case SCE_AUDIOCODEC_ATX:
-		at3File->Read(streamBuffer[0], codecCtrl.atx.inputEsSize * GROUP_SIZE);
-		break;
-	case SCE_AUDIOCODEC_AT3:
-		at3File->Read(streamBuffer[0], codecCtrl.inputEsSize * GROUP_SIZE);
-		break;
-	}
+	LOCALMediaInvalidateAllBuffers(nmHandle);
 
 	return seekSamples;
 }
 
 audio::At3Decoder::~At3Decoder()
 {
-	io::AsyncResult res;
-	at3File->WaitAsync(&res);
-
 	isPlaying = SCE_TRUE;
 	isPaused = SCE_FALSE;
 
 	audio::DecoderCore::EndPre();
-	thread::Thread::Sleep(100);
+	thread::Sleep(100);
 	audio::DecoderCore::End();
 
 	sce_paf_free(codecCtrl.pWorkMem);
-	sce_paf_free(streamBuffer[0]);
-	sce_paf_free(streamBuffer[1]);
+	sce_paf_free(esBuffer);
 
 	audio::DecoderCore::PreSetGrain(audio::DecoderCore::GetDefaultGrain());
-	at3File->Close();
-	delete at3File;
+	fio.close(fio.objectPointer);
+	LOCALMediaDeInit(nmHandle);
 }

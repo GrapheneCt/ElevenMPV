@@ -1457,7 +1457,7 @@ static  drflac_bool32 drflac__read_uint32(drflac_bs* bs, unsigned int bitCount, 
 
 static drflac_bool32 drflac__read_int32(drflac_bs* bs, unsigned int bitCount, drflac_int32* pResult)
 {
-    drflac_uint32 result;
+    drflac_uint32 result = 0;
     drflac_uint32 signbit;
 
     if (!drflac__read_uint32(bs, bitCount, &result)) {
@@ -1473,7 +1473,7 @@ static drflac_bool32 drflac__read_int32(drflac_bs* bs, unsigned int bitCount, dr
 
 static drflac_bool32 drflac__read_uint16(drflac_bs* bs, unsigned int bitCount, drflac_uint16* pResult)
 {
-    drflac_uint32 result;
+    drflac_uint32 result = 0;
 
     if (!drflac__read_uint32(bs, bitCount, &result)) {
         return DRFLAC_FALSE;
@@ -3328,7 +3328,7 @@ static drflac_bool32 drflac__read_subframe_header(drflac_bs* bs, drflac_subframe
     /* Wasted bits per sample. */
     pSubframe->wastedBitsPerSample = 0;
     if ((header & 0x01) == 1) {
-        unsigned int wastedBitsPerSample;
+        unsigned int wastedBitsPerSample = 0;
         if (!drflac__seek_past_next_set_bit(bs, &wastedBitsPerSample)) {
             return DRFLAC_FALSE;
         }
@@ -4242,8 +4242,6 @@ drflac_bool32 drflac__read_streaminfo(drflac_read_proc onRead, void* pUserData, 
     return DRFLAC_TRUE;
 }
 
-#define ROUND_UP(x, a)	((((unsigned int)x)+((a)-1u))&(~((a)-1u)))
-
 static void* drflac__malloc_default(size_t sz, void* pUserData)
 {
 	(void)pUserData;
@@ -4659,7 +4657,7 @@ drflac_bool32 drflac__init_private__native(drflac_init_info* pInit, drflac_read_
     /* Pre Condition: The bit stream should be sitting just past the 4-byte id header. */
 
     drflac_uint8 isLastBlock = 0;
-    drflac_uint8 blockType;
+    drflac_uint8 blockType = 0;
     drflac_uint32 blockSize;
 
     (void)onSeek;

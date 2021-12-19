@@ -59,7 +59,7 @@
     <Link>
       <AdditionalOptions>--no-standard-libraries </AdditionalOptions>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>-lSceDbg_stub;-lScePafTopLevel_stub;-lScePafStdc_stub;-lScePafCommon_stub;-lScePafWidget_stub;-lScePafThread_stub;-lSceLibKernel_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceAppMgrUser_stub;-ltaihen_stub;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lSceDbg_stub;-lScePafTopLevel_stub;-lScePafStdc_stub;-lScePafCommon_stub;-lScePafWidget_stub;-lScePafThread_stub;-lSceLibKernel_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceAppMgrUser_stub;-ltaihen_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress "$(LocalDebuggerCommand)" "$(OutDir)shell_plugin.suprx"
@@ -75,9 +75,12 @@ copy /Y "$(OutDir)shell_plugin.suprx" "$(SolutionDir)\ElevenMPV-A\CONTENTS\modul
       <CppLanguageStd>Cpp11</CppLanguageStd>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>-lSceDbg_stub;-lScePafTopLevel_stub;-lScePafStdc_stub;-lScePafCommon_stub;-lScePafWidget_stub;-lScePafThread_stub;-lSceLibKernel_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceAppMgrUser_stub;-ltaihen_stub;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lSceDbg_stub;-lScePafTopLevel_stub;-lScePafStdc_stub;-lScePafCommon_stub;-lScePafWidget_stub;-lScePafThread_stub;-lSceLibKernel_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceAppMgrUser_stub;-ltaihen_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>--no-standard-libraries %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--no-standard-libraries </AdditionalOptions>
+      <InfoStripping>StripSymsAndDebug</InfoStripping>
+      <DataStripping>StripFuncsAndData</DataStripping>
+      <DuplicateStripping>true</DuplicateStripping>
     </Link>
     <PostBuildEvent>
       <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress "$(LocalDebuggerCommand)" "$(OutDir)shell_plugin.suprx"

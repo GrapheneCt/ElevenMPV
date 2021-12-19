@@ -1,8 +1,6 @@
 #ifndef _ELEVENMPV_UTILS_H_
 #define _ELEVENMPV_UTILS_H_
 
-#include <libime.h>
-#include <notification_util.h>
 #include <kernel.h>
 #include <paf.h>
 
@@ -29,7 +27,7 @@ extern "C" {
 	int sceShellUtilExitToLiveBoard();
 }
 
-static const SceUInt32 k_supportedExtNum = 15;
+static const SceUInt32 k_supportedExtNum = 16;
 static const SceUInt32 k_supportedCoverExtNum = 4;
 
 static const char *k_supportedExtList[] =
@@ -48,7 +46,8 @@ static const char *k_supportedExtList[] =
 	"wav",
 	"at9",
 	"m4a",
-	"aac"
+	"aac",
+	"webm"
 };
 
 static const char *k_supportedCoverExtList[] =
@@ -63,6 +62,77 @@ class EMPVAUtils
 {
 public:
 
+	enum MemState
+	{
+		MemState_Low,
+		MemState_Mid,
+		MemState_Full,
+	};
+
+	class PleaseWaitThread : public thread::Thread
+	{
+	public:
+
+		using thread::Thread::Thread;
+
+		SceVoid EntryFunction();
+
+		SceBool withCancel;
+		SceBool forceCancel;
+		SceBool userCancel;
+	};
+
+	class AsyncEnqueue : public paf::thread::JobQueue::Item
+	{
+	public:
+
+		using thread::JobQueue::Item::Item;
+
+		typedef void(*FinishHandler)();
+
+		~AsyncEnqueue() {}
+
+		SceVoid Run()
+		{
+			EMPVAUtils::BeginPleaseWait();
+			eventHandler(eventId, self, a3, pUserData);
+			EMPVAUtils::EndPleaseWait();
+		}
+
+		SceVoid Finish()
+		{
+			if (finishHandler)
+				finishHandler();
+		}
+
+		static SceVoid JobKiller(thread::JobQueue::Item *job)
+		{
+			if (job)
+				delete job;
+		}
+
+		ui::Widget::EventCallback::EventHandler eventHandler;
+		FinishHandler finishHandler;
+		SceInt32 eventId;
+		ui::Widget *self;
+		SceInt32 a3;
+		ScePVoid pUserData;
+	};
+
+	class IPC
+	{
+	public:
+
+		static SceVoid Enable();
+
+		static SceVoid Disable();
+
+		static SceUInt32 PeekTx();
+
+		static SceVoid SendInfo(WString *title, WString *artist, WString *album, SceInt32 playBtState);
+
+	};
+
 	static SceVoid Init();
 
 	static SceBool IsSupportedExtension(const char *ext);
@@ -75,7 +145,7 @@ public:
 
 	static SceUInt32 GetHash(const char *name);
 
-	static SceWChar16 *GetStringWithNum(const char *name, SceUInt32 num);
+	static wchar_t *GetStringWithNum(const char *name, SceUInt32 num);
 
 	static SceUInt32 Downscale(SceInt32 ix, SceInt32 iy, ScePVoid ibuf, SceInt32 ox, SceInt32 oy, ScePVoid obuf);
 
@@ -95,19 +165,19 @@ public:
 
 	static SceVoid Deactivate();
 
-	class IPC
-	{
-	public:
+	static SceVoid SetMemStatus();
 
-		static SceVoid Enable();
+	static SceInt32 GetMemStatus();
 
-		static SceVoid Disable();
+	static SceInt32 GetPagemode();
 
-		static SceUInt32 PeekTx();
+	static SceVoid SetPagemode(SceInt32 mode);
 
-		static SceVoid SendInfo(WString *title, WString *artist, WString *album, SceInt32 playBtState);
+	static SceVoid RunCallbackAsJob(ui::Widget::EventCallback::EventHandler eventHandler, EMPVAUtils::AsyncEnqueue::FinishHandler finishHandler, SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
-	};
+	static SceVoid EMPVAUtils::BeginPleaseWait(SceBool withCancel = SCE_FALSE);
+
+	static SceVoid EMPVAUtils::EndPleaseWait();
 
 private:
 

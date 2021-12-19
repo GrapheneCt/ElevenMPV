@@ -6,15 +6,11 @@
 #include "xmp.h"
 #include "vitaaudiolib.h"
 
-static xmp_context xmp;
-static struct xmp_frame_info frame_info;
-static struct xmp_module_info module_info;
-
 audio::XmDecoder::XmDecoder(const char *path, SceBool isSwDecoderUsed) : GenericDecoder::GenericDecoder(path, isSwDecoderUsed)
 {
 	samplesRead = 0;
 
-	String *text8 = new String();
+	String text8;
 	xmp = xmp_create_context();
 
 	if (xmp_load_module(xmp, path) < 0)
@@ -27,15 +23,14 @@ audio::XmDecoder::XmDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 	xmp_get_module_info(xmp, &module_info);
 	if (module_info.mod->name[0] != '\0') {
 		metadata->hasMeta = SCE_TRUE;
-		text8->Set(module_info.mod->name);
-		text8->ToWString(&metadata->title);
-		text8->Clear();
+		text8 = module_info.mod->name;
+		text8.ToWString(&metadata->title);
 	}
+
+	isValid = SCE_TRUE;
 
 	audio::DecoderCore::SetDecoder(this, SCE_NULL);
 	audio::DecoderCore::Init(GetSampleRate(), GetChannels() == 2 ? SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO : SCE_AUDIO_OUT_PARAM_FORMAT_S16_MONO);
-
-	delete text8;
 }
 
 SceUInt32 audio::XmDecoder::GetSampleRate()
@@ -79,12 +74,12 @@ SceUInt64 audio::XmDecoder::Seek(SceFloat32 percent)
 {
 	SceInt32 seekSample = (SceInt32)((SceFloat32)totalSamples * percent / 100.0f);
 	
-	if (xmp_seek_time(xmp, seekSample / 44.1) >= 0) {
+	if (xmp_seek_time(xmp, (int)(seekSample / 44.1)) >= 0) {
 		samplesRead = seekSample;
 		return samplesRead;
 	}
 
-	return -1;
+	return 0;
 }
 
 audio::XmDecoder::~XmDecoder()
@@ -93,7 +88,7 @@ audio::XmDecoder::~XmDecoder()
 	isPaused = SCE_FALSE;
 
 	audio::DecoderCore::EndPre();
-	thread::Thread::Sleep(100);
+	thread::Sleep(100);
 	audio::DecoderCore::End();
 
 	xmp_end_player(xmp);

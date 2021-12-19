@@ -1,23 +1,17 @@
 #include <kernel.h>
+#include <sceavplayer.h>
 
+#include "common.h"
+#include "utils.h"
 #include "vitaaudiolib.h"
 #include "audio.h"
-#include "config.h"
 #include "dr_flac.h"
 #include "menu_audioplayer.h"
+#include "localmedia.h"
 
-static const SceUInt8 k_groupSize = 16;
+static SceOff s_currPos = 0;
 
 static audio::FlacDecoder *s_currentDecoderInstance = SCE_NULL;
-static SceBool s_readReset = SCE_TRUE;
-static SceBool s_forceSyncRead = SCE_FALSE;
-static SceUInt8 s_bufIdx = 0;
-static SceUInt8 s_callCount = 0;
-static SceUInt32 s_readOffset = 0;
-static SceOff s_maxAsyncOffset = 0;
-static io::File *s_flacFile = SCE_NULL;
-
-static char *fbuf[2];
 
 SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 {
@@ -30,17 +24,32 @@ SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 				!sce_paf_strncasecmp("image/jpeg", pMetadata->data.picture.mime, 10) ||
 				!sce_paf_strncasecmp("image/png", pMetadata->data.picture.mime, 9)) {
 
-				s_currentDecoderInstance->coverLoader = new audio::PlayerCoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_HIGHEST_PRIORITY, SCE_KERNEL_4KiB, "EMPVA::PlayerCoverLoader");
-				s_currentDecoderInstance->coverLoader->workptr = sce_paf_malloc(pMetadata->data.picture.pictureDataSize);
-				if (s_currentDecoderInstance->coverLoader->workptr != SCE_NULL) {
-					s_currentDecoderInstance->coverLoader->isExtMem = SCE_TRUE;
-					sce_paf_memcpy(s_currentDecoderInstance->coverLoader->workptr, pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize);
-					s_currentDecoderInstance->coverLoader->size = pMetadata->data.picture.pictureDataSize;
-					s_currentDecoderInstance->coverLoader->Start();
+				auto coverLoader = new PlayerCoverLoaderJob("EMPVA::PlayerCoverLoaderJob");
+				coverLoader->workptr = sce_paf_malloc(pMetadata->data.picture.pictureDataSize);
+
+				if (coverLoader->workptr != SCE_NULL) {
+
+					CleanupHandler *req = new CleanupHandler();
+					req->userData = coverLoader;
+					req->refCount = 0;
+					req->unk_08 = 1;
+					req->cb = (CleanupHandler::CleanupCallback)audio::PlayerCoverLoaderJob::JobKiller;
+
+					ObjectWithCleanup itemParam;
+					itemParam.object = coverLoader;
+					itemParam.cleanup = req;
+
+					coverLoader->isExtMem = SCE_TRUE;
+					sce_paf_memcpy(coverLoader->workptr, pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize);
+					coverLoader->size = pMetadata->data.picture.pictureDataSize;
+
+					g_coverJobQueue->Enqueue(&itemParam);
 
 					s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
 					s_currentDecoderInstance->metadata->hasCover = SCE_TRUE;
 				}
+				else
+					delete coverLoader;
 			}
 		}
 	}
@@ -53,21 +62,21 @@ SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 
 			if (!sce_paf_strncasecmp("TITLE=", tag, 6)) {
 				s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-				text8->Set(tag + 6, len - 6);
+				text8->Append(tag + 6, len - 6);
 				text8->ToWString(&s_currentDecoderInstance->metadata->title);
 				text8->Clear();
 			}
 
 			if (!sce_paf_strncasecmp("ALBUM=", tag, 6)) {
 				s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-				text8->Set(tag + 6, len - 6);
+				text8->Append(tag + 6, len - 6);
 				text8->ToWString(&s_currentDecoderInstance->metadata->album);
 				text8->Clear();
 			}
 
 			if (!sce_paf_strncasecmp("ARTIST=", tag, 7)) {
 				s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-				text8->Set(tag + 7, len - 7);
+				text8->Append(tag + 7, len - 7);
 				text8->ToWString(&s_currentDecoderInstance->metadata->artist);
 				text8->Clear();
 			}
@@ -79,86 +88,86 @@ SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 
 SceSize audio::FlacDecoder::drflacReadCB(ScePVoid pUserData, ScePVoid pBufferOut, SceSize bytesToRead)
 {
-	io::AsyncResult res;
+	DualIo *io = (DualIo *)pUserData;
+	SceInt32 read = -2;
 
-	if (bytesToRead != DR_FLAC_BUFFER_SIZE || s_forceSyncRead) {
-		return s_flacFile->Read(pBufferOut, bytesToRead);
+	if (io->mio != SCE_NULL) {
+		read = io->mio->Read(pBufferOut, bytesToRead);
 	}
 	else {
+		read = io->fio.readOffset(io->fio.objectPointer, (uint8_t *)pBufferOut, s_currPos, bytesToRead);
 
-		if (s_callCount == k_groupSize) {
-			s_bufIdx ^= 1;
-			s_readOffset = 0;
-			s_callCount = 0;
+		while (read == -2) {
+			read = io->fio.readOffset(io->fio.objectPointer, (uint8_t *)pBufferOut, s_currPos, bytesToRead);
+			thread::Sleep(10);
 		}
 
-		if (s_readReset) {
-			s_flacFile->Read(fbuf[0], bytesToRead * k_groupSize);
-			s_readReset = SCE_FALSE;
-		}
-
-		if (s_callCount == 0) {
-
-			s_flacFile->WaitAsync(&res);
-
-			s_bufIdx ^= 1;
-
-			s_flacFile->ReadAsync(fbuf[s_bufIdx], bytesToRead * k_groupSize);
-
-			s_bufIdx ^= 1;
-		}
-
-		sce_paf_memcpy(pBufferOut, fbuf[s_bufIdx] + s_readOffset, bytesToRead);
-		s_readOffset += bytesToRead;
-		s_callCount++;
-
-		return bytesToRead;
-
+		if (read < 0)
+			return 0;
 	}
+
+	s_currPos += read;
+
+	return read;
 }
 
 SceUInt32 audio::FlacDecoder::drflacSeekCB(ScePVoid pUserData, SceInt32 offset, SceInt32 origin)
 {
-	io::AsyncResult res;
-	SceOff currOffset;
-	s_flacFile->WaitAsync(&res);
-	s_bufIdx = 0;
-	s_callCount = 0;
-	s_readOffset = 0;
-	s_readReset = SCE_TRUE;
+	DualIo *io = (DualIo *)pUserData;
 
-	currOffset = s_flacFile->Lseek(offset, origin);
-
-	if (currOffset > s_maxAsyncOffset)
-		s_forceSyncRead = SCE_TRUE;
-	else
-		s_forceSyncRead = SCE_FALSE;
-
-	if (currOffset < 0)
-		return DRFLAC_FALSE;
-	else
+	if (io->mio != SCE_NULL) {
+		s_currPos = io->mio->Lseek(offset, origin);
 		return DRFLAC_TRUE;
+	}
+	else {
+		switch (origin) {
+		case SCE_SEEK_SET:
+			s_currPos = offset;
+			break;
+		case SCE_SEEK_CUR:
+			s_currPos += offset;
+			break;
+		case SCE_SEEK_END:
+			s_currPos = io->fio.size(io->fio.objectPointer);
+			s_currPos += offset;
+			break;
+		}
+
+		if (s_currPos > io->fio.size(io->fio.objectPointer))
+			return DRFLAC_FALSE;
+		else
+			return DRFLAC_TRUE;
+	}
 }
 
 audio::FlacDecoder::FlacDecoder(const char *path, SceBool isSwDecoderUsed) : GenericDecoder::GenericDecoder(path, isSwDecoderUsed)
 {
+	SceUInt32 bufMemSize = 256 * 1024;
+
 	framesRead = 0;
-	s_readReset = SCE_TRUE;
-	s_forceSyncRead = SCE_FALSE;
-	s_bufIdx = 0;
-	s_callCount = 0;
-	s_readOffset = 0;
-	s_flacFile = SCE_NULL;
+	s_currPos = 0;
+
+	flac = SCE_NULL;
 
 	s_currentDecoderInstance = this;
 
-	fbuf[0] = (char *)sce_paf_malloc(DR_FLAC_BUFFER_SIZE * k_groupSize);
-	fbuf[1] = (char *)sce_paf_malloc(DR_FLAC_BUFFER_SIZE * k_groupSize);
+	if (EMPVAUtils::GetMemStatus() > 0)
+		bufMemSize = 512 * 1024;
 
-	s_flacFile = new io::File();
-	s_flacFile->Open(path, SCE_O_RDONLY, 0);
-	s_maxAsyncOffset = (s_flacFile->GetSize() - DR_FLAC_BUFFER_SIZE * k_groupSize);
-	flac = (ScePVoid)drflac_open_with_metadata(drflacReadCB, (drflac_seek_proc)drflacSeekCB, (drflac_meta_proc)MetadataCbEntry, SCE_NULL, SCE_NULL);
+	LOCALMediaInit(&nmHandle, &io.fio, SCE_NULL, bufMemSize, 0, 0, SCE_NULL);
+
+	io.fio.open(io.fio.objectPointer, path);
+	io.mio = new io::File();
+	io.mio->Open(path, SCE_O_RDONLY, 0);
+
+	flac = (ScePVoid)drflac_open_with_metadata(drflacReadCB, (drflac_seek_proc)drflacSeekCB, (drflac_meta_proc)MetadataCbEntry, &io, SCE_NULL);
+
+	if (flac)
+		isValid = SCE_TRUE;
+
+	io.mio->Close();
+	delete io.mio;
+	io.mio = SCE_NULL;
 
 	audio::DecoderCore::SetDecoder(this, SCE_NULL);
 	audio::DecoderCore::Init(GetSampleRate(), GetChannels() == 2 ? SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO : SCE_AUDIO_OUT_PARAM_FORMAT_S16_MONO);
@@ -212,31 +221,30 @@ SceUInt64 audio::FlacDecoder::Seek(SceFloat32 percent)
 
 	drflac_uint64 seekFrame = (drflac_uint64)((SceFloat32)flacHandle->totalPCMFrameCount * percent / 100.0f);
 
+	LOCALMediaInvalidateAllBuffers(nmHandle);
+
 	if (drflac_seek_to_pcm_frame(flacHandle, seekFrame) == DRFLAC_TRUE) {
 		framesRead = seekFrame;
 		if (framesRead)
-		return framesRead;
+			return framesRead;
 	}
 
-	return -1;
+	return 0;
 }
 
 audio::FlacDecoder::~FlacDecoder()
 {
-	io::AsyncResult res;
-	s_flacFile->WaitAsync(&res);
-
 	isPlaying = SCE_TRUE;
 	isPaused = SCE_FALSE;
 
 	audio::DecoderCore::EndPre();
-	thread::Thread::Sleep(100);
+	thread::Sleep(100);
 	audio::DecoderCore::End();
 
-	drflac_close((drflac *)flac);
-	s_flacFile->Close();
-	delete s_flacFile;
+	if (flac)
+		drflac_close((drflac *)flac);
+	io.fio.close(io.fio.objectPointer);
+	LOCALMediaDeInit(nmHandle);
 
-	sce_paf_free(fbuf[0]);
-	sce_paf_free(fbuf[1]);
+	s_currentDecoderInstance = SCE_NULL;
 }
