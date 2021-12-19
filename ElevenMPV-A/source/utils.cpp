@@ -383,7 +383,7 @@ SceVoid EMPVAUtils::PleaseWaitThread::EntryFunction()
 	SceCommonDialogStatus status;
 	userCancel = SCE_FALSE;
 
-	//sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+	sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 	sceMsgDialogParamInit(&msgParam);
 	msgParam.mode = SCE_MSG_DIALOG_MODE_SYSTEM_MSG;
 
@@ -421,7 +421,7 @@ SceVoid EMPVAUtils::PleaseWaitThread::EntryFunction()
 
 	sceMsgDialogTerm();
 
-	//sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
+	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 	sceKernelExitDeleteThread(0);
 }
 
