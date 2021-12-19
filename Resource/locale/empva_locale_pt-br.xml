@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
   <string src="Este diretório está vazio" id="msg_empty_dir" />
-  <string src="Ocorreu um erro.\n\nPara utilizar esta função o plugin itls-enso deve estar previamente configurado." id="msg_netcheck_fail" />
+  <string src="Ocorreu um erro de conexão SSL.\n\nPara utilizar esta função o horário do sistema e o plugin iTLS-Enso devem estar previamente configurados." />
   
   <string src="Configurações" id="msg_settings" />
   <string src="Partição:" id="msg_settings_device" />
