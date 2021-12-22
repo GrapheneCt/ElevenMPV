@@ -388,26 +388,26 @@
   </templatetable>
   
   <stringtable>
-	<locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ja" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en-gb" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_fr.rcs.zlib" compress="on" id="fr" />
-    <locale origsize="3520" src="empva_files\locale\empva_locale_es.rcs.zlib" compress="on" id="es" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="de" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="it" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="nl" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
-    <locale origsize="3456" src="empva_files\locale\empva_locale_ru.rcs.zlib" compress="on" id="ru" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ko" />
-    <locale origsize="2784" src="empva_files\locale\empva_locale_zh-t.rcs.zlib" compress="on" id="zh-t" />
-    <locale origsize="2800" src="empva_files\locale\empva_locale_zh-s.rcs.zlib" compress="on" id="zh-s" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="fi" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="sv" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="da" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="no" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pl" />
-    <locale origsize="4336" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="tr" />
+	<locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ja" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="en-gb" />
+    <locale origsize="5184" src="empva_files\locale\empva_locale_fr.rcs.zlib" compress="on" id="fr" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="es" />
+    <locale origsize="5216" src="empva_files\locale\empva_locale_de.rcs.zlib" compress="on" id="de" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="it" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="nl" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pt" />
+    <locale origsize="5312" src="empva_files\locale\empva_locale_pt-br.rcs.zlib" compress="on" id="pt-br" />
+    <locale origsize="5200" src="empva_files\locale\empva_locale_ru.rcs.zlib" compress="on" id="ru" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="ko" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="zh-t" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="zh-s" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="fi" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="sv" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="da" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="no" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="pl" />
+    <locale origsize="4960" src="empva_files\locale\empva_locale_en.rcs.zlib" compress="on" id="tr" />
   </stringtable>
   
   <texturetable>

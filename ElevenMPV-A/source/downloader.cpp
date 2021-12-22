@@ -98,10 +98,6 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name)
 	else if (ret2 != SCE_OK)
 		return ret2;
 
-	sceClibPrintf("name: %s\n", minfo.name);
-	sceClibPrintf("mime: %s\n", minfo.mimeType);
-	sceClibPrintf("size: %u\n", minfo.size);
-
 	sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
 	sce_paf_strcpy((char *)minfo.name, name);
 
