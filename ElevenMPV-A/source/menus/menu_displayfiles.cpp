@@ -286,7 +286,7 @@ menu::displayfiles::Page::Page(const char* path)
 			file->button->Disable(0);
 		file->buttonCB = new ButtonCB;
 		file->buttonCB->pUserData = file;
-		file->button->RegisterEventCallback(ui::Widget::EventMain_Pressed, file->buttonCB, 0);
+		file->button->RegisterEventCallback(ui::Widget::EventMain_Decide, file->buttonCB, 0);
 		if (i == fileNum - 1)
 			lastFile = file;
 		file = file->next;

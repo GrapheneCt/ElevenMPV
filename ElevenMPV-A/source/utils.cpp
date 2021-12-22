@@ -16,6 +16,7 @@
 #include "common.h"
 #include "ipc.h"
 #include "yt_utils.h"
+#include "menu_settings.h"
 #include "vitaaudiolib.h"
 
 static SceBool s_isDeactivated = SCE_FALSE;

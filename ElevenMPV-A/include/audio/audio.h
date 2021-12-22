@@ -246,6 +246,7 @@ namespace audio {
 		SceNmHandle nmHandle;
 		SceUInt64 totalTime;
 		SceUInt64 samplesRead;
+		SceUInt64 seekTargetSamples;
 		SceUInt32 sampleRate;
 		SceInt32 maxSamples;
 		SceUInt8 channelNum;
@@ -438,6 +439,7 @@ namespace audio {
 		SceNmHandle nmHandle;
 		SceUInt64 totalTime;
 		SceUInt64 samplesRead;
+		SceUInt64 seekTargetSamples;
 		SceUInt32 sampleRate;
 		SceInt32 maxSamples;
 		SceUInt8 channelNum;

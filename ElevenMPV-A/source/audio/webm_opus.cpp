@@ -73,6 +73,7 @@ audio::WebmOpusDecoder::WebmOpusDecoder(const char *path, SceBool isSwDecoderUse
 	nestegg_audio_params aparams;
 
 	samplesRead = 0;
+	seekTargetSamples = 0;
 	totalTime = 0;
 	sampleRate = 0;
 	s_currPos = 0;
@@ -191,10 +192,10 @@ SceVoid audio::WebmOpusDecoder::Decode(ScePVoid stream, SceUInt32 length, ScePVo
 
 SceUInt64 audio::WebmOpusDecoder::GetPosition()
 {
-	while (isSeeking) {
-		thread::Sleep(10);
-	}
-	return samplesRead;
+	if (isSeeking)
+		return seekTargetSamples;
+	else
+		return samplesRead;
 }
 
 SceUInt64 audio::WebmOpusDecoder::GetLength()
@@ -208,6 +209,7 @@ SceUInt64 audio::WebmOpusDecoder::Seek(SceFloat32 percent)
 	seekTime = seekTime / 10.0f;
 	SceFloat32 seekIterNum = sce_paf_ceilf(seekTime);
 	SceUInt64 llSeekTime = (SceInt64)(seekIterNum * 10001000000.0f);
+	seekTargetSamples = (SceUInt64)((SceDouble)llSeekTime * (SceDouble)sampleRate / 1000000000.0f); // This imitates length in samples
 
 	LOCALMediaInvalidateAllBuffers(nmHandle);
 

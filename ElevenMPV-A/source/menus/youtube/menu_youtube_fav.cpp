@@ -72,7 +72,7 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	buttonCB->pUserData = buttonCB;
 	buttonCB->mode = menu::youtube::Base::Mode_Fav;
 	buttonCB->url = url;
-	button->RegisterEventCallback(ui::Widget::EventMain_Pressed, buttonCB, 0);
+	button->RegisterEventCallback(ui::Widget::EventMain_Decide, buttonCB, 0);
 
 	youtube_get_video_thumbnail_url_by_id(data, tmb, sizeof(tmb));
 

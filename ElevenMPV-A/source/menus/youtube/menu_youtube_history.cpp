@@ -85,7 +85,7 @@ SceVoid menu::youtube::HistoryParserThread::CreateVideoButton(HistoryPage *page,
 	buttonCB->pUserData = buttonCB;
 	buttonCB->mode = menu::youtube::Base::Mode_History;
 	buttonCB->url = url;
-	button->RegisterEventCallback(ui::Widget::EventMain_Pressed, buttonCB, 0);
+	button->RegisterEventCallback(ui::Widget::EventMain_Decide, buttonCB, 0);
 
 	HttpFile::Open(&fres, tmb, &res, 0);
 	if (res < 0) {

@@ -8,6 +8,7 @@
 #include <libnetctl.h>
 #include <libhttp.h>
 #include <paf.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "main.h"
@@ -23,7 +24,9 @@ using namespace paf;
 extern "C" {
 	SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
 
-	unsigned int sceLibcHeapSize = 5 * 1024 * 1024;
+	unsigned int sceLibcHeapSize = SCE_LIBC_HEAP_SIZE_EXTENDED_ALLOC_NO_LIMIT;
+	unsigned int sceLibcHeapInitialSize = 2 * 1024 * 1024;
+	unsigned int sceLibcHeapExtendedAlloc = 1;
 }
 
 SceUID g_eventFlagUid;
@@ -50,6 +53,8 @@ menu::audioplayer::Audioplayer *g_currentPlayerInstance = SCE_NULL;
 menu::displayfiles::Page *g_currentDispFilePage;
 menu::settings::SettingsButtonCB *g_settingsButtonCB;
 
+static const EMPVAUtils::MemState k_ytModeLimit = EMPVAUtils::MemState_Mid;
+
 SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	Plugin::TemplateInitParam tmpParam;
@@ -67,7 +72,7 @@ SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf:
 	if (currentPagemode == menu::settings::Settings::PageMode_Normal) {
 
 		if (sceSysmoduleIsLoaded(SCE_SYSMODULE_HTTPS)) {
-			if (EMPVAUtils::GetMemStatus() > EMPVAUtils::MemState_Mid) {
+			if (EMPVAUtils::GetMemStatus() > k_ytModeLimit) {
 				menu::youtube::Base::FirstTimeInit();
 			}
 		}
@@ -178,7 +183,7 @@ SceVoid pluginLoadCB(Plugin *plugin)
 	SCE_DBG_LOG_DEBUG("[EMPVA_DEBUG] pagemode set to %u\n", pagemode);
 
 	if (pagemode == menu::settings::Settings::PageMode_YouTube) {
-		if (EMPVAUtils::GetMemStatus() < EMPVAUtils::MemState_Full) {
+		if (EMPVAUtils::GetMemStatus() <= k_ytModeLimit) {
 			SCE_DBG_LOG_DEBUG("[EMPVA_DEBUG] Failed to grow memory: resetting pagemode to NORMAL\n");
 			pagemode = menu::settings::Settings::PageMode_Normal;
 		}
@@ -186,7 +191,7 @@ SceVoid pluginLoadCB(Plugin *plugin)
 
 	EMPVAUtils::SetPagemode(pagemode);
 
-	if (EMPVAUtils::GetMemStatus() > EMPVAUtils::MemState_Mid) {
+	if (EMPVAUtils::GetMemStatus() > k_ytModeLimit) {
 		g_YtVitaIconTex = new graphics::Texture();
 		searchParam.hash = EMPVAUtils::GetHash("tex_yt_icon_vita");
 		Plugin::LoadTexture(g_YtVitaIconTex, g_empvaPlugin, &searchParam);
@@ -240,7 +245,7 @@ SceVoid pluginLoadCB(Plugin *plugin)
 	searchParam.hash = EMPVAUtils::GetHash("_common_texture_transparent");
 	Plugin::LoadTexture(g_texTransparent, Plugin::Find("__system__common_resource"), &searchParam);
 
-	if (EMPVAUtils::GetMemStatus() > EMPVAUtils::MemState_Mid) {
+	if (EMPVAUtils::GetMemStatus() > k_ytModeLimit) {
 
 		searchParam.hash = EMPVAUtils::GetHash("yt_menu_template_corner_switch");
 		g_empvaPlugin->TemplateOpen(g_rootPage, &searchParam, &tmpParam);
@@ -286,6 +291,7 @@ SceVoid pluginLoadCB(Plugin *plugin)
 	auto playerButtonCB = new menu::displayfiles::PlayerButtonCB();
 	playerButton->RegisterEventCallback(0x10000008, playerButtonCB, 0);
 	playerButton->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
+	playerButton->AssignButton(0x80); //square
 
 	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 }
@@ -304,11 +310,11 @@ int main()
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
 	if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Full) {
-		fwParam.defaultSurfacePoolSize = 16 * 1024 * 1024;
+		fwParam.defaultSurfacePoolSize = 18 * 1024 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
 	else if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Mid) {
-		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024 + 512 * 1024;
+		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
 	else {

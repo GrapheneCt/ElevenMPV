@@ -341,6 +341,7 @@ SceVoid menu::youtube::Base::FirstTimeInit()
 	Resource::Element searchParam;
 	Plugin::TemplateInitParam tmpParam;
 	ui::Widget *commonWidget;
+	ui::Widget *ytTopPlane;
 	ui::Widget *btMenu;
 
 	InitYtStuff();
@@ -349,13 +350,20 @@ SceVoid menu::youtube::Base::FirstTimeInit()
 	g_empvaPlugin->TemplateOpen(g_rootPage, &searchParam, &tmpParam);
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_plane_top_search");
-	commonWidget = g_rootPage->GetChildByHash(&searchParam, 0);
-	commonWidget->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
+	ytTopPlane = g_rootPage->GetChildByHash(&searchParam, 0);
+	ytTopPlane->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_image_button_top_search");
-	commonWidget = commonWidget->GetChildByHash(&searchParam, 0);
+	commonWidget = ytTopPlane->GetChildByHash(&searchParam, 0);
 	auto searchActionButtonCB = new menu::youtube::SearchActionButtonCB();
 	commonWidget->RegisterEventCallback(0x10000008, searchActionButtonCB, 0);
+
+	/*
+	searchParam.hash = EMPVAUtils::GetHash("yt_text_box_top_search");
+	commonWidget = ytTopPlane->GetChildByHash(&searchParam, 0);
+	searchActionButtonCB = new menu::youtube::SearchActionButtonCB();
+	commonWidget->RegisterEventCallback(0x10000008, searchActionButtonCB, 0);
+	*/
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_plane_bottommenu");
 	btMenu = g_rootPage->GetChildByHash(&searchParam, 0);

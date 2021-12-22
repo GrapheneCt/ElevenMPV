@@ -98,6 +98,10 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name)
 	else if (ret2 != SCE_OK)
 		return ret2;
 
+	sceClibPrintf("name: %s\n", minfo.name);
+	sceClibPrintf("mime: %s\n", minfo.mimeType);
+	sceClibPrintf("size: %u\n", minfo.size);
+
 	sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
 	sce_paf_strcpy((char *)minfo.name, name);
 
@@ -114,9 +118,19 @@ SceInt32 Downloader::Enqueue(const char *url, const char *name)
 	bfInfo.data1 = &dwRes;
 	bfInfo.data1Size = sizeof(SceInt32);
 
+	ret2 = SCE_OK;
 	ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
-	if (ret2 != SCE_OK)
-		return ret2;
+	if (ret2 != SCE_OK) {
+		//invalid filename?
+		sce_paf_memset(&minfo.name, 0, sizeof(minfo.name));
+		char *ext = sce_paf_strrchr(name, '.');
+		sce_paf_snprintf((char *)minfo.name, sizeof(minfo.name), "DefaultFilename%s", ext);
+
+		ret2 = SCE_OK;
+		ret = dw.client->invokeSyncMethod(0x12340011, &dtInfo, 3, &ret2, &bfInfo, 1);
+		if (ret2 != SCE_OK)
+			return ret2;
+	}
 
 	return ret;
 }

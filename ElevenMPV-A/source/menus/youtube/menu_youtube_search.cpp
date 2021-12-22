@@ -62,7 +62,7 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 		buttonCB->pUserData = buttonCB;
 		buttonCB->mode = menu::youtube::Base::Mode_Search;
 		buttonCB->url = page->parseResult->results[index].video.url.c_str();
-		button->RegisterEventCallback(ui::Widget::EventMain_Pressed, buttonCB, 0);
+		button->RegisterEventCallback(ui::Widget::EventMain_Decide, buttonCB, 0);
 	}
 	else if (page->parseResult->results[index].type == YouTubeSuccinctItem::PLAYLIST) {
 
@@ -81,7 +81,7 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 		buttonCB->pUserData = buttonCB;
 		buttonCB->mode = menu::youtube::Base::Mode_Search;
 		buttonCB->url = page->parseResult->results[index].playlist.url.c_str();
-		button->RegisterEventCallback(ui::Widget::EventMain_Pressed, buttonCB, 0);
+		button->RegisterEventCallback(ui::Widget::EventMain_Decide, buttonCB, 0);
 	}
 
 	if (res < 0) {

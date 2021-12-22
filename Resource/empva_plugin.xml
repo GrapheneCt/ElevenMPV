@@ -341,7 +341,7 @@
 	  
 	  <plane style="_common_style_plane_transparent" id="yt_plane_top_search">
         <layout_hint align="0, 2" anchor="0, 2" size="700, 96" pos="-130, 0" />
-		<text_box auto_scroll="1" ime_type="1" edit_mode="1" paste_mode="1" edit_auto_transition_mode="0" style="yt_style_text_box_top_search" id="yt_text_box_top_search" >
+		<text_box auto_scroll="1" ime_type="0" edit_mode="1" paste_mode="1" edit_auto_transition_mode="0" style="yt_style_text_box_top_search" id="yt_text_box_top_search" >
           <layout_hint pos="122, 8" adjust="0, 0" anchor="1, 1" align="1, 1" size="740, 50" />
           <focus_hint focus_shape="0" />
         </text_box>
