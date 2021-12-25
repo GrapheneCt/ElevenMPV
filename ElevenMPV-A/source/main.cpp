@@ -146,6 +146,7 @@ SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf:
 				g_currentDispFilePage->prev->root->PlayAnimation(0.0f, ui::Widget::Animation_SlideFromBottom1);
 				if (g_currentDispFilePage->prev->root->animationStatus & 0x80)
 					g_currentDispFilePage->prev->root->animationStatus &= ~0x80;
+				g_currentDispFilePage->prev->root->SetAlpha(0.3f);
 			}
 			g_currentDispFilePage->root->PlayAnimation(0.0f, ui::Widget::Animation_SlideFromBottom1);
 			if (g_currentDispFilePage->root->animationStatus & 0x80)

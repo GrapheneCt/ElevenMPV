@@ -434,7 +434,8 @@ SceVoid menu::audioplayer::Audioplayer::Close()
 {
 	Resource::Element searchParam;
 
-	menu::audioplayer::BackButtonCB::BackButtonCBFun(0, SCE_NULL, 0, SCE_NULL);
+	if (*(SceUInt32 *)g_settingsButtonCB->pUserData != menu::settings::SettingsButtonCB::Parent_Displayfiles)
+		menu::audioplayer::BackButtonCB::BackButtonCBFun(0, SCE_NULL, 0, SCE_NULL);
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_pagemode_button");
 	ui::Widget *buttonPagemode = g_rootPage->GetChildByHash(&searchParam, 0);
