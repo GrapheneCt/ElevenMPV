@@ -20,7 +20,7 @@
   <string src="待機時間（分鐘）" id="msg_settings_power_time" />
   
   <string src="在休眠模式下用右搖桿跳過曲目" id="msg_settings_control_stick" />
-  <string src="運動控制" id="msg_settings_control_motion" />
+  <string src="移動控制" id="msg_settings_control_motion" />
   <string src="超時（秒）" id="msg_settings_control_time" />
   <string src="角閾值（°）" id="msg_settings_control_angle" />
   
