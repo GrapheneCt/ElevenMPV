@@ -32,6 +32,10 @@
   <string src="所有收藏將被刪除，是否繼續？" id="msg_settings_youtube_clean_fav_confirm" />
   <string src="下載" id="msg_settings_youtube_download" />
   <string src="已添加到下載隊列中。" id="msg_settings_youtube_download_begin" />
+  <string src="質量" id="msg_youtube_quality" />
+  <string src="高質量" id="msg_option_youtube_quality_0" />
+  <string src="中等質量" id="msg_option_youtube_quality_1" />
+  <string src="低質量" id="msg_option_youtube_quality_2" />
   
   <string src="隨機" id="msg_player_shuffle" />
   <string src="重複" id="msg_player_repeat" />

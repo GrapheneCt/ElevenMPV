@@ -400,8 +400,8 @@
     <locale origsize="5616" src="RES_RCO_TMP\empva_locale_pt-br.xml.rcs.zlib" compress="on" id="pt-br" />
     <locale origsize="5536" src="RES_RCO_TMP\empva_locale_ru.xml.rcs.zlib" compress="on" id="ru" />
     <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="ko" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="zh-t" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="zh-s" />
+    <locale origsize="4256" src="RES_RCO_TMP\empva_locale_ch.xml.rcs.zlib" compress="on" id="zh-t" />
+    <locale origsize="4288" src="RES_RCO_TMP\empva_locale_zh.xml.rcs.zlib" compress="on" id="zh-s" />
     <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="fi" />
     <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="sv" />
     <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="da" />
