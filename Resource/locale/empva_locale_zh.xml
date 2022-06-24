@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+  <string src="此目录为空" id="msg_empty_dir" />
+  <string src="发生SSL错误。\n\n使用此功能时必须设置正确的系统时间，并且必须已安装iTLS-Enso插件。" id="msg_netcheck_fail" />
+  
+  <string src="设定" id="msg_settings" />
+  <string src="设备" id="msg_settings_device" />
+  <string src="排序" id="msg_settings_sort" />
+  <string src="音频 " id="msg_settings_audio" />
+  <string src="省电" id="msg_settings_power" />
+  <string src="控制" id="msg_settings_control" />
+  <string src="YouTube" id="msg_settings_youtube" />
+  
+  <string src="均衡器" id="msg_settings_audio_eq" />
+  <string src="自动调节控制" id="msg_settings_audio_alc" />
+  <string src="用均衡器限制音量" id="msg_settings_audio_limit" />
+  
+  <string src="帧数限制器" id="msg_settings_power_fps" />
+  <string src="当暂停时自动待机" id="msg_settings_power_save" />
+  <string src="待机计时器（分钟）" id="msg_settings_power_time" />
+  
+  <string src="在休眠模式下用右摇杆跳过曲目" id="msg_settings_control_stick" />
+  <string src="移动控制" id="msg_settings_control_motion" />
+  <string src="超时（秒）" id="msg_settings_control_time" />
+  <string src="角阈值（°）" id="msg_settings_control_angle" />
+  
+  <string src="清除历史记录" id="msg_settings_youtube_clean_history" />
+  <string src="清除收藏" id="msg_settings_youtube_clean_fav" />
+  <string src="历史记录已清除。" id="msg_settings_youtube_clean_history_done" />
+  <string src="收藏已清除。" id="msg_settings_youtube_clean_fav_done" />
+  <string src="所有历史记录将被删除，是否继续？" id="msg_settings_youtube_clean_history_confirm" />
+  <string src="所有收藏将被删除，是否继续？" id="msg_settings_youtube_clean_fav_confirm" />
+  <string src="下载" id="msg_settings_youtube_download" />
+  <string src="已添加到下载队列中。" id="msg_settings_youtube_download_begin" />
+  
+  <string src="随机播放" id="msg_player_shuffle" />
+  <string src="重复播放" id="msg_player_repeat" />
+  <string src="收藏" id="msg_player_fav" />
+  
+  <string src="关" id="msg_option_audio_eq_0" />
+  <string src="重低音" id="msg_option_audio_eq_1" />
+  <string src="流行" id="msg_option_audio_eq_2" />
+  <string src="爵士" id="msg_option_audio_eq_3" />
+  <string src="独特" id="msg_option_audio_eq_4" />
+  
+  <string src="ux0:/" id="msg_option_device_0" />
+  <string src="ur0:/" id="msg_option_device_1" />
+  <string src="uma0:/" id="msg_option_device_2" />
+  <string src="xmc0:/" id="msg_option_device_3" />
+  <string src="imc0:/" id="msg_option_device_4" />
+  <string src="grw0:/" id="msg_option_device_5" />
+  <string src="找不到设备。" id="msg_settings_device_not_found" />
+  
+  <string src="按名称（升序）" id="msg_option_sort_0" />
+  <string src="按名称（降序）" id="msg_option_sort_1" />
+  <string src="按大小（最大优先）" id="msg_option_sort_2" />
+  <string src="按大小（最小优先）" id="msg_option_sort_3" />
+  
+</stringset>
