@@ -15,7 +15,7 @@ static audio::FlacDecoder *s_currentDecoderInstance = SCE_NULL;
 
 SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 {
-	String *text8 = new String();
+	string *text8 = new string();
 	drflac_metadata *pMetadata = (drflac_metadata *)pMeta;
 	s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
 	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE && !s_currentDecoderInstance->metadata->hasCover) {
@@ -29,15 +29,7 @@ SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 
 				if (coverLoader->workptr != SCE_NULL) {
 
-					CleanupHandler *req = new CleanupHandler();
-					req->userData = coverLoader;
-					req->refCount = 0;
-					req->unk_08 = 1;
-					req->cb = (CleanupHandler::CleanupCallback)audio::PlayerCoverLoaderJob::JobKiller;
-
-					ObjectWithCleanup itemParam;
-					itemParam.object = coverLoader;
-					itemParam.cleanup = req;
+					SharedPtr<job::JobItem> itemParam(coverLoader);
 
 					coverLoader->isExtMem = SCE_TRUE;
 					sce_paf_memcpy(coverLoader->workptr, pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize);
@@ -62,23 +54,23 @@ SceVoid audio::FlacDecoder::MetadataCbEntry(ScePVoid pUserData, ScePVoid pMeta)
 
 			if (!sce_paf_strncasecmp("TITLE=", tag, 6)) {
 				s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-				text8->Append(tag + 6, len - 6);
-				text8->ToWString(&s_currentDecoderInstance->metadata->title);
-				text8->Clear();
+				text8->append(tag + 6, len - 6);
+				ccc::UTF8toUTF16(text8, &s_currentDecoderInstance->metadata->title);
+				text8->clear();
 			}
 
 			if (!sce_paf_strncasecmp("ALBUM=", tag, 6)) {
 				s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-				text8->Append(tag + 6, len - 6);
-				text8->ToWString(&s_currentDecoderInstance->metadata->album);
-				text8->Clear();
+				text8->append(tag + 6, len - 6);
+				ccc::UTF8toUTF16(text8, &s_currentDecoderInstance->metadata->album);
+				text8->clear();
 			}
 
 			if (!sce_paf_strncasecmp("ARTIST=", tag, 7)) {
 				s_currentDecoderInstance->metadata->hasMeta = SCE_TRUE;
-				text8->Append(tag + 7, len - 7);
-				text8->ToWString(&s_currentDecoderInstance->metadata->artist);
-				text8->Clear();
+				text8->append(tag + 7, len - 7);
+				ccc::UTF8toUTF16(text8, &s_currentDecoderInstance->metadata->artist);
+				text8->clear();
 			}
 		}
 	}
@@ -116,7 +108,7 @@ SceUInt32 audio::FlacDecoder::drflacSeekCB(ScePVoid pUserData, SceInt32 offset, 
 	DualIo *io = (DualIo *)pUserData;
 
 	if (io->mio != SCE_NULL) {
-		s_currPos = io->mio->Lseek(offset, origin);
+		s_currPos = io->mio->Seek(offset, origin);
 		return DRFLAC_TRUE;
 	}
 	else {
@@ -142,6 +134,7 @@ SceUInt32 audio::FlacDecoder::drflacSeekCB(ScePVoid pUserData, SceInt32 offset, 
 
 audio::FlacDecoder::FlacDecoder(const char *path, SceBool isSwDecoderUsed) : GenericDecoder::GenericDecoder(path, isSwDecoderUsed)
 {
+	LocalFile::OpenArg oarg;
 	SceUInt32 bufMemSize = 256 * 1024;
 
 	framesRead = 0;
@@ -157,8 +150,9 @@ audio::FlacDecoder::FlacDecoder(const char *path, SceBool isSwDecoderUsed) : Gen
 	LOCALMediaInit(&nmHandle, &io.fio, SCE_NULL, bufMemSize, 0, 0, SCE_NULL);
 
 	io.fio.open(io.fio.objectPointer, path);
-	io.mio = new io::File();
-	io.mio->Open(path, SCE_O_RDONLY, 0);
+	io.mio = new LocalFile();
+	oarg.filename = path;
+	io.mio->Open(&oarg);
 
 	flac = (ScePVoid)drflac_open_with_metadata(drflacReadCB, (drflac_seek_proc)drflacSeekCB, (drflac_meta_proc)MetadataCbEntry, &io, SCE_NULL);
 

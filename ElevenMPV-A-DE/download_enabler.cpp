@@ -72,17 +72,17 @@ static SceInt32 ExportFilePatched(uint32_t *data)
 			else
 				sce_paf_snprintf(download_path, sizeof(download_path), "ux0:empva_download/%s (%d)%s", short_name, count, ext);
 
-			if (!io::Misc::Exists(download_path))
+			if (!LocalFile::Exists(download_path))
 				break;
 
 			count++;
 		}
 
-		res = io::Misc::MkdirRWSYS("ux0:empva_download");
+		res = Dir::Create("ux0:empva_download");
 		if (res < 0 && res != 0x80010011)
 			return res;
 
-		return io::Misc::Rename(bgdl_path, download_path);
+		return LocalFile::RenameFile(bgdl_path, download_path);
 	}
 
 	return res;

@@ -29,8 +29,8 @@ static ui::Widget *textBottom = SCE_NULL;
 static tai_hook_ref_t hookRef[1];
 static SceUID hookId[1];
 
-static WString *topText;
-static WString *bottomText;
+static wstring *topText;
+static wstring *bottomText;
 
 static SceBool impose = SCE_FALSE;
 
@@ -74,14 +74,13 @@ setup_error_return:
 
 void setup_stage2()
 {
-	topText = new WString();
-	bottomText = new WString();
+	topText = new wstring();
+	bottomText = new wstring();
 
 	ipcPipeRX = sceKernelCreateMsgPipe("ElevenMPVA::ShellIPC_RX", SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, IPC_PIPE_ATTR, sizeof(IpcDataRX), SCE_NULL);
 	ipcPipeTX = sceKernelCreateMsgPipe("ElevenMPVA::ShellIPC_TX", SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, IPC_PIPE_ATTR, sizeof(IpcDataTX), SCE_NULL);
 
 	mainThread = new ImposeThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellControl");
-	mainThread->done = SCE_FALSE;
 	mainThread->Start();
 
 	rxThread = new RxThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellRx");
@@ -93,7 +92,7 @@ void cleanup()
 	IpcDataRX ipcDataRX;
 
 	if (mainThread != SCE_NULL) {
-		mainThread->done = SCE_TRUE;
+		mainThread->Cancel();
 		mainThread->Join();
 		delete mainThread;
 	}
@@ -117,39 +116,39 @@ void cleanup()
 
 int findWidgets()
 {
-	Resource::Element widgetSearchResult;
+	rco::Element widgetSearchResult;
 
 	widgetSearchResult.hash = PlayerButtonCB::ButtonHash_Rew;
 
 	buttonREW = SCE_NULL;
 	while (buttonREW == NULL) {
-		buttonREW = imposeRoot->GetChildByHash(&widgetSearchResult, 0);
+		buttonREW = imposeRoot->GetChild(&widgetSearchResult, 0);
 		thread::Sleep(100);
 	}
 
 	widgetSearchResult.hash = PlayerButtonCB::ButtonHash_Ff;
-	buttonFF = imposeRoot->GetChildByHash(&widgetSearchResult, 0);
+	buttonFF = imposeRoot->GetChild(&widgetSearchResult, 0);
 	if (buttonFF == NULL) {
 		SCE_DBG_LOG_ERROR("buttonFF not found\n");
 		goto findButton_error_return;
 	}
 
 	widgetSearchResult.hash = PlayerButtonCB::ButtonHash_Play;
-	buttonPLAY = imposeRoot->GetChildByHash(&widgetSearchResult, 0);
+	buttonPLAY = imposeRoot->GetChild(&widgetSearchResult, 0);
 	if (buttonPLAY == NULL) {
 		SCE_DBG_LOG_ERROR("buttonPLAY not found\n");
 		goto findButton_error_return;
 	}
 
 	widgetSearchResult.hash = 0x66FDAFE3;
-	textTop = imposeRoot->GetChildByHash(&widgetSearchResult, 0);
+	textTop = imposeRoot->GetChild(&widgetSearchResult, 0);
 	if (textTop == NULL) {
 		SCE_DBG_LOG_ERROR("textTop not found\n");
 		goto findButton_error_return;
 	}
 
 	widgetSearchResult.hash = 0xF099B450;
-	textBottom = imposeRoot->GetChildByHash(&widgetSearchResult, 0);
+	textBottom = imposeRoot->GetChild(&widgetSearchResult, 0);
 	if (textBottom == NULL) {
 		SCE_DBG_LOG_ERROR("textBottom not found\n");
 		goto findButton_error_return;
@@ -191,7 +190,7 @@ void setButtonState()
 
 void setText()
 {
-	ui::Widget::Color col;
+	Rgba col;
 	col.r = 1.0f;
 	col.g = 1.0f;
 	col.b = 1.0f;
@@ -232,9 +231,9 @@ SceVoid PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, ui::Widget *self, Sc
 SceVoid RxThread::EntryFunction()
 {
 	IpcDataRX ipcDataRX;
-	WString text16;
+	wstring text16;
 	SceUInt32 artLen, albLen;
-	ui::Widget::Color col;
+	Rgba col;
 	col.r = 1.0f;
 	col.g = 1.0f;
 	col.b = 1.0f;
@@ -270,23 +269,23 @@ SceVoid RxThread::EntryFunction()
 					textTop->SetColor(&col);
 				}
 
-				topText->Clear();
-				topText->Append(text16.data, text16.length);
+				topText->clear();
+				topText->append(text16.c_str(), text16.length());
 
 				text16 = (wchar_t *)ipcDataRX.artist;
 				artLen = sce_paf_wcslen((wchar_t *)ipcDataRX.artist);
 				albLen = sce_paf_wcslen((wchar_t *)ipcDataRX.album);
 				if (artLen != 0 && albLen != 0)
-					text16.Append(L" / ", 4);
-				text16.Append((wchar_t *)ipcDataRX.album, albLen);
+					text16.append(L" / ", 4);
+				text16.append((wchar_t *)ipcDataRX.album, albLen);
 
 				if (textBottom != SCE_NULL && impose) {
 					textBottom->SetLabel(&text16);
 					textBottom->SetColor(&col);
 				}
 
-				bottomText->Clear();
-				bottomText->Append(text16.data, text16.length);
+				bottomText->clear();
+				bottomText->append(text16.c_str(), text16.length());
 			}
 
 			break;
@@ -295,14 +294,14 @@ SceVoid RxThread::EntryFunction()
 
 endRxThrd:
 
-	sceKernelExitDeleteThread(0);
+	Cancel();
 }
 
 SceVoid ImposeThread::EntryFunction()
 {
 	SceAppMgrAppState appState;
 
-	while (!done) {
+	while (!IsCanceled()) {
 		sceAppMgrGetAppState(&appState);
 		if (impose != appState.isSystemUiOverlaid && appState.isSystemUiOverlaid == SCE_TRUE) {
 			SCE_DBG_LOG_INFO("Impose detected\n");
@@ -321,7 +320,7 @@ SceVoid ImposeThread::EntryFunction()
 		thread::Sleep(100);
 	}
 
-	sceKernelExitDeleteThread(0);
+	Cancel();
 }
 
 extern "C" {
@@ -346,8 +345,6 @@ extern "C" {
 	{
 #ifdef _DEBUG
 		sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_TRACE);
-#else
-		sceDbgSetMinimumLogLevel(SCE_DBG_LOG_LEVEL_ERROR);
 #endif
 
 		int ret = setup_stage1();

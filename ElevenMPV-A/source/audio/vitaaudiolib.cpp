@@ -62,7 +62,7 @@ SceVoid audio::DecoderCore::DecoderCoreThread::EntryFunction()
 		}
 	}
 
-	sceKernelExitDeleteThread(0);
+	Cancel();
 }
 
 SceInt32 audio::DecoderCore::Init(SceUInt32 frequency, SceUInt32 mode)

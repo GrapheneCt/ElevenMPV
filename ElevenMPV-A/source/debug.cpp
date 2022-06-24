@@ -76,13 +76,16 @@ int ExceptionHandlerThread(SceSize argSize, void *pArgBlock)
 
 SceVoid leakTestTask(ScePVoid pUserData)
 {
-	Allocator *glAlloc = Allocator::GetGlobalAllocator();
+	memory::HeapAllocator *glAlloc = memory::HeapAllocator::GetGlobalHeapAllocator();
 	SceInt32 sz = glAlloc->GetFreeSize();
-	String *str = new String();
+	SceInt32 delta = 0;
+	string *str;
 
-	str->MemsizeFormat(sz);
-	sceClibPrintf("[EMPVA_DEBUG] Free heap memory: %s\n", str->data);
-	SceInt32 delta = s_oldMemSize - sz;
+	str = new string();
+
+	*str = ccc::MemsizeFormat(sz);
+	sceClibPrintf("[EMPVA_DEBUG] Free heap memory: %s\n", str->c_str());
+	delta = s_oldMemSize - sz;
 	delta = -delta;
 	if (delta) {
 		sceClibPrintf("[EMPVA_DEBUG] Memory delta: %d bytes\n", delta);
@@ -90,12 +93,12 @@ SceVoid leakTestTask(ScePVoid pUserData)
 	s_oldMemSize = sz;
 	delete str;
 
-	str = new String();
+	/*str = new string();
 
-	sz = Framework::s_frameworkInstance->GetDefaultGraphicsMemoryPool()->GetFreeSize();
-	str->MemsizeFormat(sz);
+	sz = s_frameworkInstance->GetDefaultSurfaceMemoryPool()->GetFreeSize();
+	*str = ccc::MemsizeFormat(sz);
 
-	sceClibPrintf("[EMPVA_DEBUG] Free graphics pool: %s\n", str->data);
+	sceClibPrintf("[EMPVA_DEBUG] Free graphics pool: %s\n", str->c_str());
 
 	delta = s_oldGraphMemSize - sz;
 	delta = -delta;
@@ -103,7 +106,7 @@ SceVoid leakTestTask(ScePVoid pUserData)
 		sceClibPrintf("[EMPVA_DEBUG] Graphics pool delta: %d bytes\n", delta);
 	}
 	s_oldGraphMemSize = sz;
-	delete str;
+	delete str;*/
 }
 
 SceVoid JobQueueTestTask(ScePVoid pUserData)
@@ -125,8 +128,8 @@ void InitDebug()
 	sceKernelStartThread(exh, 0, NULL);*/
 
 	sceAppMgrSetInfobarState(SCE_TRUE, 0, 0); // In .sfo for release
-	common::Utils::AddMainThreadTask(leakTestTask, SCE_NULL);
-	//common::Utils::AddMainThreadTask(JobQueueTestTask, SCE_NULL);
+	//task::Register(leakTestTask, SCE_NULL);
+	//task::Register(JobQueueTestTask, SCE_NULL);
 }
 
 

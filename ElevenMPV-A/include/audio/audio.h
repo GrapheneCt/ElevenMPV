@@ -22,11 +22,11 @@ typedef SceInt64 ogg_int64_t;
 
 namespace audio {
 
-	class PlayerCoverLoaderJob : public paf::thread::JobQueue::Item
+	class PlayerCoverLoaderJob : public job::JobItem
 	{
 	public:
 
-		using thread::JobQueue::Item::Item;
+		using job::JobItem::JobItem;
 
 		~PlayerCoverLoaderJob()
 		{
@@ -37,23 +37,17 @@ namespace audio {
 
 		SceVoid Finish();
 
-		static SceVoid JobKiller(thread::JobQueue::Item *job)
-		{
-			if (job)
-				delete job;
-		}
-
 		ScePVoid workptr;
 		SceSize size;
 		SceBool isExtMem;
-		graphics::Texture coverTex;
+		graph::Surface *coverTex;
 	};
 
-	class YoutubePlayerCoverLoaderJob : public paf::thread::JobQueue::Item
+	class YoutubePlayerCoverLoaderJob : public job::JobItem
 	{
 	public:
 
-		using thread::JobQueue::Item::Item;
+		using job::JobItem::JobItem;
 
 		~YoutubePlayerCoverLoaderJob()
 		{
@@ -64,15 +58,9 @@ namespace audio {
 
 		SceVoid Finish();
 
-		static SceVoid JobKiller(thread::JobQueue::Item *job)
-		{
-			if (job)
-				delete job;
-		}
+		string url;
 
-		String url;
-
-		graphics::Texture coverTex;
+		graph::Surface *coverTex;
 	};
 
 	class Utils
@@ -87,7 +75,7 @@ namespace audio {
 	public:
 
 		SceAvPlayerFileReplacement fio;
-		io::File *mio;
+		LocalFile *mio;
 	};
 
 	class GenericDecoder
@@ -100,9 +88,9 @@ namespace audio {
 
 			SceBool hasMeta;
 			SceBool hasCover;
-			WString title;
-			WString album;
-			WString artist;
+			wstring title;
+			wstring album;
+			wstring artist;
 		};
 
 		GenericDecoder(const char *path, SceBool isSwDecoderUsed);
@@ -135,7 +123,7 @@ namespace audio {
 		SceBool isPaused;
 		SceBool isValid;
 		Metadata *metadata;
-		String dataPath;
+		string dataPath;
 	};
 
 	class FlacDecoder : public GenericDecoder

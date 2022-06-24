@@ -11,7 +11,7 @@ using namespace paf;
 namespace menu {
 	namespace audioplayer {
 
-		class PlayerButtonCB : public ui::Widget::EventCallback
+		class PlayerButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -41,7 +41,7 @@ namespace menu {
 
 		};
 
-		class BackButtonCB : public ui::Widget::EventCallback
+		class BackButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -97,7 +97,7 @@ namespace menu {
 			{
 			public:
 
-				String *path[1024];
+				string *path[1024];
 				SceUInt8 isConsumed[1024];
 			};
 
@@ -119,7 +119,7 @@ namespace menu {
 
 			static SceVoid YtJobFinishHandler();
 
-			static SceVoid ConvertSecondsToString(String *string, SceUInt64 seconds, SceBool needSeparator);
+			static SceVoid ConvertSecondsToString(string *string, SceUInt64 seconds, SceBool needSeparator);
 
 			static SceVoid Return();
 

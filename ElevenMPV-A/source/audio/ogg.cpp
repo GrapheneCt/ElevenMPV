@@ -68,7 +68,7 @@ SceInt32 audio::OggDecoder::OggClose(ScePVoid datasource)
 
 audio::OggDecoder::OggDecoder(const char *path, SceBool isSwDecoderUsed) : GenericDecoder::GenericDecoder(path, isSwDecoderUsed)
 {
-	String text8;
+	string text8;
 	ov_callbacks ioCb;
 	SceUInt32 bufMemSize = 64 * 1024;
 
@@ -101,19 +101,19 @@ audio::OggDecoder::OggDecoder(const char *path, SceBool isSwDecoderUsed) : Gener
 
 		if ((value = vorbis_comment_query(comment, "title", 0)) != SCE_NULL) {
 			text8 = value;
-			text8.ToWString(&metadata->title);
+			ccc::UTF8toUTF16(&text8, &metadata->title);
 			metadata->hasMeta = SCE_TRUE;
 		}
 
 		if ((value = vorbis_comment_query(comment, "album", 0)) != SCE_NULL) {
 			text8 = value;
-			text8.ToWString(&metadata->album);
+			ccc::UTF8toUTF16(&text8, &metadata->album);
 			metadata->hasMeta = SCE_TRUE;
 		}
 
 		if ((value = vorbis_comment_query(comment, "artist", 0)) != SCE_NULL) {
 			text8 = value;
-			text8.ToWString(&metadata->artist);
+			ccc::UTF8toUTF16(&text8, &metadata->artist);
 			metadata->hasMeta = SCE_TRUE;
 		}
 	}

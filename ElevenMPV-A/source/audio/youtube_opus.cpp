@@ -13,9 +13,6 @@
 
 static SceOff s_currPos = 0;
 
-static SceAvPlayerFileReplacement s_fio;
-static SceNmHandle s_nmHandle = SCE_NULL;
-
 
 SceInt32 audio::YoutubeDecoder::NeRead(ScePVoid buffer, SceSize length, ScePVoid userdata)
 {

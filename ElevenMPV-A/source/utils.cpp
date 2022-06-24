@@ -33,9 +33,7 @@ static SceUID s_ipcPipeTX = SCE_UID_INVALID_UID;
 static SceInt32 s_memGrown = EMPVAUtils::MemState_Low;
 static SceInt32 s_pagemode = menu::settings::Settings::PageMode_Normal;
 
-static EMPVAUtils::PleaseWaitThread *s_pleaseWaitThread = SCE_NULL;
-
-static thread::JobQueue *s_cbJobQueue = SCE_NULL;
+static job::JobQueue *s_cbJobQueue = SCE_NULL;
 
 SceBool EMPVAUtils::IsSupportedExtension(const char *ext)
 {
@@ -78,24 +76,34 @@ const char *EMPVAUtils::GetFileExt(const char *filename)
 
 SceUInt32 EMPVAUtils::GetHash(const char *name)
 {
-	Resource::Element searchRequest;
-	Resource::Element searchResult;
+	string searchRequest;
+	rco::Element searchResult;
 
-	searchRequest.id = name;
-	searchResult.hash = searchResult.GetHashById(&searchRequest);
+	searchRequest = name;
+	searchResult.hash = searchResult.GetHash(&searchRequest);
 
 	return searchResult.hash;
 }
 
 wchar_t *EMPVAUtils::GetStringWithNum(const char *name, SceUInt32 num)
 {
-	Resource::Element searchRequest;
+	rco::Element searchRequest;
 	char fullName[128];
 
 	sce_paf_snprintf(fullName, sizeof(fullName), "%s%u", name, num);
 
 	searchRequest.hash = EMPVAUtils::GetHash(fullName);
-	wchar_t *res = (wchar_t *)g_empvaPlugin->GetString(&searchRequest);
+	wchar_t *res = (wchar_t *)g_empvaPlugin->GetWString(&searchRequest);
+
+	return res;
+}
+
+wchar_t *EMPVAUtils::GetString(const char *name)
+{
+	rco::Element searchRequest;
+
+	searchRequest.hash = EMPVAUtils::GetHash(name);
+	wchar_t *res = (wchar_t *)g_empvaPlugin->GetWString(&searchRequest);
 
 	return res;
 }
@@ -105,19 +113,6 @@ SceUInt32 EMPVAUtils::Downscale(SceInt32 ix, SceInt32 iy, ScePVoid ibuf, SceInt3
 	/*return stbir_resize_uint8_generic((unsigned char *)ibuf, ix, iy, ix * 4, (unsigned char *)obuf, ox, oy, ox * 4, 4, -1, 0,
 		STBIR_EDGE_CLAMP, STBIR_FILTER_BOX, STBIR_COLORSPACE_LINEAR, NULL);*/
 	return 0;
-}
-
-SceInt32 EMPVAUtils::Alphasort(const void *p1, const void *p2) 
-{
-	io::Dir::Dirent *entryA = (io::Dir::Dirent *)p1;
-	io::Dir::Dirent *entryB = (io::Dir::Dirent *)p2;
-
-	if ((entryA->type == io::Type_Dir) && (entryB->type != io::Type_Dir))
-		return -1;
-	else if ((entryA->type != io::Type_Dir) && (entryB->type == io::Type_Dir))
-		return 1;
-
-	return sce_paf_strcasecmp(entryA->name.data, entryB->name.data);
 }
 
 SceBool EMPVAUtils::IsDecoderUsed() 
@@ -157,9 +152,9 @@ SceVoid EMPVAUtils::PowerTickTask(ScePVoid pUserData)
 SceVoid EMPVAUtils::SetPowerTickTask(SceBool enable)
 {
 	if (enable)
-		common::Utils::AddMainThreadTask(EMPVAUtils::PowerTickTask, SCE_NULL);
+		task::Register(EMPVAUtils::PowerTickTask, SCE_NULL);
 	else
-		common::Utils::RemoveMainThreadTask(EMPVAUtils::PowerTickTask, SCE_NULL);
+		task::Unregister(EMPVAUtils::PowerTickTask, SCE_NULL);
 
 }
 
@@ -246,7 +241,7 @@ SceVoid EMPVAUtils::Init()
 	char pluginPath[256];
 
 	sceAppMgrAppParamGetString(SCE_KERNEL_PROCESS_ID_SELF, 12, s_titleid, 12);
-	common::Utils::AddMainThreadTask(EMPVAUtils::AppWatchdogTask, SCE_NULL);
+	task::Register(EMPVAUtils::AppWatchdogTask, SCE_NULL);
 
 	SceInt32 ret = sceAppMgrGetIdByName(&s_shellPid, "NPXS19999");
 	if (ret >= 0) {
@@ -262,18 +257,18 @@ SceVoid EMPVAUtils::Init()
 		}
 	}
 
-	if (!Misc::IsDolce()) {
+	if (!SCE_PAF_IS_DOLCE) {
 		SceUID powerCbid = sceKernelCreateCallback("EMPVA::PowerCb", 0, EMPVAUtils::PowerCallback, SCE_NULL);
 		scePowerRegisterCallback(powerCbid);
 	}
 
-	thread::JobQueue::Opt queueOpt;
+	job::JobQueue::Option queueOpt;
 	queueOpt.workerNum = 1;
 	queueOpt.workerOpt = SCE_NULL;
 	queueOpt.workerPriority = SCE_KERNEL_HIGHEST_PRIORITY_USER + 30;
 	queueOpt.workerStackSize = SCE_KERNEL_256KiB;
 
-	s_cbJobQueue = new thread::JobQueue("EMPVA::CallbackJobQueue", &queueOpt);
+	s_cbJobQueue = new job::JobQueue("EMPVA::CallbackJobQueue", &queueOpt);
 }
 
 SceVoid EMPVAUtils::Exit()
@@ -289,7 +284,7 @@ SceVoid EMPVAUtils::Exit()
 SceVoid EMPVAUtils::Activate()
 {
 	audio::GenericDecoder *currentDecoder = SCE_NULL;
-	paf::ui::Widget *scene;
+	ui::Widget *scene;
 
 	if (g_currentPlayerInstance != SCE_NULL) {
 		if (g_currentPlayerInstance->GetCore())
@@ -298,9 +293,9 @@ SceVoid EMPVAUtils::Activate()
 
 	sceKernelSetEventFlag(g_eventFlagUid, FLAG_ELEVENMPVA_IS_FG);
 
-	paf::Misc::ResumeTouchInput(SCE_TOUCH_PORT_FRONT);
+	system::ResumeTouchInput(SCE_TOUCH_PORT_FRONT);
 
-	scene = Framework::s_frameworkInstance->GetCurrentScene();
+	scene = s_frameworkInstance->GetCurrentPage();
 	scene->unk_0D6 = 0;
 
 	if (currentDecoder) {
@@ -310,13 +305,13 @@ SceVoid EMPVAUtils::Activate()
 			sceAppMgrAcquireBgmPortWithPriority(0x80);
 	}
 
-	sceKernelChangeThreadPriority(thread::GetMainThreadUID(), 77);
+	sceKernelChangeThreadPriority(thread::GetMainThread(), 77);
 }
 
 SceVoid EMPVAUtils::Deactivate()
 {
 	audio::GenericDecoder *currentDecoder = SCE_NULL;
-	paf::ui::Widget *scene;
+	ui::Widget *scene;
 
 	if (g_currentPlayerInstance != SCE_NULL) {
 		if (g_currentPlayerInstance->GetCore())
@@ -325,9 +320,9 @@ SceVoid EMPVAUtils::Deactivate()
 
 	sceKernelClearEventFlag(g_eventFlagUid, ~FLAG_ELEVENMPVA_IS_FG);
 
-	paf::Misc::SuspendTouchInput(SCE_TOUCH_PORT_FRONT);
+	system::SuspendTouchInput(SCE_TOUCH_PORT_FRONT);
 
-	scene = Framework::s_frameworkInstance->GetCurrentScene();
+	scene = s_frameworkInstance->GetCurrentPage();
 	scene->unk_0D6 = 1;
 
 	if (currentDecoder) {
@@ -335,7 +330,7 @@ SceVoid EMPVAUtils::Deactivate()
 			sceAppMgrReleaseBgmPort();
 	}
 
-	sceKernelChangeThreadPriority(thread::GetMainThreadUID(), SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY);
+	sceKernelChangeThreadPriority(thread::GetMainThread(), SCE_KERNEL_COMMON_QUEUE_LOWEST_PRIORITY);
 }
 
 SceVoid EMPVAUtils::SetMemStatus()
@@ -376,77 +371,7 @@ SceInt32 EMPVAUtils::GetMemStatus()
 	return s_memGrown;
 }
 
-SceVoid EMPVAUtils::PleaseWaitThread::EntryFunction()
-{
-	SceMsgDialogParam				msgParam;
-	SceMsgDialogSystemMessageParam	sysMsgParam;
-	SceMsgDialogUserMessageParam userMsgParam;
-	SceCommonDialogStatus status;
-	userCancel = SCE_FALSE;
-
-	sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-	sceMsgDialogParamInit(&msgParam);
-	msgParam.mode = SCE_MSG_DIALOG_MODE_SYSTEM_MSG;
-
-	sce_paf_memset(&sysMsgParam, 0, sizeof(SceMsgDialogSystemMessageParam));
-	msgParam.sysMsgParam = &sysMsgParam;
-	if (withCancel)
-		msgParam.sysMsgParam->sysMsgType = SCE_MSG_DIALOG_SYSMSG_TYPE_WAIT_CANCEL;
-	else
-		msgParam.sysMsgParam->sysMsgType = SCE_MSG_DIALOG_SYSMSG_TYPE_WAIT_SMALL;
-
-	sceMsgDialogInit(&msgParam);
-	status = sceMsgDialogGetStatus();
-
-	while (status != SCE_COMMON_DIALOG_STATUS_RUNNING) {
-		status = sceMsgDialogGetStatus();
-		thread::Sleep(10);
-	}
-
-	while (status == SCE_COMMON_DIALOG_STATUS_RUNNING && !forceCancel) {
-		status = sceMsgDialogGetStatus();
-		thread::Sleep(100);
-	}
-
-	if (status != SCE_COMMON_DIALOG_STATUS_RUNNING)
-		userCancel = SCE_TRUE;
-
-	if (!userCancel) {
-		sceMsgDialogClose();
-
-		while (status != SCE_COMMON_DIALOG_STATUS_FINISHED) {
-			status = sceMsgDialogGetStatus();
-			thread::Sleep(10);
-		}
-	}
-
-	sceMsgDialogTerm();
-
-	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
-	sceKernelExitDeleteThread(0);
-}
-
-SceVoid EMPVAUtils::BeginPleaseWait(SceBool withCancel)
-{
-	if (s_pleaseWaitThread) {
-		s_pleaseWaitThread->forceCancel = SCE_TRUE;
-		s_pleaseWaitThread->Join();
-		delete s_pleaseWaitThread;
-	}
-	s_pleaseWaitThread = new EMPVAUtils::PleaseWaitThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_4KiB, "EMPVA::PlsWaitDialog");
-	s_pleaseWaitThread->withCancel = withCancel;
-	s_pleaseWaitThread->forceCancel = SCE_FALSE;
-	s_pleaseWaitThread->Start();
-}
-
-SceVoid EMPVAUtils::EndPleaseWait()
-{
-	if (s_pleaseWaitThread) {
-		s_pleaseWaitThread->forceCancel = SCE_TRUE;
-	}
-}
-
-SceVoid EMPVAUtils::RunCallbackAsJob(ui::Widget::EventCallback::EventHandler eventHandler, EMPVAUtils::AsyncEnqueue::FinishHandler finishHandler, SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
+SceVoid EMPVAUtils::RunCallbackAsJob(ui::EventCallback::EventHandler eventHandler, EMPVAUtils::AsyncEnqueue::FinishHandler finishHandler, SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	AsyncEnqueue *asJob = new AsyncEnqueue("EMPVA::AsyncCallback");
 	asJob->eventHandler = eventHandler;
@@ -456,14 +381,7 @@ SceVoid EMPVAUtils::RunCallbackAsJob(ui::Widget::EventCallback::EventHandler eve
 	asJob->a3 = a3;
 	asJob->pUserData = pUserData;
 
-	CleanupHandler *req = new CleanupHandler();
-	req->refCount = 0;
-	req->unk_08 = 1;
-	req->cb = (CleanupHandler::CleanupCallback)AsyncEnqueue::JobKiller;
-
-	ObjectWithCleanup itemParam;
-	itemParam.object = asJob;
-	itemParam.cleanup = req;
+	SharedPtr<job::JobItem> itemParam(asJob);
 
 	s_cbJobQueue->Enqueue(&itemParam);
 }
@@ -486,7 +404,7 @@ SceVoid EMPVAUtils::IPC::Disable()
 		sceKernelSendMsgPipe(s_ipcPipeRX, &packet, sizeof(IpcDataRX), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, SCE_NULL, SCE_NULL);
 }
 
-SceVoid EMPVAUtils::IPC::SendInfo(WString *title, WString *artist, WString *album, SceInt32 playBtState)
+SceVoid EMPVAUtils::IPC::SendInfo(wstring *title, wstring *artist, wstring *album, SceInt32 playBtState)
 {
 	IpcDataRX packet;
 	packet.cmd = EMPVA_IPC_INFO;
@@ -500,19 +418,19 @@ SceVoid EMPVAUtils::IPC::SendInfo(WString *title, WString *artist, WString *albu
 	if (title != SCE_NULL) {
 		packet.flags |= EMPVA_IPC_REFRESH_TEXT;
 		sce_paf_memset(&packet.title, 0, sizeof(packet.title));
-		sce_paf_wcsncpy((wchar_t *)&packet.title, title->data, 256);
+		sce_paf_wcsncpy((wchar_t *)&packet.title, title->c_str(), 256);
 	}
 
 	if (artist != SCE_NULL) {
 		packet.flags |= EMPVA_IPC_REFRESH_TEXT;
 		sce_paf_memset(&packet.artist, 0, sizeof(packet.artist));
-		sce_paf_wcsncpy((wchar_t *)&packet.artist, artist->data, 256);
+		sce_paf_wcsncpy((wchar_t *)&packet.artist, artist->c_str(), 256);
 	}
 
 	if (artist != SCE_NULL) {
 		packet.flags |= EMPVA_IPC_REFRESH_TEXT;
 		sce_paf_memset(&packet.album, 0, sizeof(packet.album));
-		sce_paf_wcsncpy((wchar_t *)&packet.album, album->data, 256);
+		sce_paf_wcsncpy((wchar_t *)&packet.album, album->c_str(), 256);
 	}
 
 	if (s_ipcPipeRX > 0)

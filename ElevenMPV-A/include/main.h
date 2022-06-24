@@ -11,7 +11,7 @@ using namespace paf;
 namespace menu {
 	namespace main {
 
-		class PagemodeButtonCB : public ui::Widget::EventCallback
+		class PagemodeButtonCB : public ui::EventCallback
 		{
 		public:
 

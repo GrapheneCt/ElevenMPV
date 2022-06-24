@@ -51,13 +51,14 @@
       <OptimizationLevel>Level3</OptimizationLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lnestegg;-lShellAudio;-lSceSysmem_stub;-lSceKernelForMono_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceDisplay_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceShellUtil_stub;-lSceSysmodule_stub;-lSceMotion_stub;-lSceDbg_stub;-lSceAudiocodec_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceNet_stub;-lSceNetCtl_stub;-lSceHttp_stub;-lSceSsl_stub;-lSceAppSettings_stub;-lScebXCe_stub;-lSceIniFileProcessor_stub;-lSceCommonDialog_stub;-lSceIpmi_stub;-lNetMedia_stub;-lLocalMedia_stub;-lThirdTube_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lnestegg;-lShellAudio;-lSceSysmem_stub;-lSceKernelForMono_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceDisplay_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceShellUtil_stub;-lSceSysmodule_stub;-lSceMotion_stub;-lSceDbg_stub;-lSceAudiocodec_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceNet_stub;-lSceNetCtl_stub;-lSceHttp_stub;-lSceSsl_stub;-lSceAppSettings_stub;-lScebXCe_stub;-lSceIniFileProcessor_stub;-lSceCommonGuiDialog_stub;-lSceIpmi_stub;-lNetMedia_stub;-lLocalMedia_stub;-lThirdTube_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <AdditionalOptions>--no-standard-libraries</AdditionalOptions>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
+      <Command>call "$(ProjectDir)gen_rco.bat"
+"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
 "$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubsfo.exe" "$(ProjectDir)param_for_debug.sfx" "$(OutDir)param.sfo"
 "$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/module" module  --file "$(ProjectDir)CONTENTS/empva_plugin.rco" empva_plugin.rco "$(OutDir)$(ProjectName).vpk"
 copy /Y "$(OutDir)eboot.bin" "$(ProjectDir)CONTENTS/eboot.bin"
@@ -68,7 +69,7 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PSVita'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;SCE_DBG_LOGGING_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OptimizationLevel>Level3</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(ProjectDir)libs\include;$(ProjectDir)include\audio;$(ProjectDir)include\menus;$(SolutionDir)ElevenMPV-A-Common\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -77,16 +78,17 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     </ClCompile>
     <Link>
       <InfoStripping>StripSymsAndDebug</InfoStripping>
-      <AdditionalDependencies>-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lnestegg;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceDisplay_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceShellUtil_stub;-lSceSysmodule_stub;-lSceMotion_stub;-lSceDbg_stub;-lSceAudiocodec_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceNet_stub;-lSceNetCtl_stub;-lSceHttp_stub;-lSceSsl_stub;-lSceAppSettings_stub;-lScebXCe_stub;-lSceIniFileProcessor_stub;-lSceCommonDialog_stub;-lSceIpmi_stub;-lNetMedia_stub;-lLocalMedia_stub;-lThirdTube_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lnestegg;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceDisplay_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceShellUtil_stub;-lSceSysmodule_stub;-lSceMotion_stub;-lSceAudiocodec_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceNet_stub;-lSceNetCtl_stub;-lSceHttp_stub;-lSceSsl_stub;-lSceAppSettings_stub;-lScebXCe_stub;-lSceIniFileProcessor_stub;-lSceCommonGuiDialog_stub;-lSceIpmi_stub;-lNetMedia_stub;-lLocalMedia_stub;-lThirdTube_stub;-lsnc;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>--no-standard-libraries %(AdditionalOptions)</AdditionalOptions>
       <DataStripping>StripFuncsAndData</DataStripping>
       <DuplicateStripping>true</DuplicateStripping>
     </Link>
     <PostBuildEvent>
-      <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
+      <Command>call "$(ProjectDir)gen_rco.bat"
+"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
 "$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubsfo.exe" "$(ProjectDir)param.sfx" "$(OutDir)param.sfo"
-"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/module" module  --file "$(ProjectDir)CONTENTS/empva_plugin.rco" empva_plugin.rco --file "$(ProjectDir)CONTENTS/empva_settings.xml" empva_settings.xml --file "$(ProjectDir)CONTENTS/LICENSE/LICENSE.txt" LICENSE/LICENSE.txt "$(OutDir)$(ProjectName).vpk"
+"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/module" module  --file "$(ProjectDir)CONTENTS/empva_plugin.rco" empva_plugin.rco --file "$(ProjectDir)CONTENTS/LICENSE/LICENSE.txt" LICENSE/LICENSE.txt "$(OutDir)$(ProjectName).vpk"
 copy /Y "$(OutDir)eboot.bin" "$(ProjectDir)CONTENTS/eboot.bin"
 copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
 "$(SCE_ROOT_DIR)/PSP2/Tools/Publishing Tools/bin/ext/make_pkg.exe" --output $(OutDir) "$(ProjectDir)package.conf" $(ProjectDir)</Command>
@@ -107,6 +109,7 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     <ClCompile Include="source\audio\xm.cpp" />
     <ClCompile Include="source\audio\youtube_opus.cpp" />
     <ClCompile Include="source\debug.cpp" />
+    <ClCompile Include="source\dialog.cpp" />
     <ClCompile Include="source\downloader.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\menus\menu_audioplayer.cpp" />
@@ -132,6 +135,7 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     <ClInclude Include="include\audio\vitaaudiolib.h" />
     <ClInclude Include="include\common.h" />
     <ClInclude Include="include\debug.h" />
+    <ClInclude Include="include\dialog.h" />
     <ClInclude Include="include\downloader.h" />
     <ClInclude Include="include\main.h" />
     <ClInclude Include="include\menus\menu_audioplayer.h" />

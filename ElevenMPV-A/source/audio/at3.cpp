@@ -131,13 +131,14 @@ SceVoid audio::At3Decoder::InitCommon(const char *path, SceUInt8 type, SceUInt8 
 
 SceVoid audio::At3Decoder::InitOMA(const char *path)
 {
-	io::File file;
+	LocalFile file;
+	LocalFile::OpenArg oarg;
 	SceInt32 ret;
 	SceSize offset;
 	SceUInt8 codecType;
 	SceUInt8 param1;
 	SceUInt8 param2;
-	String text8;
+	string text8;
 	ID3Tag *ID3 = (ID3Tag *)sce_paf_malloc(sizeof(ID3Tag));
 
 	ParseID3(path, ID3);
@@ -153,18 +154,20 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 
 	if (metadata->hasMeta) {
 		text8 = ID3->ID3Title;
-		text8.ToWString(&metadata->title);
+		ccc::UTF8toUTF16(&text8, &metadata->title);
 
 		text8 = ID3->ID3Artist;
-		text8.ToWString(&metadata->artist);
+		ccc::UTF8toUTF16(&text8, &metadata->artist);
 
 		text8 = ID3->ID3Album;
-		text8.ToWString(&metadata->album);
+		ccc::UTF8toUTF16(&text8, &metadata->album);
 	}
+
+	oarg.filename = path;
 
 	if ((ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) && !metadata->hasCover) {
 
-		ret = file.Open(path, SCE_O_RDONLY, 0);
+		ret = file.Open(&oarg);
 		if (ret >= 0) {
 
 			auto coverLoader = new PlayerCoverLoaderJob("EMPVA::PlayerCoverLoaderJob");
@@ -172,18 +175,10 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 
 			if (coverLoader->workptr != SCE_NULL) {
 
-				CleanupHandler *req = new CleanupHandler();
-				req->userData = coverLoader;
-				req->refCount = 0;
-				req->unk_08 = 1;
-				req->cb = (CleanupHandler::CleanupCallback)audio::PlayerCoverLoaderJob::JobKiller;
-
-				ObjectWithCleanup itemParam;
-				itemParam.object = coverLoader;
-				itemParam.cleanup = req;
+				SharedPtr<job::JobItem> itemParam(coverLoader);
 
 				coverLoader->isExtMem = SCE_TRUE;
-				file.Lseek(ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
+				file.Seek(ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
 				file.Read(coverLoader->workptr, ID3->ID3EncapsulatedPictureLength);
 				file.Close();
 				coverLoader->size = ID3->ID3EncapsulatedPictureLength;
@@ -207,8 +202,8 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 	char* ea3Header = ea3Header_init;
 	sce_paf_memset(ea3Header, 0, 1024);
 
-	file.Open(path, SCE_O_RDONLY, 0);
-	file.Lseek((SceOff)offset, SCE_SEEK_SET);
+	file.Open(&oarg);
+	file.Seek((SceOff)offset, SCE_SEEK_SET);
 	file.Read(ea3Header, 1024);
 	file.Close();
 
@@ -263,7 +258,8 @@ SceVoid audio::At3Decoder::InitOMA(const char *path)
 
 SceVoid audio::At3Decoder::InitRIFF(const char *path)
 {
-	io::File headerFile;
+	LocalFile headerFile;
+	LocalFile::OpenArg oarg;
 	SceUInt8 codecType = 0;
 	SceUInt8 param1;
 	SceUInt8 param2;
@@ -274,7 +270,8 @@ SceVoid audio::At3Decoder::InitRIFF(const char *path)
 	char* dataStart = ea3Header;
 	sce_paf_memset(ea3Header, 0, 1024);
 
-	headerFile.Open(path, SCE_O_RDONLY, 0);
+	oarg.filename = path;
+	headerFile.Open(&oarg);
 	headerFile.Read(ea3Header, 1024);
 	headerFile.Close();
 

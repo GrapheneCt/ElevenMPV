@@ -35,7 +35,15 @@ namespace menu {
 				Hash_ControlsAngle = 0x21112208,
 				Hash_YoutubeCleanHistory = 0x26dd8c17,
 				Hash_YoutubeCleanFav = 0xe79d8bdc,
-				Hash_YoutubeDownload = 0x15fb99aa
+				Hash_YoutubeDownload = 0x15fb99aa,
+				Hash_YoutubeQuality = 0x77e5a453
+			};
+
+			enum YtQuality
+			{
+				YtQuality_High = -1,
+				YtQuality_Medium = 90000,
+				YtQuality_Low = 58800
 			};
 
 			Settings();
@@ -50,7 +58,7 @@ namespace menu {
 
 			SceVoid SetLastDirectory(const char *cwd);
 
-			SceVoid GetLastDirectory(String *cwd);
+			SceVoid GetLastDirectory(string *cwd);
 
 			SceInt32 device;
 			SceInt32 sort;
@@ -65,9 +73,10 @@ namespace menu {
 			SceInt32 motion_degree;
 			SceInt32 last_pagemode;
 			SceInt32 fps_limit;
+			SceInt32 yt_quality;
 
 			const SceUInt32 k_safeMemIniLimit = 0x400;
-			const SceInt32 k_settingsVersion = 4;
+			const SceInt32 k_settingsVersion = 5;
 
 		private:
 
@@ -89,9 +98,9 @@ namespace menu {
 
 			static SceVoid CBTerm();
 
-			static SceWChar16 *CBGetString(const char *elementId);
+			static wchar_t *CBGetString(const char *elementId);
 
-			static SceInt32 CBGetTex(graphics::Texture *tex, const char *elementId);
+			static SceInt32 CBGetTex(graph::Surface **tex, const char *elementId);
 
 			sce::AppSettings *appSet;
 			SceBool settingsReset;
@@ -110,9 +119,10 @@ namespace menu {
 			const SceInt32 k_defDevice = 0;
 			const SceInt32 k_defLastPagemode = 0;
 			const SceInt32 k_defFpsLimit = 1;
+			const SceInt32 k_defYtQuality = 0;
 		};
 
-		class SettingsButtonCB : public ui::Widget::EventCallback
+		class SettingsButtonCB : public ui::EventCallback
 		{
 		public:
 

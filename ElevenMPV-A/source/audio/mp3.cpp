@@ -11,8 +11,9 @@
 
 audio::Mp3Decoder::Mp3Decoder(const char *path, SceBool isSwDecoderUsed) : ShellCommonDecoder::ShellCommonDecoder(path, isSwDecoderUsed)
 {
-	String text8;
-	io::File file;
+	string text8;
+	LocalFile file;
+	LocalFile::OpenArg oarg;
 	SceInt32 ret = 0;
 
 	ID3Tag *ID3 = (ID3Tag *)sce_paf_malloc(sizeof(ID3Tag));
@@ -29,18 +30,20 @@ audio::Mp3Decoder::Mp3Decoder(const char *path, SceBool isSwDecoderUsed) : Shell
 
 	if (metadata->hasMeta) {
 		text8 = ID3->ID3Title;
-		text8.ToWString(&metadata->title);
+		ccc::UTF8toUTF16(&text8, &metadata->title);
 
 		text8 = ID3->ID3Artist;
-		text8.ToWString(&metadata->artist);
+		ccc::UTF8toUTF16(&text8, &metadata->artist);
 
 		text8 = ID3->ID3Album;
-		text8.ToWString(&metadata->album);
+		ccc::UTF8toUTF16(&text8, &metadata->album);
 	}
+
+	oarg.filename = path;
 
 	if ((ID3->ID3EncapsulatedPictureType == JPEG_IMAGE || ID3->ID3EncapsulatedPictureType == PNG_IMAGE) && !metadata->hasCover) {
 
-		ret = file.Open(path, SCE_O_RDONLY, 0);
+		ret = file.Open(&oarg);
 		if (ret >= 0) {
 
 			auto coverLoader = new PlayerCoverLoaderJob("EMPVA::PlayerCoverLoaderJob");
@@ -48,18 +51,10 @@ audio::Mp3Decoder::Mp3Decoder(const char *path, SceBool isSwDecoderUsed) : Shell
 
 			if (coverLoader->workptr != SCE_NULL) {
 
-				CleanupHandler *req = new CleanupHandler();
-				req->userData = coverLoader;
-				req->refCount = 0;
-				req->unk_08 = 1;
-				req->cb = (CleanupHandler::CleanupCallback)audio::PlayerCoverLoaderJob::JobKiller;
-
-				ObjectWithCleanup itemParam;
-				itemParam.object = coverLoader;
-				itemParam.cleanup = req;
+				SharedPtr<job::JobItem> itemParam(coverLoader);
 
 				coverLoader->isExtMem = SCE_TRUE;
-				file.Lseek(ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
+				file.Seek(ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
 				file.Read(coverLoader->workptr, ID3->ID3EncapsulatedPictureLength);
 				file.Close();
 				coverLoader->size = ID3->ID3EncapsulatedPictureLength;

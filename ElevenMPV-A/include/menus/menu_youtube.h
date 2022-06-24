@@ -15,7 +15,7 @@ namespace menu {
 		class HistoryPage;
 		class FavPage;
 
-		class VideoButtonCB : public ui::Widget::EventCallback
+		class VideoButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -48,7 +48,7 @@ namespace menu {
 
 			static SceVoid VideoButtonCBFun(SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
-			String url;
+			string url;
 			SceUInt32 mode;
 		};
 
@@ -62,10 +62,9 @@ namespace menu {
 
 			static SceVoid CreateVideoButton(SearchPage *page, SceUInt32 index);
 
-			String newRequset;
+			string newRequset;
 			SearchPage *prevPage;
 			SearchPage *workPage;
-			SceBool cancel;
 		};
 
 		class FavParserThread : public thread::Thread
@@ -78,11 +77,10 @@ namespace menu {
 
 			static SceVoid CreateVideoButton(FavPage *page, const char *data, SceUInt32 index, const char *keyWord);
 
-			String newRequset;
+			string newRequset;
 			FavPage *prevPage;
 			FavPage *workPage;
-			SceBool cancel;
-			String keyWord;
+			string keyWord;
 		};
 
 		class HistoryParserThread : public thread::Thread
@@ -95,12 +93,11 @@ namespace menu {
 
 			static SceVoid CreateVideoButton(HistoryPage *page, const char *data, SceUInt32 index);
 
-			String newRequset;
+			string newRequset;
 			HistoryPage *workPage;
-			SceBool cancel;
 		};
 
-		class SearchActionButtonCB : public ui::Widget::EventCallback
+		class SearchActionButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -118,7 +115,7 @@ namespace menu {
 
 		};
 
-		class SearchButtonCB : public ui::Widget::EventCallback
+		class SearchButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -136,7 +133,7 @@ namespace menu {
 
 		};
 
-		class HistoryButtonCB : public ui::Widget::EventCallback
+		class HistoryButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -154,7 +151,7 @@ namespace menu {
 
 		};
 
-		class FavButtonCB : public ui::Widget::EventCallback
+		class FavButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -172,7 +169,7 @@ namespace menu {
 
 		};
 
-		class LeftButtonCB : public ui::Widget::EventCallback
+		class LeftButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -190,7 +187,7 @@ namespace menu {
 
 		};
 
-		class RightButtonCB : public ui::Widget::EventCallback
+		class RightButtonCB : public ui::EventCallback
 		{
 		public:
 

@@ -22,15 +22,15 @@ extern ui::Widget *g_root;
 extern ui::Widget *g_rootPage;
 extern ui::Widget *g_player_page;
 extern ui::Widget *g_topText;
-extern graphics::Texture *g_commonBgTex;
-extern graphics::Texture *g_coverBgTex;
+extern graph::Surface *g_commonBgTex;
+extern graph::Surface *g_coverBgTex;
 extern ui::BusyIndicator *g_commonBusyInidcator;
 
-extern thread::JobQueue *g_coverJobQueue;
+extern job::JobQueue *g_coverJobQueue;
 
-extern graphics::Texture *g_texCheckMark;
-extern graphics::Texture *g_texTransparent;
-extern graphics::Surface *g_currentCoverSurf;
+extern graph::Surface *g_texCheckMark;
+extern graph::Surface *g_texTransparent;
+extern graph::Surface *g_currentCoverSurf;
 
 extern menu::audioplayer::Audioplayer *g_currentPlayerInstance;
 extern menu::displayfiles::Page *g_currentDispFilePage;

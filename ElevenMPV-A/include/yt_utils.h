@@ -24,7 +24,7 @@ public:
 
 		}
 
-		~Log()
+		virtual ~Log()
 		{
 			ini->flush();
 			ini->close();
@@ -80,7 +80,11 @@ public:
 
 	static Downloader *GetDownloader();
 
-	static thread::Sema *GetMenuSema();
+	static SceVoid LockMenuParsers();
+
+	static SceVoid UnlockMenuParsers();
+
+	static SceVoid WaitMenuParsers();
 
 	static SceVoid GetNETMedia(SceNmHandle *handle, SceAvPlayerFileReplacement *fio);
 

@@ -19,22 +19,22 @@ static SceUInt32 s_bgmMode = BgmMode_Normal;
 
 SceVoid audio::PlayerCoverLoaderJob::Run()
 {
-	coverTex.texSurface = SCE_NULL;
-	Resource::Element searchParam;
+	coverTex = SCE_NULL;
+	rco::Element searchParam;
 	ui::Widget *playerCover;
 	ui::BusyIndicator *playerBusyInd;
-	ui::Widget::Color col;
-	SceFVector4 wsize;
-	ObjectWithCleanup fres;
+	Rgba col;
+	Vector4 wsize;
 	SceInt32 res;
+	SharedPtr<MemFile> fres;
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
-	playerCover = g_player_page->GetChildByHash(&searchParam, 0);
+	playerCover = g_player_page->GetChild(&searchParam, 0);
 
 	if (g_currentDispFilePage->coverState) {
 		if (g_currentCoverSurf != SCE_NULL) {
-			coverTex.texSurface = g_currentCoverSurf;
-			playerCover->SetTextureBase(&coverTex);
+			coverTex = g_currentCoverSurf;
+			playerCover->SetSurfaceBase(&coverTex);
 
 			col.r = 0.207;
 			col.g = 0.247;
@@ -48,14 +48,14 @@ SceVoid audio::PlayerCoverLoaderJob::Run()
 			wsize.w = 0.0f;
 			g_root->SetSize(&wsize);
 
-			g_root->SetTextureBase(&coverTex);
+			g_root->SetSurfaceBase(&coverTex);
 		}
 
 		return;
 	}
 
 	searchParam.hash = EMPVAUtils::GetHash("busyindicator_player");
-	playerBusyInd = (ui::BusyIndicator *)g_player_page->GetChildByHash(&searchParam, 0);
+	playerBusyInd = (ui::BusyIndicator *)g_player_page->GetChild(&searchParam, 0);
 	playerBusyInd->Start();
 
 	if (g_currentCoverSurf != SCE_NULL)
@@ -66,7 +66,7 @@ SceVoid audio::PlayerCoverLoaderJob::Run()
 		return;
 	}
 
-	MemFile::Open(&fres, workptr, size, &res);
+	fres = MemFile::Open(workptr, size, &res);
 
 	if (res < 0) {
 		if (isExtMem)
@@ -75,24 +75,22 @@ SceVoid audio::PlayerCoverLoaderJob::Run()
 		return;
 	}
 
-	graphics::Texture::CreateFromFile(&coverTex, g_empvaPlugin->memoryPool, &fres);
+	graph::Surface::Create(&coverTex, g_empvaPlugin->memoryPool, (SharedPtr<File>*)&fres);
 
-	if (coverTex.texSurface == SCE_NULL) {
-		fres.cleanup->cb(fres.object);
-		delete fres.cleanup;
+	if (coverTex == SCE_NULL) {
+		fres.reset();
 		if (isExtMem)
 			sce_paf_free(workptr);
 		playerBusyInd->Stop();
 		return;
 	}
 
-	g_currentCoverSurf = coverTex.texSurface;
+	g_currentCoverSurf = coverTex;
 
 	if (isExtMem)
 		sce_paf_free(workptr);
 
-	fres.cleanup->cb(fres.object);
-	delete fres.cleanup;
+	fres.reset();
 
 	col.r = 0.207;
 	col.g = 0.247;
@@ -106,39 +104,38 @@ SceVoid audio::PlayerCoverLoaderJob::Run()
 	wsize.w = 0.0f;
 	g_root->SetSize(&wsize);
 
-	g_root->SetTextureBase(&coverTex);
+	g_root->SetSurfaceBase(&coverTex);
 
-	playerCover->SetTextureBase(&coverTex);
+	playerCover->SetSurfaceBase(&coverTex);
 
 	playerBusyInd->Stop();
 }
 
 SceVoid audio::YoutubePlayerCoverLoaderJob::Run()
 {
-	coverTex.texSurface = SCE_NULL;
-	Resource::Element searchParam;
+	coverTex = SCE_NULL;
+	rco::Element searchParam;
 	ui::Widget *playerCover;
 	ui::BusyIndicator *playerBusyInd;
-	ui::Widget::Color col;
-	SceFVector4 wsize;
-	ObjectWithCleanup fres;
+	Rgba col;
 	SceInt32 res;
 	SceUInt32 retryCount = 0;
+	SharedPtr<HttpFile> fres;
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
-	playerCover = g_player_page->GetChildByHash(&searchParam, 0);
+	playerCover = g_player_page->GetChild(&searchParam, 0);
 
 	searchParam.hash = EMPVAUtils::GetHash("busyindicator_player");
-	playerBusyInd = (ui::BusyIndicator *)g_player_page->GetChildByHash(&searchParam, 0);
+	playerBusyInd = (ui::BusyIndicator *)g_player_page->GetChild(&searchParam, 0);
 	playerBusyInd->Start();
 
 	if (g_currentCoverSurf != SCE_NULL)
 		menu::displayfiles::Page::ResetBgPlaneTex();
 
-	HttpFile::Open(&fres, url.data, &res, 0);
+	fres = HttpFile::Open(url.c_str(), &res, 0);
 
 	while (res < 0 && retryCount != 3) {
-		HttpFile::Open(&fres, url.data, &res, 0);
+		fres = HttpFile::Open(url.c_str(), &res, 0);
 		retryCount++;
 	}
 
@@ -147,19 +144,18 @@ SceVoid audio::YoutubePlayerCoverLoaderJob::Run()
 		return;
 	}
 
-	graphics::Texture::CreateFromFile(&coverTex, g_empvaPlugin->memoryPool, &fres);
+	graph::Surface::Create(&coverTex, g_empvaPlugin->memoryPool, (SharedPtr<File>*)&fres);
 
-	fres.cleanup->cb(fres.object);
-	delete fres.cleanup;
+	fres.reset();
 
-	if (coverTex.texSurface == SCE_NULL) {
+	if (coverTex == SCE_NULL) {
 		playerBusyInd->Stop();
 		return;
 	}
 
-	g_currentCoverSurf = coverTex.texSurface;
+	g_currentCoverSurf = coverTex;
 
-	playerCover->SetTextureBase(&coverTex);
+	playerCover->SetSurfaceBase(&coverTex);
 
 	playerBusyInd->Stop();
 }
@@ -207,16 +203,12 @@ audio::GenericDecoder::GenericDecoder(const char *path, SceBool isSwDecoderUsed)
 
 audio::GenericDecoder::~GenericDecoder()
 {
-	Resource::Element searchParam;
-	ui::Widget *playerCover;
+	rco::Element searchParam;
 
 	audio::DecoderCore::SetDecoder(SCE_NULL, SCE_NULL); // Clear channel callback
 
 	sceKernelClearEventFlag(g_eventFlagUid, ~FLAG_ELEVENMPVA_IS_DECODER_USED);
 
-	metadata->title.Clear();
-	metadata->album.Clear();
-	metadata->artist.Clear();
 	delete metadata;
 }
 

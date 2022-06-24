@@ -11,17 +11,17 @@
 
 using namespace paf;
 
-graphics::Surface *g_currentCoverSurf = SCE_NULL;
+graph::Surface *g_currentCoverSurf = SCE_NULL;
 
 SceVoid menu::displayfiles::CoverLoaderJob::Run()
 {
-	Resource::Element searchParam;
-	ObjectWithCleanup fres;
-	graphics::Texture tex;
-	ui::Widget::Color col;
-	SceFVector4 wsize;
+	rco::Element searchParam;
+	SharedPtr<LocalFile> fres;
+	graph::Surface *tex;
+	Rgba col;
+	Vector4 wsize;
 	SceInt32 res;
-	String fullPath;
+	string fullPath;
 
 	if (!workFile) {
 		menu::displayfiles::Page::ResetBgPlaneTex();
@@ -35,37 +35,33 @@ SceVoid menu::displayfiles::CoverLoaderJob::Run()
 		return;
 	}
 
-	fullPath.Append(workPage->cwd->data, workPage->cwd->length);
-	fullPath.Append(workFile->name->string.data, workFile->name->string.length);
-	LocalFile::Open(&fres, fullPath.data, SCE_O_RDONLY, 0, &res);
+	fullPath.append(workPage->cwd->c_str(), workPage->cwd->length());
+	fullPath.append(workFile->name->string.c_str(), workFile->name->string.length());
+	fres = LocalFile::Open(fullPath.c_str(), SCE_O_RDONLY, 0, &res);
 
 	if (res < 0) {
 		return;
 	}
 
 	if (g_currentDispFilePage != workPage) {
-		fres.cleanup->cb(fres.object);
-		delete fres.cleanup;
+		fres.reset();
 		return;
 	}
 
-	graphics::Texture::CreateFromFile(&tex, g_empvaPlugin->memoryPool, &fres);
-	g_currentCoverSurf = tex.texSurface;
+	graph::Surface::Create(&tex, g_empvaPlugin->memoryPool, (SharedPtr<paf::File>*)&fres);
+	g_currentCoverSurf = tex;
 
 	if (g_currentDispFilePage != workPage) {
-		fres.cleanup->cb(fres.object);
-		delete fres.cleanup;
+		fres.reset();
 		return;
 	}
 
-	if (tex.texSurface == SCE_NULL) {
-		fres.cleanup->cb(fres.object);
-		delete fres.cleanup;
+	if (tex == SCE_NULL) {
+		fres.reset();
 		return;
 	}
 
-	fres.cleanup->cb(fres.object);
-	delete fres.cleanup;
+	fres.reset();
 
 	col.r = 0.207;
 	col.g = 0.247;
@@ -80,7 +76,7 @@ SceVoid menu::displayfiles::CoverLoaderJob::Run()
 	if (!g_isPlayerActive) {
 		g_root->SetColor(&col);
 		g_root->SetSize(&wsize);
-		g_root->SetTextureBase(&tex);
+		g_root->SetSurfaceBase(&tex);
 	}
 }
 
@@ -96,17 +92,17 @@ SceVoid menu::displayfiles::CoverLoaderJob::Finish()
 
 SceVoid menu::displayfiles::BackButtonCB::BackButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
-	Resource::Element searchParam;
+	rco::Element searchParam;
 	Page *tmpCurr = g_currentDispFilePage;
 	g_currentDispFilePage = g_currentDispFilePage->prev;
 	delete tmpCurr;
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-	ui::Widget *backButton = g_rootPage->GetChildByHash(&searchParam, 0);
-	if (!EMPVAUtils::IsRootDevice(g_currentDispFilePage->cwd->data))
-		backButton->PlayAnimation(600.0f, ui::Widget::Animation_Reset);
+	ui::Widget *backButton = g_rootPage->GetChild(&searchParam, 0);
+	if (!EMPVAUtils::IsRootDevice(g_currentDispFilePage->cwd->c_str()))
+		backButton->PlayEffect(600.0f, effect::EffectType_Reset);
 	else
-		backButton->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
+		backButton->PlayEffectReverse(0.0f, effect::EffectType_Reset);
 }
 
 SceVoid menu::displayfiles::ButtonCB::StartNewPlayer(menu::displayfiles::File *startFile)
@@ -118,39 +114,31 @@ SceVoid menu::displayfiles::ButtonCB::StartNewPlayer(menu::displayfiles::File *s
 	else
 		g_currentDispFilePage->coverLoader->workFile = SCE_NULL;
 
-	CleanupHandler *req = new CleanupHandler();
-	req->userData = g_currentDispFilePage->coverLoader;
-	req->refCount = 0;
-	req->unk_08 = 1;
-	req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
-
-	ObjectWithCleanup itemParam;
-	itemParam.object = g_currentDispFilePage->coverLoader;
-	itemParam.cleanup = req;
+	SharedPtr<job::JobItem> itemParam(g_currentDispFilePage->coverLoader);
 
 	g_coverJobQueue->Enqueue(&itemParam);
 
-	new menu::audioplayer::Audioplayer::Audioplayer(g_currentDispFilePage->cwd->data, startFile, menu::audioplayer::Audioplayer::Mode_Normal);
+	new menu::audioplayer::Audioplayer::Audioplayer(g_currentDispFilePage->cwd->c_str(), startFile, menu::audioplayer::Audioplayer::Mode_Normal);
 }
 
 SceVoid menu::displayfiles::ButtonCB::ButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
 	File *file = (File *)pUserData;
 
-	String *tempCwd = new String();
+	string *tempCwd = new string();
 
-	tempCwd->Setf("%s%s%s", g_currentDispFilePage->cwd->data, file->name->string.data, "/");
-	if (!io::Misc::Exists(tempCwd->data)) {
-		tempCwd->Clear();
+	*tempCwd = ccc::Sprintf("%s%s%s", g_currentDispFilePage->cwd->c_str(), file->name->string.c_str(), "/");
+	if (!LocalFile::Exists(tempCwd->c_str())) {
+		tempCwd->clear();
 		return;
 	}
 	else {
 		if (file->type == File::Type_Dir) {
-			Page *newPage = new menu::displayfiles::Page(tempCwd->data);
+			Page *newPage = new menu::displayfiles::Page(tempCwd->c_str());
 		}
 		else if (file->type == File::Type_Music) {
 			if (g_isPlayerActive) {
-				if (!sce_paf_strncasecmp(g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->data, tempCwd->data, g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->length)) {
+				if (!sce_paf_strncasecmp(g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->c_str(), tempCwd->c_str(), g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->length())) {
 					menu::audioplayer::Audioplayer::Return();
 				}
 				else {
@@ -161,7 +149,7 @@ SceVoid menu::displayfiles::ButtonCB::ButtonCBFun(SceInt32 eventId, paf::ui::Wid
 				StartNewPlayer(file);
 			}
 		}
-		tempCwd->Clear();
+		tempCwd->clear();
 	}
 
 	delete tempCwd;
@@ -209,19 +197,19 @@ menu::displayfiles::Page::Page(const char* path)
 		}
 	}
 
-	Resource::Element searchParam;
+	rco::Element searchParam;
 	Plugin::TemplateInitParam tmpParam;
 
-	cwd = new String(path);
+	cwd = new string(path);
 
-	WString topText;
-	String topText8;
-	topText8 = cwd->data;
-	topText8.ToWString(&topText);
+	wstring topText;
+	string topText8;
+	topText8 = cwd->c_str();
+	ccc::UTF8toUTF16(&topText8, &topText);
 	g_topText->SetLabel(&topText);
 	coverLoader = SCE_NULL;
 
-	if (PopulateFiles(cwd->data) < 0)
+	if (PopulateFiles(cwd->c_str()) < 0)
 		fileNum = 0;
 
 	if (fileNum > k_busyIndicatorFileLimit)
@@ -236,22 +224,22 @@ menu::displayfiles::Page::Page(const char* path)
 	g_empvaPlugin->TemplateOpen(g_root, &searchParam, &tmpParam);
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_displayfiles_bg");
-	root = (ui::Plane *)g_root->GetChildByHash(&searchParam, 0);
+	root = (ui::Plane *)g_root->GetChild(&searchParam, 0);
 	root->hash = (SceUInt32)root;
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
-	ui::Widget *backButton = g_rootPage->GetChildByHash(&searchParam, 0);
-	if (!EMPVAUtils::IsRootDevice(cwd->data))
-		backButton->PlayAnimation(300.0f, ui::Widget::Animation_Reset);
+	ui::Widget *backButton = g_rootPage->GetChild(&searchParam, 0);
+	if (!EMPVAUtils::IsRootDevice(cwd->c_str()))
+		backButton->PlayEffect(300.0f, effect::EffectType_Reset);
 	else
-		backButton->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
+		backButton->PlayEffectReverse(0.0f, effect::EffectType_Reset);
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_scroll_box");
-	box = (ui::Box *)root->GetChildByHash(&searchParam, 0);
+	box = (ui::Box *)root->GetChild(&searchParam, 0);
 	box->hash = (SceUInt32)box;
 
-	Resource::Element searchParamMusic;
-	Resource::Element searchParamDir;
+	rco::Element searchParamMusic;
+	rco::Element searchParamDir;
 	searchParamMusic.hash = EMPVAUtils::GetHash("menu_template_displayfiles_button_mus");
 	searchParamDir.hash = EMPVAUtils::GetHash("menu_template_displayfiles_button_dir");
 	searchParam.hash = EMPVAUtils::GetHash("menu_template_displayfiles_button_unk");
@@ -279,14 +267,14 @@ menu::displayfiles::Page::Page(const char* path)
 			break;
 		}
 
-		file->button = (ui::ImageButton *)box->GetChildByNum(box->childNum - 1);
+		file->button = (ui::ImageButton *)box->GetChild(box->childNum - 1);
 		file->button->hash = (SceUInt32)file->button;
 		file->button->SetLabel(&file->name->wstring);
 		if (file->type == File::Type_Unsupported)
 			file->button->Disable(0);
 		file->buttonCB = new ButtonCB;
 		file->buttonCB->pUserData = file;
-		file->button->RegisterEventCallback(ui::Widget::EventMain_Decide, file->buttonCB, 0);
+		file->button->RegisterEventCallback(ui::EventMain_Decide, file->buttonCB, 0);
 		if (i == fileNum - 1)
 			lastFile = file;
 		file = file->next;
@@ -306,15 +294,15 @@ menu::displayfiles::Page::Page(const char* path)
 
 	if (g_currentDispFilePage != SCE_NULL) {
 		if (g_currentDispFilePage->prev != SCE_NULL) {
-			g_currentDispFilePage->prev->root->PlayAnimationReverse(0.0f, ui::Widget::Animation_Reset);
+			g_currentDispFilePage->prev->root->PlayEffectReverse(0.0f, effect::EffectType_Reset);
 			if (g_currentDispFilePage->prev->root->animationStatus & 0x80)
 				g_currentDispFilePage->prev->root->animationStatus &= ~0x80;
 		}
-		g_currentDispFilePage->root->PlayAnimation(0.0f, ui::Widget::Animation_3D_SlideToBack1);
+		g_currentDispFilePage->root->PlayEffect(0.0f, effect::EffectType_3D_SlideToBack1);
 		if (g_currentDispFilePage->root->animationStatus & 0x80)
 			g_currentDispFilePage->root->animationStatus &= ~0x80;
 	}
-	root->PlayAnimation(-5000.0f, ui::Widget::Animation_3D_SlideFromFront);
+	root->PlayEffect(-5000.0f, effect::EffectType_3D_SlideFromFront);
 	if (root->animationStatus & 0x80)
 		root->animationStatus &= ~0x80;
 
@@ -325,14 +313,14 @@ menu::displayfiles::Page::Page(const char* path)
 
 menu::displayfiles::Page::~Page()
 {
-	String topText8;
-	WString topText;
+	string topText8;
+	wstring topText;
 	char tmpPath[SCE_IO_MAX_PATH_LENGTH];
 
 	sce_paf_memset(tmpPath, 0, SCE_IO_MAX_PATH_LENGTH);
-	sce_paf_strncpy(tmpPath, prev->cwd->data, sce_paf_strlen(prev->cwd->data));
+	sce_paf_strncpy(tmpPath, prev->cwd->c_str(), sce_paf_strlen(prev->cwd->c_str()));
 	topText8 = tmpPath;
-	topText8.ToWString(&topText);
+	ccc::UTF8toUTF16(&topText8, &topText);
 	g_topText->SetLabel(&topText);
 
 	if (prev != SCE_NULL && !g_isPlayerActive) {
@@ -344,28 +332,20 @@ menu::displayfiles::Page::~Page()
 		else
 			coverLoader->workFile = SCE_NULL;
 
-		CleanupHandler *req = new CleanupHandler();
-		req->userData = coverLoader;
-		req->refCount = 0;
-		req->unk_08 = 1;
-		req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
-
-		ObjectWithCleanup itemParam;
-		itemParam.object = coverLoader;
-		itemParam.cleanup = req;
+		SharedPtr<job::JobItem> itemParam(coverLoader);
 
 		g_coverJobQueue->Enqueue(&itemParam);
 
 	}
 
-	common::Utils::WidgetStateTransition(-100.0f, root, ui::Widget::Animation_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
+	effect::Play(-100.0f, root, effect::EffectType_3D_SlideFromFront, SCE_TRUE, SCE_FALSE);
 	if (prev != SCE_NULL) {
-		prev->root->PlayAnimationReverse(0.0f, ui::Widget::Animation_3D_SlideToBack1);
-		prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
+		prev->root->PlayEffectReverse(0.0f, effect::EffectType_3D_SlideToBack1);
+		prev->root->PlayEffect(0.0f, effect::EffectType_Reset);
 		if (prev->root->animationStatus & 0x80)
 			prev->root->animationStatus &= ~0x80;
 		if (prev->prev != SCE_NULL) {
-			prev->prev->root->PlayAnimation(0.0f, ui::Widget::Animation_Reset);
+			prev->prev->root->PlayEffect(0.0f, effect::EffectType_Reset);
 			if (prev->prev->root->animationStatus & 0x80)
 				prev->prev->root->animationStatus &= ~0x80;
 		}
@@ -374,16 +354,16 @@ menu::displayfiles::Page::~Page()
 	if (files != SCE_NULL)
 		ClearFiles(files);
 
-	menu::settings::Settings::GetInstance()->SetLastDirectory(prev->cwd->data);
+	menu::settings::Settings::GetInstance()->SetLastDirectory(prev->cwd->c_str());
 
 	delete cwd;
 }
 
 SceVoid menu::displayfiles::Page::ResetBgPlaneTex()
 {
-	ui::Widget::Color col;
-	SceFVector4 wsize;
-	Resource::Element searchParam;
+	Rgba col;
+	Vector4 wsize;
+	rco::Element searchParam;
 
 	col.r = 1;
 	col.g = 1;
@@ -397,13 +377,13 @@ SceVoid menu::displayfiles::Page::ResetBgPlaneTex()
 	wsize.w = 0.0f;
 	g_root->SetSize(&wsize);
 
-	g_root->SetTextureBase(g_commonBgTex);
+	g_root->SetSurfaceBase(&g_commonBgTex);
 
 	if (g_player_page) {
 		searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
-		ui::Widget *playerCover = g_player_page->GetChildByHash(&searchParam, 0);
+		ui::Widget *playerCover = g_player_page->GetChild(&searchParam, 0);
 		if (playerCover)
-			playerCover->SetTextureBase(g_coverBgTex);
+			playerCover->SetSurfaceBase(&g_coverBgTex);
 	}
 
 	if (g_currentCoverSurf)
@@ -421,20 +401,20 @@ SceVoid menu::displayfiles::Page::ClearFiles(File *file)
 
 SceInt32 menu::displayfiles::Page::Cmpstringp(const ScePVoid p1, const ScePVoid p2)
 {
-	io::Dir::Dirent *entryA = (io::Dir::Dirent *)p1;
-	io::Dir::Dirent *entryB = (io::Dir::Dirent *)p2;
+	Dir::Entry *entryA = (Dir::Entry *)p1;
+	Dir::Entry *entryB = (Dir::Entry *)p2;
 
-	if ((entryA->type == io::Type_Dir) && (entryB->type != io::Type_Dir))
+	if ((entryA->type == Dir::Entry::Type_Dir) && (entryB->type != Dir::Entry::Type_Dir))
 		return -1;
-	else if ((entryA->type != io::Type_Dir) && (entryB->type == io::Type_Dir))
+	else if ((entryA->type != Dir::Entry::Type_Dir) && (entryB->type == Dir::Entry::Type_Dir))
 		return 1;
 	else {
 		switch (menu::settings::Settings::GetInstance()->sort) {
 		case 0: // Sort alphabetically (ascending - A to Z)
-			return sce_paf_strcasecmp(entryA->name.data, entryB->name.data);
+			return sce_paf_strcasecmp(entryA->name.c_str(), entryB->name.c_str());
 			break;
 		case 1: // Sort alphabetically (descending - Z to A)
-			return sce_paf_strcasecmp(entryB->name.data, entryA->name.data);
+			return sce_paf_strcasecmp(entryB->name.c_str(), entryA->name.c_str());
 			break;
 		case 2: // Sort by file size (largest first)
 			return entryA->size > entryB->size ? -1 : entryA->size < entryB->size ? 1 : 0;
@@ -450,7 +430,7 @@ SceInt32 menu::displayfiles::Page::Cmpstringp(const ScePVoid p1, const ScePVoid 
 
 SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath) 
 {
-	io::Dir dir;
+	Dir dir;
 	File *coverWorkItem = SCE_NULL;
 	files = SCE_NULL;
 	fileNum = 0;
@@ -458,26 +438,26 @@ SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath)
 	if (dir.Open(rootPath) >= 0) {
 
 		int entryCount = 0;
-		io::Dir::Dirent *entries = new io::Dir::Dirent[MAX_FILES];
+		Dir::Entry *entries = new Dir::Entry[MAX_FILES];
 
 		while (dir.Read(&entries[entryCount]) >= 0)
 			entryCount++;
 
 		dir.Close();
-		sce_paf_qsort(entries, entryCount, sizeof(io::Dir::Dirent), (int(*)(const void *, const void *))Cmpstringp);
+		sce_paf_qsort(entries, entryCount, sizeof(Dir::Entry), (int(*)(const void *, const void *))Cmpstringp);
 
 		for (int i = 0; i < entryCount; i++) {
 			// Allocate Memory
 			File *item = new File();
 
 			// Set type and check if supported
-			if (entries[i].type != io::Type_Dir) {
-				sce_paf_strncpy(item->ext, EMPVAUtils::GetFileExt(entries[i].name.data), 5);
+			if (entries[i].type != Dir::Entry::Type_Dir) {
+				sce_paf_strncpy(item->ext, EMPVAUtils::GetFileExt(entries[i].name.c_str()), 5);
 
 				if (EMPVAUtils::IsSupportedExtension(item->ext))
 					item->type = File::Type_Music;
 				else if (EMPVAUtils::IsSupportedCoverExtension(item->ext)) {
-					if (!sce_paf_strncasecmp(entries[i].name.data, "cover", 5) || !sce_paf_strncasecmp(entries[i].name.data, "folder", 6)) {
+					if (!sce_paf_strncasecmp(entries[i].name.c_str(), "cover", 5) || !sce_paf_strncasecmp(entries[i].name.c_str(), "folder", 6)) {
 						coverState = SCE_TRUE;
 						coverWorkItem = item;
 					}
@@ -491,16 +471,16 @@ SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath)
 					continue;
 				}
 			}
-			else if (entries[i].type == io::Type_Dir)
+			else if (entries[i].type == Dir::Entry::Type_Dir)
 				item->type = File::Type_Dir;
 			else {
 				delete item;
 				continue;
 			}
 
-			item->name = new SWString(entries[i].name.data);
+			item->name = new swstring(entries[i].name.c_str());
 
-			item->name->string.ToWString(&item->name->wstring);
+			ccc::UTF8toUTF16(&item->name->string, &item->name->wstring);
 
 			fileNum++;
 
@@ -529,15 +509,7 @@ SceInt32 menu::displayfiles::Page::PopulateFiles(const char *rootPath)
 			else
 				coverLoader->workFile = SCE_NULL;
 
-			CleanupHandler *req = new CleanupHandler();
-			req->userData = coverLoader;
-			req->refCount = 0;
-			req->unk_08 = 1;
-			req->cb = (CleanupHandler::CleanupCallback)menu::displayfiles::CoverLoaderJob::JobKiller;
-
-			ObjectWithCleanup itemParam;
-			itemParam.object = coverLoader;
-			itemParam.cleanup = req;
+			SharedPtr<job::JobItem> itemParam(coverLoader);
 
 			g_coverJobQueue->Enqueue(&itemParam);
 		}

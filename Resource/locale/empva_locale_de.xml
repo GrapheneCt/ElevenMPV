@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
   <string src="Dieses Verzeichnis ist leer" id="msg_empty_dir" />
-  <string src="Es ist ein SSL-Fehler aufgetreten.\n\nUm diese Funktion zu verwenden, muss die Systemzeit richtig eingestellt und das iTLS-Enso-Plugin installiert sein." id="msg_netcheck_fail" />
+  <string src="Es ist ein SSL-Fehler aufgetreten.Um diese Funktion zu verwenden, muss die Systemzeit richtig eingestellt und das iTLS-Enso-Plugin installiert sein." id="msg_netcheck_fail" />
 
   <string src="Einstellungen" id="msg_settings" />
   <string src="Gerät" id="msg_settings_device" />

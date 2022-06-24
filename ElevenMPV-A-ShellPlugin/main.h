@@ -10,8 +10,6 @@ public:
 	using paf::thread::Thread::Thread;
 
 	virtual SceVoid EntryFunction();
-
-	SceBool done;
 };
 
 class RxThread : public paf::thread::Thread
@@ -23,7 +21,7 @@ public:
 	virtual SceVoid EntryFunction();
 };
 
-class PlayerButtonCB : public ui::Widget::EventCallback
+class PlayerButtonCB : public ui::EventCallback
 {
 public:
 

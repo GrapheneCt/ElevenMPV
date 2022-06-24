@@ -14,6 +14,7 @@
 PRX_EXPORT void youtube_change_content_language(std::string language_code);
 
 // util function
+PRX_EXPORT int youtube_set_audio_bitrate_limit(int limit);
 PRX_EXPORT std::string youtube_get_video_thumbnail_url_by_id(const std::string &id);
 PRX_EXPORT std::string youtube_get_video_thumbnail_hq_url_by_id(const std::string &id);
 PRX_EXPORT std::string youtube_get_video_url_by_id(const std::string &id);

@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "yt_utils.h"
 #include "downloader.h"
+#include "youtube_parser.hpp"
 
 using namespace paf;
 using namespace sce;
@@ -32,14 +33,12 @@ static SceInt32 s_lastError = SCE_OK;
 menu::settings::Settings::Settings()
 {
 	SceInt32 ret;
-	Framework::PluginInitParam pluginParam;
+	SceSize fsize = 0;
+	const char *fmime = SCE_NULL;
+	Plugin::InitParam pluginParam;
 	AppSettings::InitParam sparam;
 
 	settingsReset = SCE_FALSE;
-
-	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_BXCE);
-	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_INI_FILE_PROCESSOR);
-	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
 
 	pluginParam.pluginName = "app_settings_plugin";
 	pluginParam.resourcePath = "vs0:vsh/common/app_settings_plugin.rco";
@@ -53,9 +52,9 @@ menu::settings::Settings::Settings()
 	pluginParam.pluginPath = "vs0:vsh/common/app_settings.suprx";
 	pluginParam.unk_58 = 0x96;
 
-	Framework::s_frameworkInstance->LoadPlugin(&pluginParam);
+	s_frameworkInstance->LoadPlugin(&pluginParam);
 
-	LocalFile::Open(&sparam.xmlFile, "app0:empva_settings.xml", SCE_O_RDONLY, 0, &ret);
+	sparam.xmlFile = g_empvaPlugin->resource->GetFile(EMPVAUtils::GetHash("file_empva_settings"), &fsize, &fmime);
 
 	sparam.allocCB = sce_paf_malloc;
 	sparam.freeCB = sce_paf_free;
@@ -83,6 +82,7 @@ menu::settings::Settings::Settings()
 		appSet->SetInt("motion_degree", k_defMotionDeg);
 		appSet->SetInt("last_pagemode", k_defLastPagemode);
 		appSet->SetInt("fps_limit", k_defFpsLimit);
+		appSet->SetInt("yt_quality", k_defYtQuality);
 
 		ret = appSet->SetInt("settings_version", k_settingsVersion);
 
@@ -102,6 +102,7 @@ menu::settings::Settings::Settings()
 	appSet->GetInt("device", &device, k_defDevice);
 	appSet->GetInt("last_pagemode", &last_pagemode, k_defLastPagemode);
 	appSet->GetInt("fps_limit", &fps_limit, k_defFpsLimit);
+	appSet->GetInt("yt_quality", &yt_quality, k_defYtQuality);
 
 	s_settingsInstance = this;
 }
@@ -178,7 +179,7 @@ SceInt32 menu::settings::Settings::CBIsVisible(const char *elementId, SceBool *p
 
 	// Check if PSTV to disable unsupported settings lists
 #ifdef NDEBUG
-	if (Misc::IsDolce()) {
+	if (SCE_PAF_IS_DOLCE) {
 		if (!sce_paf_strcmp(elementId, "setting_list_power") || !sce_paf_strcmp(elementId, "setting_list_controls")) {
 			*pIsVisible = SCE_FALSE;
 		}
@@ -204,17 +205,15 @@ SceInt32 menu::settings::Settings::CBValueChange(const char *elementId, const ch
 	SceInt32 ret = SCE_OK;
 	SceUInt32 elemHash = EMPVAUtils::GetHash(elementId);
 	SceInt32 value = sce_paf_strtol(newValue, &end, 10);
-	String *text8 = SCE_NULL;
-	WString label16;
-	String label8;
-	char entry[SCE_INI_FILE_PROCESSOR_KEY_BUFFER_SIZE];
-	YTUtils::Log *log;
-	Resource::Element searchParam;
+	string *text8 = SCE_NULL;
+	wstring label16;
+	string label8;
+	rco::Element searchParam;
 
 	switch (elemHash) {
 	case Hash_Device:
-		text8 = String::WCharToNewString(EMPVAUtils::GetStringWithNum("msg_option_device_", value), text8);
-		if (io::Misc::Exists(text8->data)) {
+		text8 = ccc::UTF16toUTF8WithAlloc(EMPVAUtils::GetStringWithNum("msg_option_device_", value));
+		if (LocalFile::Exists(text8->c_str())) {
 			s_needPageReload = SCE_TRUE;
 			s_needCwdReload = SCE_TRUE;
 			GetInstance()->device = value;
@@ -285,20 +284,32 @@ SceInt32 menu::settings::Settings::CBValueChange(const char *elementId, const ch
 			if (g_currentPlayerInstance->GetCore()->GetDecoder()) {
 				if (g_currentPlayerInstance->GetCore()->GetDecoder()->IsValid()) {
 					searchParam.hash = EMPVAUtils::GetHash("text_player_title");
-					ui::Widget *textTitle = g_player_page->GetChildByHash(&searchParam, 0);
+					ui::Widget *textTitle = g_player_page->GetChild(&searchParam, 0);
 					textTitle->GetLabel(&label16);
-					label16.ToString(&label8);
-					label8.Append(".webmyt", 8);
+					ccc::UTF16toUTF8(&label16, &label8);
+					label8.append(".webmyt", 8);
 
-					ret = YTUtils::GetDownloader()->Enqueue(g_currentPlayerInstance->GetCore()->GetDecoder()->dataPath.data, label8.data);
+					ret = YTUtils::GetDownloader()->Enqueue(g_currentPlayerInstance->GetCore()->GetDecoder()->dataPath.c_str(), label8.c_str());
 
 					break;
 				}
 			}
 		}
-
 		ret = SCE_ERROR_ERRNO_ENXIO;
+		break;
+	case Hash_YoutubeQuality:
+		GetInstance()->yt_quality = value;
+		//Check if yt modules are loaded
+		if (sceSysmoduleIsLoaded(SCE_SYSMODULE_HTTPS) == SCE_OK) {
+			if (value == 1)
+				value = YtQuality_Medium;
+			else if (value == 2)
+				value = YtQuality_Low;
+			else
+				value = YtQuality_High;
 
+			youtube_set_audio_bitrate_limit(value);
+		}
 		break;
 	default:
 		break;
@@ -306,7 +317,6 @@ SceInt32 menu::settings::Settings::CBValueChange(const char *elementId, const ch
 
 
 	if (text8) {
-		text8->Clear();
 		delete text8;
 	}
 
@@ -321,18 +331,18 @@ SceInt32 menu::settings::Settings::CBValueChange2(const char *elementId, const c
 
 SceVoid menu::settings::Settings::CBTerm()
 {
-	Resource::Element searchParam;
-	String *text8 = SCE_NULL;
+	rco::Element searchParam;
+	string *text8 = SCE_NULL;
 	SceInt32 value = 0;
 
 	switch (s_callerMode) {
 	case menu::settings::SettingsButtonCB::Parent_Player:
 		// Show (enable) player page
-		g_player_page->PlayAnimation(-1000.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		g_player_page->PlayEffect(-1000.0f, effect::EffectType_Fadein1, SCE_NULL);
 		break;
 	case menu::settings::SettingsButtonCB::Parent_Displayfiles:
 		// Show (enable) displayfiles page
-		g_rootPage->PlayAnimation(-1000.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		g_rootPage->PlayEffect(-1000.0f, effect::EffectType_Fadein1, SCE_NULL);
 		break;
 	}
 
@@ -350,17 +360,16 @@ SceVoid menu::settings::Settings::CBTerm()
 			}
 
 			GetAppSetInstance()->GetInt("device", &value, 0);
-			text8 = String::WCharToNewString(EMPVAUtils::GetStringWithNum("msg_option_device_", value), text8);
+			text8 = ccc::UTF16toUTF8WithAlloc(EMPVAUtils::GetStringWithNum("msg_option_device_", value));
 
-			menu::displayfiles::Page *newPage = new menu::displayfiles::Page(text8->data);
+			menu::displayfiles::Page *newPage = new menu::displayfiles::Page(text8->c_str());
 
-			text8->Clear();
 			delete text8;
 
 			s_needCwdReload = SCE_FALSE;
 		}
 		else {
-			text8 = new String(g_currentDispFilePage->cwd->data);
+			text8 = new string(g_currentDispFilePage->cwd->c_str());
 
 			if (g_currentDispFilePage->prev != SCE_NULL) {
 				tmpCurr = g_currentDispFilePage;
@@ -368,9 +377,8 @@ SceVoid menu::settings::Settings::CBTerm()
 				delete tmpCurr;
 			}
 
-			menu::displayfiles::Page *newPage = new menu::displayfiles::Page(text8->data);
+			menu::displayfiles::Page *newPage = new menu::displayfiles::Page(text8->c_str());
 
-			text8->Clear();
 			delete text8;
 		}
 
@@ -378,15 +386,15 @@ SceVoid menu::settings::Settings::CBTerm()
 	}
 }
 
-SceWChar16 *menu::settings::Settings::CBGetString(const char *elementId)
+wchar_t *menu::settings::Settings::CBGetString(const char *elementId)
 {
-	Resource::Element searchParam;
+	rco::Element searchParam;
 	searchParam.hash = EMPVAUtils::GetHash(elementId);
 
-	return g_empvaPlugin->GetString(&searchParam);
+	return g_empvaPlugin->GetWString(&searchParam);
 }
 
-SceInt32 menu::settings::Settings::CBGetTex(graphics::Texture *tex, const char *elementId)
+SceInt32 menu::settings::Settings::CBGetTex(graph::Surface **tex, const char *elementId)
 {
 	return SCE_OK;
 }
@@ -408,7 +416,7 @@ SceVoid menu::settings::Settings::SetLastDirectory(const char *cwd)
 	sceAppUtilSaveSafeMemory((ScePVoid)cwd, len, k_safeMemIniLimit + sizeof(SceInt32));
 }
 
-SceVoid menu::settings::Settings::GetLastDirectory(String *cwd)
+SceVoid menu::settings::Settings::GetLastDirectory(string *cwd)
 {
 	SceInt32 ret = 0;
 	const char *root_paths[] = {
@@ -430,8 +438,8 @@ SceVoid menu::settings::Settings::GetLastDirectory(String *cwd)
 		sceAppUtilSaveSafeMemory((ScePVoid)&ret, sizeof(SceInt32), k_safeMemIniLimit);
 		sceAppUtilSaveSafeMemory((ScePVoid)cwd, ret, k_safeMemIniLimit + sizeof(SceInt32));
 
-		cwd->Clear();
-		cwd->Append(rootPath, ret);
+		cwd->clear();
+		cwd->append(rootPath, ret);
 
 		settingsReset = SCE_FALSE;
 	}
@@ -445,7 +453,7 @@ SceVoid menu::settings::Settings::GetLastDirectory(String *cwd)
 
 		buf[len] = '\0';
 
-		if (io::Misc::Exists(buf))
+		if (LocalFile::Exists(buf))
 			*cwd = buf;
 		else
 			*cwd = rootPath;
@@ -456,18 +464,17 @@ SceVoid menu::settings::Settings::GetLastDirectory(String *cwd)
 
 SceVoid menu::settings::SettingsButtonCB::SettingsButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
-	Resource::Element searchParam;
-	Plugin::SceneInitParam rwiParam;
+	rco::Element searchParam;
 	SceUInt32 callerMode = *(SceUInt32 *)pUserData;
 
 	switch (callerMode) {
 	case Parent_Player:
 		// Hide (disable) player page
-		g_player_page->PlayAnimationReverse(100.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		g_player_page->PlayEffectReverse(100.0f, effect::EffectType_Fadein1, SCE_NULL);
 		break;
 	case Parent_Displayfiles:
 		// Hide (disable) displayfiles page
-		g_rootPage->PlayAnimationReverse(100.0f, ui::Widget::Animation_Fadein1, SCE_NULL);
+		g_rootPage->PlayEffectReverse(100.0f, effect::EffectType_Fadein1, SCE_NULL);
 		break;
 	}
 

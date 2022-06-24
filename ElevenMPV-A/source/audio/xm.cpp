@@ -10,7 +10,7 @@ audio::XmDecoder::XmDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 {
 	samplesRead = 0;
 
-	String text8;
+	string text8;
 	xmp = xmp_create_context();
 
 	if (xmp_load_module(xmp, path) < 0)
@@ -24,7 +24,7 @@ audio::XmDecoder::XmDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 	if (module_info.mod->name[0] != '\0') {
 		metadata->hasMeta = SCE_TRUE;
 		text8 = module_info.mod->name;
-		text8.ToWString(&metadata->title);
+		ccc::UTF8toUTF16(&text8, &metadata->title);
 	}
 
 	isValid = SCE_TRUE;

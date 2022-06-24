@@ -11,11 +11,11 @@ namespace menu {
 		class Page;
 		class File;
 
-		class CoverLoaderJob : public paf::thread::JobQueue::Item
+		class CoverLoaderJob : public job::JobItem
 		{
 		public:
 
-			using thread::JobQueue::Item::Item;
+			using job::JobItem::JobItem;
 
 			~CoverLoaderJob()
 			{
@@ -26,17 +26,11 @@ namespace menu {
 
 			SceVoid Finish();
 
-			static SceVoid JobKiller(thread::JobQueue::Item *job)
-			{
-				if (job)
-					delete job;
-			}
-
 			Page *workPage;
 			File *workFile;
 		};
 
-		class BackButtonCB : public ui::Widget::EventCallback
+		class BackButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -54,7 +48,7 @@ namespace menu {
 
 		};
 
-		class PlayerButtonCB : public ui::Widget::EventCallback
+		class PlayerButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -72,7 +66,7 @@ namespace menu {
 
 		};
 
-		class ButtonCB : public ui::Widget::EventCallback
+		class ButtonCB : public ui::EventCallback
 		{
 		public:
 
@@ -91,7 +85,7 @@ namespace menu {
 			static SceVoid StartNewPlayer(menu::displayfiles::File *startFile);
 		};
 
-		class BusyCB : public ui::Widget::EventCallback
+		class BusyCB : public ui::EventCallback
 		{
 		public:
 
@@ -135,7 +129,7 @@ namespace menu {
 			}
 
 			File *next;
-			SWString *name;
+			swstring *name;
 			char ext[5];
 			Type type;
 			ui::ImageButton *button;
@@ -156,7 +150,7 @@ namespace menu {
 
 			ui::Plane *root;
 			ui::Box *box;
-			String *cwd;
+			string *cwd;
 			Page *prev;
 			File *files;
 			BusyCB *busyCB;

@@ -22,30 +22,24 @@ public:
 
 private:
 
-	class AsyncEnqueue : public paf::thread::JobQueue::Item
+	class AsyncEnqueue : public job::JobItem
 	{
 	public:
 
-		using thread::JobQueue::Item::Item;
+		using job::JobItem::JobItem;
 
 		~AsyncEnqueue() {}
 
 		SceVoid Run()
 		{
 			Downloader *pdownloader = (Downloader *)downloader;
-			pdownloader->Enqueue(url8.data, name8.data);
+			pdownloader->Enqueue(url8.c_str(), name8.c_str());
 		}
 
 		SceVoid Finish() {}
 
-		static SceVoid JobKiller(thread::JobQueue::Item *job)
-		{
-			if (job)
-				delete job;
-		}
-
-		String url8;
-		String name8;
+		string url8;
+		string name8;
 		ScePVoid downloader;
 	};
 

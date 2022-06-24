@@ -38,6 +38,11 @@
 			<text_field id="text_field_controls_angle" title="msg_settings_control_angle" max_length="2" min_length="1" keyboard_type="numeral" key="motion_degree" default_value="45"/>
 		</setting_list>
 		<setting_list id="setting_list_youtube" title="msg_settings_youtube">
+			<list id="list_youtube_quality" title="msg_youtube_quality" key="yt_quality" default_value="0">
+				<list_item id="list_youtube_quality_00" title="msg_option_youtube_quality_0" value="0" />
+				<list_item id="list_youtube_quality_01" title="msg_option_youtube_quality_1" value="1" />
+				<list_item id="list_youtube_quality_02" title="msg_option_youtube_quality_2" value="2" />
+			</list>	
 			<button id="button_youtube_clean_history" title="msg_settings_youtube_clean_history" success_dialog_message="msg_settings_youtube_clean_history_done" confirm="msg_settings_youtube_clean_history_confirm" />
 			<button id="button_youtube_clean_fav" title="msg_settings_youtube_clean_fav" success_dialog_message="msg_settings_youtube_clean_fav_done" confirm="msg_settings_youtube_clean_fav_confirm" />
 			<button id="button_youtube_download" title="msg_settings_youtube_download" success_dialog_message="msg_settings_youtube_download_begin" />

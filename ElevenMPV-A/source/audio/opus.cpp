@@ -39,7 +39,7 @@ SceInt32 audio::OpDecoder::OpSeek(ScePVoid _stream, SceInt64 _offset, SceInt32 _
 	DualIo *io = (DualIo *)_stream;
 
 	if (io->mio != SCE_NULL) {
-		s_currPos = io->mio->Lseek(_offset, _whence);
+		s_currPos = io->mio->Seek(_offset, _whence);
 		return 0;
 	}
 	else {
@@ -81,7 +81,8 @@ audio::OpDecoder::OpDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 {
 	SceInt32 error = 0;
 	SceUInt32 bufMemSize = 64 * 1024;
-	String text8;
+	string text8;
+	LocalFile::OpenArg oarg;
 	OggOpusFile *opusFile = SCE_NULL;
 	OpusFileCallbacks opCb;
 
@@ -100,8 +101,9 @@ audio::OpDecoder::OpDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 	LOCALMediaInit(&nmHandle, &io.fio, SCE_NULL, bufMemSize, 0, 0, SCE_NULL);
 
 	io.fio.open(io.fio.objectPointer, path);
-	io.mio = new io::File();
-	io.mio->Open(path, SCE_O_RDONLY, 0);
+	io.mio = new LocalFile();
+	oarg.filename = path;
+	io.mio->Open(&oarg);
 
 	if ((opus = (ScePVoid)op_open_callbacks(&io, &opCb, SCE_NULL, 0, &error)) == SCE_NULL) {
 		io.fio.close(io.fio.objectPointer);
@@ -129,21 +131,21 @@ audio::OpDecoder::OpDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 		metadata->hasMeta = SCE_TRUE;
 
 		text8 = opus_tags_query(tags, "title", 0);
-		text8.ToWString(&metadata->title);
+		ccc::UTF8toUTF16(&text8, &metadata->title);
 	}
 
 	if (opus_tags_query_count(tags, "album") > 0) {
 		metadata->hasMeta = SCE_TRUE;
 
 		text8 = opus_tags_query(tags, "album", 0);
-		text8.ToWString(&metadata->album);
+		ccc::UTF8toUTF16(&text8, &metadata->album);
 	}
 
 	if (opus_tags_query_count(tags, "artist") > 0) {
 		metadata->hasMeta = SCE_TRUE;
 
 		text8 = opus_tags_query(tags, "artist", 0);
-		text8.ToWString(&metadata->artist);
+		ccc::UTF8toUTF16(&text8, &metadata->artist);
 	}
 
 	if ((opus_tags_query_count(tags, "METADATA_BLOCK_PICTURE") > 0)) {
@@ -163,15 +165,7 @@ audio::OpDecoder::OpDecoder(const char *path, SceBool isSwDecoderUsed) : Generic
 
 					if (coverLoader->workptr != SCE_NULL) {
 
-						CleanupHandler *req = new CleanupHandler();
-						req->userData = coverLoader;
-						req->refCount = 0;
-						req->unk_08 = 1;
-						req->cb = (CleanupHandler::CleanupCallback)audio::PlayerCoverLoaderJob::JobKiller;
-
-						ObjectWithCleanup itemParam;
-						itemParam.object = coverLoader;
-						itemParam.cleanup = req;
+						SharedPtr<job::JobItem> itemParam(coverLoader);
 
 						coverLoader->isExtMem = SCE_TRUE;
 						sce_paf_memcpy(coverLoader->workptr, picture_tag.data, picture_tag.data_length);

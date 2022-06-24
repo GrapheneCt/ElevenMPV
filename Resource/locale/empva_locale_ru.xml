@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
   <string src="Эта папка пуста" id="msg_empty_dir" />
-  <string src="Произошла ошибка SSL.\n\nДля того, чтобы использовать эту функцию, системное время должно быть выставлено корректно и должен быть установлен плагин iTLS-Enso." id="msg_netcheck_fail" />
+  <string src="Произошла ошибка SSL.Для того, чтобы использовать эту функцию, системное время должно быть выставлено корректно и должен быть установлен плагин iTLS-Enso." id="msg_netcheck_fail" />
   
   <string src="Настройки" id="msg_settings" />
   <string src="Устройство" id="msg_settings_device" />

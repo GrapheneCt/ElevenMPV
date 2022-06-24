@@ -5,6 +5,7 @@
 #include <paf.h>
 
 #include "common.h"
+#include "dialog.h"
 
 using namespace paf;
 
@@ -71,24 +72,11 @@ public:
 		MemState_Full,
 	};
 
-	class PleaseWaitThread : public thread::Thread
+	class AsyncEnqueue : public job::JobItem
 	{
 	public:
 
-		using thread::Thread::Thread;
-
-		SceVoid EntryFunction();
-
-		SceBool withCancel;
-		SceBool forceCancel;
-		SceBool userCancel;
-	};
-
-	class AsyncEnqueue : public paf::thread::JobQueue::Item
-	{
-	public:
-
-		using thread::JobQueue::Item::Item;
+		using job::JobItem::JobItem;
 
 		typedef void(*FinishHandler)();
 
@@ -97,9 +85,9 @@ public:
 		SceVoid Run()
 		{
 			if (!sceKernelPollEventFlag(g_eventFlagUid, FLAG_ELEVENMPVA_IS_FG, SCE_KERNEL_EVF_WAITMODE_AND, SCE_NULL))
-				EMPVAUtils::BeginPleaseWait();
+				Dialog::OpenPleaseWait(g_empvaPlugin, SCE_NULL, EMPVAUtils::GetString("msg_wait"));
 			eventHandler(eventId, self, a3, pUserData);
-			EMPVAUtils::EndPleaseWait();
+			Dialog::Close();
 		}
 
 		SceVoid Finish()
@@ -108,13 +96,7 @@ public:
 				finishHandler();
 		}
 
-		static SceVoid JobKiller(thread::JobQueue::Item *job)
-		{
-			if (job)
-				delete job;
-		}
-
-		ui::Widget::EventCallback::EventHandler eventHandler;
+		ui::EventCallback::EventHandler eventHandler;
 		FinishHandler finishHandler;
 		SceInt32 eventId;
 		ui::Widget *self;
@@ -132,7 +114,7 @@ public:
 
 		static SceUInt32 PeekTx();
 
-		static SceVoid SendInfo(WString *title, WString *artist, WString *album, SceInt32 playBtState);
+		static SceVoid SendInfo(wstring *title, wstring *artist, wstring *album, SceInt32 playBtState);
 
 	};
 
@@ -150,9 +132,9 @@ public:
 
 	static wchar_t *GetStringWithNum(const char *name, SceUInt32 num);
 
-	static SceUInt32 Downscale(SceInt32 ix, SceInt32 iy, ScePVoid ibuf, SceInt32 ox, SceInt32 oy, ScePVoid obuf);
+	static wchar_t *GetString(const char *name);
 
-	static SceInt32 Alphasort(const void *p1, const void *p2);
+	static SceUInt32 Downscale(SceInt32 ix, SceInt32 iy, ScePVoid ibuf, SceInt32 ox, SceInt32 oy, ScePVoid obuf);
 
 	static SceBool IsDecoderUsed();
 
@@ -176,11 +158,7 @@ public:
 
 	static SceVoid SetPagemode(SceInt32 mode);
 
-	static SceVoid RunCallbackAsJob(ui::Widget::EventCallback::EventHandler eventHandler, EMPVAUtils::AsyncEnqueue::FinishHandler finishHandler, SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
-
-	static SceVoid EMPVAUtils::BeginPleaseWait(SceBool withCancel = SCE_FALSE);
-
-	static SceVoid EMPVAUtils::EndPleaseWait();
+	static SceVoid RunCallbackAsJob(ui::EventCallback::EventHandler eventHandler, EMPVAUtils::AsyncEnqueue::FinishHandler finishHandler, SceInt32 eventId, ui::Widget *self, SceInt32 a3, ScePVoid pUserData);
 
 private:
 
