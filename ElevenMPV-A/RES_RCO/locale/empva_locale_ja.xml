@@ -1,1 +1,63 @@
-
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+  <string src="このディレクトリは空です" id="msg_empty_dir" />
+  <string src="SSLエラーが発生しました。この機能を使用するには、システム時刻を正しく設定し、iTLS-Ensoプラグインをインストールする必要があります。" id="msg_netcheck_fail" />
+  
+  <string src="設定" id="msg_settings" />
+  <string src="デバイス" id="msg_settings_device" />
+  <string src="ソート" id="msg_settings_sort" />
+  <string src="オーディオ" id="msg_settings_audio" />
+  <string src="省電力モード" id="msg_settings_power" />
+  <string src="コントロール" id="msg_settings_control" />
+  <string src="YouTube" id="msg_settings_youtube" />
+  
+  <string src="イコライザ" id="msg_settings_audio_eq" />
+  <string src="自動レベル制御" id="msg_settings_audio_alc" />
+  <string src="EQで音量を制限する" id="msg_settings_audio_limit" />
+  
+  <string src="FPS Limiter" id="msg_settings_power_fps" />
+  <string src="Suspend Automatically When Paused" id="msg_settings_power_save" />
+  <string src="Suspend Timer (min)" id="msg_settings_power_time" />
+  
+  <string src="Skip Tracks With Right Stick in Sleep Mode" id="msg_settings_control_stick" />
+  <string src="Motion Controls" id="msg_settings_control_motion" />
+  <string src="Timeout (sec)" id="msg_settings_control_time" />
+  <string src="Angle Threshold ( °)" id="msg_settings_control_angle" />
+  
+  <string src="Clean History" id="msg_settings_youtube_clean_history" />
+  <string src="Clean Favourites" id="msg_settings_youtube_clean_fav" />
+  <string src="History has been cleaned." id="msg_settings_youtube_clean_history_done" />
+  <string src="Favourites has been cleaned." id="msg_settings_youtube_clean_fav_done" />
+  <string src="All history records will be deleted. Continue?" id="msg_settings_youtube_clean_history_confirm" />
+  <string src="All favourites will be deleted. Continue?" id="msg_settings_youtube_clean_fav_confirm" />
+  <string src="ダウンロード" id="msg_settings_youtube_download" />
+  <string src="Download has been added to queue." id="msg_settings_youtube_download_begin" />
+  <string src="音質" id="msg_youtube_quality" />
+  <string src="高音質" id="msg_option_youtube_quality_0" />
+  <string src="標準音質" id="msg_option_youtube_quality_1" />
+  <string src="低音質" id="msg_option_youtube_quality_2" />
+  
+  <string src="シャッフル" id="msg_player_shuffle" />
+  <string src="リピート" id="msg_player_repeat" />
+  <string src="お気に入り" id="msg_player_fav" />
+  
+  <string src="オフ" id="msg_option_audio_eq_0" />
+  <string src="ヘヴィ" id="msg_option_audio_eq_1" />
+  <string src="ポップ" id="msg_option_audio_eq_2" />
+  <string src="ジャズ" id="msg_option_audio_eq_3" />
+  <string src="ユニーク" id="msg_option_audio_eq_4" />
+  
+  <string src="ux0:/" id="msg_option_device_0" />
+  <string src="ur0:/" id="msg_option_device_1" />
+  <string src="uma0:/" id="msg_option_device_2" />
+  <string src="xmc0:/" id="msg_option_device_3" />
+  <string src="imc0:/" id="msg_option_device_4" />
+  <string src="grw0:/" id="msg_option_device_5" />
+  <string src="Device not found." id="msg_settings_device_not_found" />
+  
+  <string src="By Name (Ascending)" id="msg_option_sort_0" />
+  <string src="By Name (Descending)" id="msg_option_sort_1" />
+  <string src="By Size (Largest First)" id="msg_option_sort_2" />
+  <string src="By Size (Smallest First)" id="msg_option_sort_3" />
+  
+</stringset>
