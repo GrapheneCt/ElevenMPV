@@ -15,23 +15,23 @@
   <string src="自動レベル制御" id="msg_settings_audio_alc" />
   <string src="EQで音量を制限する" id="msg_settings_audio_limit" />
   
-  <string src="FPS Limiter" id="msg_settings_power_fps" />
-  <string src="Suspend Automatically When Paused" id="msg_settings_power_save" />
-  <string src="Suspend Timer (min)" id="msg_settings_power_time" />
+  <string src="FPSリミッター" id="msg_settings_power_fps" />
+  <string src="一時停止すると自動的に一時停止します" id="msg_settings_power_save" />
+  <string src="サスペンドタイマー（分)" id="msg_settings_power_time" />
   
-  <string src="Skip Tracks With Right Stick in Sleep Mode" id="msg_settings_control_stick" />
-  <string src="Motion Controls" id="msg_settings_control_motion" />
-  <string src="Timeout (sec)" id="msg_settings_control_time" />
-  <string src="Angle Threshold ( °)" id="msg_settings_control_angle" />
+  <string src="スリープモードで右スティックでトラックをスキップする" id="msg_settings_control_stick" />
+  <string src="モーションコントロール" id="msg_settings_control_motion" />
+  <string src="タイムアウト（秒）" id="msg_settings_control_time" />
+  <string src="角度のしきい値 ( °)" id="msg_settings_control_angle" />
   
-  <string src="Clean History" id="msg_settings_youtube_clean_history" />
-  <string src="Clean Favourites" id="msg_settings_youtube_clean_fav" />
-  <string src="History has been cleaned." id="msg_settings_youtube_clean_history_done" />
-  <string src="Favourites has been cleaned." id="msg_settings_youtube_clean_fav_done" />
-  <string src="All history records will be deleted. Continue?" id="msg_settings_youtube_clean_history_confirm" />
-  <string src="All favourites will be deleted. Continue?" id="msg_settings_youtube_clean_fav_confirm" />
+  <string src="履歴を削除" id="msg_settings_youtube_clean_history" />
+  <string src="お気に入りを削除" id="msg_settings_youtube_clean_fav" />
+  <string src="履歴が削除されました。" id="msg_settings_youtube_clean_history_done" />
+  <string src="お気に入りが削除されました。" id="msg_settings_youtube_clean_fav_done" />
+  <string src="すべての履歴が削除されます。続けますか？" id="msg_settings_youtube_clean_history_confirm" />
+  <string src="すべてのお気に入りが削除されます。続けますか？" id="msg_settings_youtube_clean_fav_confirm" />
   <string src="ダウンロード" id="msg_settings_youtube_download" />
-  <string src="Download has been added to queue." id="msg_settings_youtube_download_begin" />
+  <string src="ダウンロードがキューに追加されました。" id="msg_settings_youtube_download_begin" />
   <string src="音質" id="msg_youtube_quality" />
   <string src="高音質" id="msg_option_youtube_quality_0" />
   <string src="標準音質" id="msg_option_youtube_quality_1" />
@@ -53,11 +53,11 @@
   <string src="xmc0:/" id="msg_option_device_3" />
   <string src="imc0:/" id="msg_option_device_4" />
   <string src="grw0:/" id="msg_option_device_5" />
-  <string src="Device not found." id="msg_settings_device_not_found" />
+  <string src="デバイスが見つかりません。" id="msg_settings_device_not_found" />
   
-  <string src="By Name (Ascending)" id="msg_option_sort_0" />
-  <string src="By Name (Descending)" id="msg_option_sort_1" />
-  <string src="By Size (Largest First)" id="msg_option_sort_2" />
-  <string src="By Size (Smallest First)" id="msg_option_sort_3" />
+  <string src="名前別（昇順）" id="msg_option_sort_0" />
+  <string src="名前別（降順）" id="msg_option_sort_1" />
+  <string src="サイズ別（最大）" id="msg_option_sort_2" />
+  <string src="サイズ別（最小）" id="msg_option_sort_3" />
   
 </stringset>
