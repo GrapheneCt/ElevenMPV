@@ -225,7 +225,7 @@ menu::displayfiles::Page::Page(const char* path)
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_displayfiles_bg");
 	root = (ui::Plane *)g_root->GetChild(&searchParam, 0);
-	root->hash = (SceUInt32)root;
+	root->elem.hash = (SceUInt32)root;
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_back_button");
 	ui::Widget *backButton = g_rootPage->GetChild(&searchParam, 0);
@@ -236,7 +236,7 @@ menu::displayfiles::Page::Page(const char* path)
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_scroll_box");
 	box = (ui::Box *)root->GetChild(&searchParam, 0);
-	box->hash = (SceUInt32)box;
+	box->elem.hash = (SceUInt32)box;
 
 	rco::Element searchParamMusic;
 	rco::Element searchParamDir;
@@ -268,7 +268,7 @@ menu::displayfiles::Page::Page(const char* path)
 		}
 
 		file->button = (ui::ImageButton *)box->GetChild(box->childNum - 1);
-		file->button->hash = (SceUInt32)file->button;
+		file->button->elem.hash = (SceUInt32)file->button;
 		file->button->SetLabel(&file->name->wstring);
 		if (file->type == File::Type_Unsupported)
 			file->button->Disable(0);

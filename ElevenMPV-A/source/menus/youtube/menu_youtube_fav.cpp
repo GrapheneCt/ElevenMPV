@@ -10,7 +10,7 @@
 #include "menu_audioplayer.h"
 #include "utils.h"
 #include "yt_utils.h"
-#include "youtube_parser.hpp"
+#include "invidious.h"
 
 using namespace paf;
 
@@ -22,7 +22,7 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	wstring title16;
 	wstring subtext16;
 	string text8;
-	YouTubeVideoDetail *vidInfo;
+	InvItemVideo *vidInfo;
 	rco::Element searchParam;
 	Plugin::TemplateInitParam tmpParam;
 	ui::Widget *box;
@@ -31,18 +31,14 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	VideoButtonCB *buttonCB;
 	SharedPtr<HttpFile> fres;
 	graph::Surface *tmbTex;
-	char url[256];
-	char tmb[256];
 
-	sce_paf_memset(url, 0, sizeof(url));
-	sce_paf_memset(tmb, 0, sizeof(tmb));
-
-	youtube_get_video_url_by_id(data, url, sizeof(url));
-	vidInfo = youtube_parse_video_page(url);
+	res = invParseVideo(data, &vidInfo);
+	if (res != 1)
+		return;
 
 	if (keyWord) {
-		if (!sce_paf_strstr(vidInfo->title.c_str(), keyWord)) {
-			youtube_destroy_struct(vidInfo);
+		if (!sce_paf_strstr(vidInfo->title, keyWord)) {
+			invCleanupVideo(vidInfo);
 			return;
 		}
 		else {
@@ -54,37 +50,36 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	box = page->thisPage->GetChild(&searchParam, 0);
 
 	searchParam.hash = EMPVAUtils::GetHash("menu_template_youtube_result_button");
+	thread::s_mainThreadMutex.Lock();
 	g_empvaPlugin->TemplateOpen(box, &searchParam, &tmpParam);
+	thread::s_mainThreadMutex.Unlock();
 
 	button = (ui::ImageButton *)box->GetChild(box->childNum - 1);
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_text_button_subtext");
 	subtext = button->GetChild(&searchParam, 0);
 
-	text8 = vidInfo->title.c_str();
+	text8 = vidInfo->title;
 	ccc::UTF8toUTF16(&text8, &title16);
 
-	menu::audioplayer::Audioplayer::ConvertSecondsToString(&text8, (SceUInt64)((SceFloat)vidInfo->duration_ms / 1000.0f), SCE_FALSE);
+	menu::audioplayer::Audioplayer::ConvertSecondsToString(&text8, (SceUInt64)vidInfo->lengthSec, SCE_FALSE);
 	text8 += "  ";
-	text8 += vidInfo->author.name.c_str();
+	text8 += vidInfo->author;
 	ccc::UTF8toUTF16(&text8, &subtext16);
 
+	thread::s_mainThreadMutex.Lock();
 	buttonCB = new VideoButtonCB;
 	buttonCB->pUserData = buttonCB;
 	buttonCB->mode = menu::youtube::Base::Mode_Fav;
-	buttonCB->url = url;
+	buttonCB->url = vidInfo->id;
 
-	thread::s_mainThreadMutex.Lock();
 	button->SetLabel(&title16);
 	subtext->SetLabel(&subtext16);
 	button->RegisterEventCallback(ui::EventMain_Decide, buttonCB, 0);
 	thread::s_mainThreadMutex.Unlock();
 
-	youtube_get_video_thumbnail_url_by_id(data, tmb, sizeof(tmb));
-
-	youtube_destroy_struct(vidInfo);
-
-	fres = HttpFile::Open(tmb, &res, 0);
+	fres = HttpFile::Open(vidInfo->thmbUrl, &res, 0);
+	invCleanupVideo(vidInfo);
 	if (res < 0) {
 		return;
 	}
@@ -134,7 +129,7 @@ SceVoid menu::youtube::FavParserThread::EntryFunction()
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_youtube_bg");
 	workPage->thisPage = (ui::Plane *)g_root->GetChild(&searchParam, 0);
-	workPage->thisPage->hash = (SceUInt32)workPage->thisPage;
+	workPage->thisPage->elem.hash = (SceUInt32)workPage->thisPage;
 
 	if (workPage->prev != SCE_NULL) {
 		if (workPage->prev->prev != SCE_NULL) {

@@ -17,7 +17,6 @@
 #include "utils.h"
 #include "yt_utils.h"
 #include "downloader.h"
-#include "youtube_parser.hpp"
 
 using namespace paf;
 using namespace sce;
@@ -299,17 +298,6 @@ SceInt32 menu::settings::Settings::CBValueChange(const char *elementId, const ch
 		break;
 	case Hash_YoutubeQuality:
 		GetInstance()->yt_quality = value;
-		//Check if yt modules are loaded
-		if (sceSysmoduleIsLoaded(SCE_SYSMODULE_HTTPS) == SCE_OK) {
-			if (value == 1)
-				value = YtQuality_Medium;
-			else if (value == 2)
-				value = YtQuality_Low;
-			else
-				value = YtQuality_High;
-
-			youtube_set_audio_bitrate_limit(value);
-		}
 		break;
 	default:
 		break;

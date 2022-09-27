@@ -9,7 +9,7 @@
 #include "menu_audioplayer.h"
 #include "utils.h"
 #include "yt_utils.h"
-#include "youtube_parser.hpp"
+#include "invidious.h"
 
 using namespace paf;
 
@@ -30,46 +30,55 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 	SharedPtr<HttpFile> fres;
 	graph::Surface *tmbTex;
 
-	if (page->parseResult->results[index].type == YouTubeSuccinctItem::CHANNEL)
+	if (page->parseResult[index].type == INV_ITEM_TYPE_CHANNEL ||
+		page->parseResult[index].type == INV_ITEM_TYPE_PLAYLIST)
 		return;
+
+	if (page->parseResult[index].type == INV_ITEM_TYPE_VIDEO) {
+		if (page->parseResult[index].videoItem->lengthSec == 0) //livestream
+			return;
+	}
 
 	searchParam.hash = EMPVAUtils::GetHash("youtube_scroll_box");
 	box = page->thisPage->GetChild(&searchParam, 0);
 
 	searchParam.hash = EMPVAUtils::GetHash("menu_template_youtube_result_button");
+	thread::s_mainThreadMutex.Lock();
 	g_empvaPlugin->TemplateOpen(box, &searchParam, &tmpParam);
+	thread::s_mainThreadMutex.Unlock();
 
 	button = (ui::ImageButton *)box->GetChild(box->childNum - 1);
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_text_button_subtext");
 	subtext = button->GetChild(&searchParam, 0);
 
-	searchParam.hash = EMPVAUtils::GetHash("yt_text_button_subtext");
-	subtext = button->GetChild(&searchParam, 0);
+	if (page->parseResult[index].type == INV_ITEM_TYPE_VIDEO) {
 
-	if (page->parseResult->results[index].type == YouTubeSuccinctItem::VIDEO) {
-
-		text8 = page->parseResult->results[index].video.title.c_str();
+		text8 = page->parseResult[index].videoItem->title;
 		ccc::UTF8toUTF16(&text8, &title16);
 
-		text8 = page->parseResult->results[index].video.duration_text.c_str();
+
+		text8.clear();
+		menu::audioplayer::Audioplayer::ConvertSecondsToString(&text8, (SceUInt64)page->parseResult[index].videoItem->lengthSec, SCE_FALSE);
 		text8 += "  ";
-		text8 += page->parseResult->results[index].video.author.c_str();
+		text8 += page->parseResult[index].videoItem->author;
 		ccc::UTF8toUTF16(&text8, &subtext16);
 
-		fres = HttpFile::Open(page->parseResult->results[index].video.thumbnail_url.c_str(), &res, 0);
+		fres = HttpFile::Open(page->parseResult[index].videoItem->thmbUrl, &res, 0);
 
+		thread::s_mainThreadMutex.Lock();
 		buttonCB = new VideoButtonCB;
 		buttonCB->pUserData = buttonCB;
 		buttonCB->mode = menu::youtube::Base::Mode_Search;
-		buttonCB->url = page->parseResult->results[index].video.url.c_str();
+		buttonCB->url = page->parseResult[index].videoItem->id;
 
-		thread::s_mainThreadMutex.Lock();
 		button->SetLabel(&title16);
 		subtext->SetLabel(&subtext16);
 		button->RegisterEventCallback(ui::EventMain_Decide, buttonCB, 0);
 		thread::s_mainThreadMutex.Unlock();
 	}
+	//TODO: playlist
+	/*
 	else if (page->parseResult->results[index].type == YouTubeSuccinctItem::PLAYLIST) {
 
 		text8 = page->parseResult->results[index].playlist.title.c_str();
@@ -92,6 +101,7 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 		button->RegisterEventCallback(ui::EventMain_Decide, buttonCB, 0);
 		thread::s_mainThreadMutex.Unlock();
 	}
+	*/
 
 	if (res < 0) {
 		return;
@@ -116,8 +126,6 @@ SceVoid menu::youtube::SearchParserThread::EntryFunction()
 	rco::Element searchParam;
 	Plugin::TemplateInitParam tmpParam;
 	ui::Widget *commonWidget;
-	SceUInt32 prevResNum = 0;
-	SceUInt32 curResNum = 0;
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_button_btmenu_right");
 	commonWidget = g_rootPage->GetChild(&searchParam, 0);
@@ -128,33 +136,21 @@ SceVoid menu::youtube::SearchParserThread::EntryFunction()
 	commonWidget->PlayEffectReverse(0.0f, effect::EffectType_Fadein1);
 
 	if (prevPage) {
-
-		workPage->parseResult = youtube_continue_search(*prevPage->parseResult);
-
-		prevResNum = prevPage->resultCount;
-		SearchPage *tres;
-
-		tres = prevPage->prev;
-		while (tres) {
-			prevResNum += tres->resultCount;
-			tres = tres->prev;
-		}
-
-		workPage->resultCount = workPage->parseResult->results.size() - prevResNum;
+		workPage->resultCount = invParseSearch(newRequset.c_str(), workPage->pageNum, INV_ITEM_TYPE_VIDEO, INV_SORT_RELEVANCE, INV_DATE_ALL, &workPage->parseResult);
 	}
 	else {
-		workPage->parseResult = youtube_parse_search_word((char *)newRequset.c_str());
-		workPage->resultCount = workPage->parseResult->results.size();
+		workPage->resultCount = invParseSearch(newRequset.c_str(), workPage->pageNum, INV_ITEM_TYPE_VIDEO, INV_SORT_RELEVANCE, INV_DATE_ALL, &workPage->parseResult);
 	}
 
-	curResNum = prevResNum + workPage->resultCount;
+	if (workPage->resultCount < 0)
+		workPage->resultCount = 0;
 
 	searchParam.hash = EMPVAUtils::GetHash("menu_template_youtube");
 	g_empvaPlugin->TemplateOpen(g_root, &searchParam, &tmpParam);
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_youtube_bg");
 	workPage->thisPage = (ui::Plane *)g_root->GetChild(&searchParam, 0);
-	workPage->thisPage->hash = (SceUInt32)workPage->thisPage;
+	workPage->thisPage->elem.hash = (SceUInt32)workPage->thisPage;
 
 	if (workPage->prev != SCE_NULL) {
 		if (workPage->prev->prev != SCE_NULL) {
@@ -176,16 +172,16 @@ SceVoid menu::youtube::SearchParserThread::EntryFunction()
 		commonWidget->PlayEffect(0.0f, effect::EffectType_Fadein1);
 	}
 
-	for (SceInt32 i = prevResNum; i < workPage->resultCount + prevResNum; i++) {
-		YTUtils::WaitMenuParsers();
-		if (IsCanceled()) {
-			Cancel();
-			return;
+	if (workPage->resultCount != 0) {
+		for (SceInt32 i = 0; i < workPage->resultCount; i++) {
+			YTUtils::WaitMenuParsers();
+			if (IsCanceled()) {
+				Cancel();
+				return;
+			}
+			CreateVideoButton(workPage, i);
 		}
-		CreateVideoButton(workPage, i);
-	}
 
-	if (workPage->parseResult->estimated_result_num > curResNum) {
 		searchParam.hash = EMPVAUtils::GetHash("yt_button_btmenu_right");
 		commonWidget = g_rootPage->GetChild(&searchParam, 0);
 		commonWidget->PlayEffect(0.0f, effect::EffectType_Fadein1);
@@ -240,9 +236,12 @@ menu::youtube::SearchPage::SearchPage(SearchPage *prevPage)
 
 	prev->parserThread->Join();
 
+	pageNum = prev->pageNum + 1;
+
 	parserThread = new SearchParserThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_256KiB, "EMPVA::YtSearchParser");
 	parserThread->prevPage = prevPage;
 	parserThread->workPage = this;
+	parserThread->newRequset = prev->parserThread->newRequset;
 	parserThread->Start();
 
 	s_currentSearchPage = this;
@@ -255,6 +254,7 @@ menu::youtube::SearchPage::SearchPage(const char *searchWord)
 	next = SCE_NULL;
 	parseResult = SCE_NULL;
 	parserThread = SCE_NULL;
+	pageNum = 0;
 
 	parserThread = new SearchParserThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_256KiB, "EMPVA::YtSearchParser");
 	parserThread->prevPage = SCE_NULL;
@@ -300,7 +300,7 @@ menu::youtube::SearchPage::~SearchPage()
 	commonWidget = g_rootPage->GetChild(&searchParam, 0);
 	commonWidget->PlayEffect(0.0f, effect::EffectType_Fadein1);
 
-	youtube_destroy_struct(this->parseResult);
+	invCleanupSearch(this->parseResult);
 
 	s_currentSearchPage = prev;
 }

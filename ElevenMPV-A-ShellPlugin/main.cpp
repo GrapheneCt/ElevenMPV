@@ -207,7 +207,7 @@ SceVoid PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, ui::Widget *self, Sc
 	IpcDataTX ipcDataTX;
 	ipcDataTX.cmd = 0;
 
-	switch (self->hash) {
+	switch (self->elem.hash) {
 	case ButtonHash_Play:
 
 		ipcDataTX.cmd = EMPVA_IPC_PLAY;

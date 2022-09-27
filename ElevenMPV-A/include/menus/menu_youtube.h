@@ -4,7 +4,7 @@
 #include <paf.h>
 
 #include "utils.h"
-#include "youtube_parser.hpp"
+#include "invidious.h"
 
 using namespace paf;
 
@@ -270,10 +270,11 @@ namespace menu {
 
 			SearchPage *prev;
 			SearchPage *next;
-			YouTubeSearchResult *parseResult;
+			InvItem *parseResult;
 			SearchParserThread *parserThread;
 			ui::Widget *thisPage;
-			SceUInt32 resultCount;
+			SceInt32 resultCount;
+			SceUInt32 pageNum;
 
 		};
 

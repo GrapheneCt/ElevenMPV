@@ -18,7 +18,6 @@
 #include "dialog.h"
 #include "utils.h"
 #include "yt_utils.h"
-#include "youtube_parser.hpp"
 
 using namespace paf;
 
@@ -85,12 +84,11 @@ SceVoid menu::youtube::VideoButtonCB::VideoButtonCBFun(SceInt32 eventId, ui::Wid
 	rco::Element searchParam;
 	wstring text16;
 	string text8;
-	char *idptr;
+	const char *idptr;
 
 	VideoButtonCB *thisCb = (VideoButtonCB *)pUserData;
 
-	idptr = sce_paf_strchr(thisCb->url.c_str(), '=');
-	idptr += 1;
+	idptr = thisCb->url.c_str();
 
 	if (thisCb->mode != menu::youtube::Base::Mode_History)
 		YTUtils::GetHistLog()->Add(idptr);
@@ -326,7 +324,7 @@ SceVoid menu::youtube::Base::FirstTimeInit()
 	commonWidget = btMenu->GetChild(&searchParam, 0);
 	auto leftButtonCB = new menu::youtube::LeftButtonCB();
 	commonWidget->RegisterEventCallback(0x10000008, leftButtonCB, 0);
-	commonWidget->AssignButton(SCE_CTRL_L1);
+	commonWidget->SetDirectKey(SCE_CTRL_L1);
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_button_btmenu_search");
 	commonWidget = btMenu->GetChild(&searchParam, 0);
@@ -347,7 +345,7 @@ SceVoid menu::youtube::Base::FirstTimeInit()
 	commonWidget = btMenu->GetChild(&searchParam, 0);
 	auto rightButtonCB = new menu::youtube::RightButtonCB();
 	commonWidget->RegisterEventCallback(0x10000008, rightButtonCB, 0);
-	commonWidget->AssignButton(SCE_CTRL_R1);
+	commonWidget->SetDirectKey(SCE_CTRL_R1);
 }
 
 SceInt32 menu::youtube::Base::InitYtStuff()
@@ -360,21 +358,8 @@ SceInt32 menu::youtube::Base::InitYtStuff()
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 	sceSysmoduleLoadModule(SCE_SYSMODULE_SSL);
 
-	new Module("vs0:sys/external/libfios2.suprx", 0, 0, 0);
-	new Module("vs0:sys/external/libc.suprx", 0, 0, 0);
-	new Module("app0:module/libThirdTube.suprx", 0, 0, 0);
+	new Module("app0:module/libInvidious.suprx", 0, 0, 0);
 	new Module("app0:module/libNetMedia.suprx", 0, 0, 0);
-
-	/* initial quality limit */
-	quality = menu::settings::Settings::GetInstance()->yt_quality;
-	if (quality == 1)
-		quality = menu::settings::Settings::YtQuality_Medium;
-	else if (quality == 2)
-		quality = menu::settings::Settings::YtQuality_Low;
-	else
-		quality = menu::settings::Settings::YtQuality_High;
-
-	youtube_set_audio_bitrate_limit(quality);
 
 	/* libnet */
 	param.memory = sce_paf_malloc(k_netMemSize);
@@ -399,6 +384,11 @@ SceInt32 menu::youtube::Base::InitYtStuff()
 	ret = sceHttpInit(40 * 1024);
 	if (ret < 0) {
 		SCE_DBG_LOG_ERROR("[EMPVA_PLUGIN_BASE] sceHttpInit() error: 0x%08X\n", ret);
+	}
+
+	ret = invInit(sce_paf_malloc, sce_paf_free, SCE_NULL);
+	if (ret < 0) {
+		SCE_DBG_LOG_ERROR("[EMPVA_PLUGIN_BASE] invInit() error: 0x%08X\n", ret);
 	}
 
 	return SCE_OK;

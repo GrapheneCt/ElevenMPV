@@ -91,6 +91,8 @@ public:
 	static ScePVoid NMAllocate(ScePVoid argP, SceUInt32 argAlignment, SceUInt32 argSize);
 
 	static SceVoid NMDeallocate(ScePVoid argP, ScePVoid argMemory);
+
+	static SceBool DowbloadFile(char *url, ScePVoid *ppBuf, SceSize *pBufSize);
 };
 
 #endif

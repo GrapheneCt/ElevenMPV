@@ -20,7 +20,7 @@
 #include "yt_utils.h"
 #include "ipc.h"
 #include "vitaaudiolib.h"
-#include "youtube_parser.hpp"
+#include "invidious.h"
 
 using namespace paf;
 
@@ -41,7 +41,7 @@ static graph::Surface *s_favOnButtonTex;
 
 static menu::audioplayer::PlayerButtonCB *s_playerButtonCb;
 
-static YouTubeVideoDetail *s_ytVidInfo = SCE_NULL;
+static InvItemVideo *s_ytVidInfo = SCE_NULL;
 static SceBool s_ytFirstIdx = SCE_FALSE;
 
 typedef enum RepeatState{
@@ -475,7 +475,7 @@ SceVoid menu::audioplayer::PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, u
 
 	audio::GenericDecoder *currentDecoder = g_currentPlayerInstance->GetCore()->GetDecoder();
 
-	switch (self->hash) {
+	switch (self->elem.hash) {
 	case ButtonHash_Play:
 
 		currentDecoder->Pause();
@@ -552,8 +552,7 @@ SceVoid menu::audioplayer::PlayerButtonCB::PlayerButtonCBFun(SceInt32 eventId, u
 		break;
 	case ButtonHash_Favourite:
 
-		char *idptr = sce_paf_strchr(g_currentPlayerInstance->playlist.path[0]->c_str(), '=');
-		idptr += 1;
+		const char *idptr = s_ytVidInfo->id;
 
 		if (!YTUtils::GetFavLog()->Get(idptr)) {
 			YTUtils::GetFavLog()->Remove(idptr);
@@ -634,12 +633,12 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 		searchParam.hash = EMPVAUtils::GetHash("player_rew_button");
 		commonWidget = s_playerPlane->GetChild(&searchParam, 0);
 		commonWidget->RegisterEventCallback(0x10000008, s_playerButtonCb, 0);
-		commonWidget->AssignButton(SCE_CTRL_L1);
+		commonWidget->SetDirectKey(SCE_CTRL_L1);
 
 		searchParam.hash = EMPVAUtils::GetHash("player_ff_button");
 		commonWidget = s_playerPlane->GetChild(&searchParam, 0);
 		commonWidget->RegisterEventCallback(0x10000008, s_playerButtonCb, 0);
-		commonWidget->AssignButton(SCE_CTRL_R1);
+		commonWidget->SetDirectKey(SCE_CTRL_R1);
 
 		searchParam.hash = EMPVAUtils::GetHash("player_shuffle_button");
 		commonWidget = s_playerPlane->GetChild(&searchParam, 0);
@@ -652,7 +651,7 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 		searchParam.hash = EMPVAUtils::GetHash("player_close_button");
 		commonWidget = s_playerPlane->GetChild(&searchParam, 0);
 		commonWidget->RegisterEventCallback(0x10000008, s_playerButtonCb, 0);
-		commonWidget->AssignButton(0);
+		commonWidget->SetDirectKey(0);
 
 		searchParam.hash = EMPVAUtils::GetHash("progressbar_player");
 		commonWidget = s_playerPlane->GetChild(&searchParam, 0);
@@ -690,17 +689,17 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 	EMPVAUtils::SetPowerTickTask(SCE_TRUE);
 
 	if (mode == Mode_Youtube) {
-
-		char url[256];
-
 		YTUtils::LockMenuParsers();
-		youtube_get_video_url_by_id(cwd, url, sizeof(url));
-		s_ytVidInfo = youtube_parse_video_page(url);
+		invParseVideo(cwd, &s_ytVidInfo);
+
+		//TODO: playlist
+		/*
 		if (s_ytVidInfo->playlist.videos.size() && s_ytVidInfo->playlist.selected_index > 0) {
 			YouTubeVideoDetail *ytVidInfoOld = s_ytVidInfo;
 			s_ytVidInfo = youtube_parse_video_page((char *)ytVidInfoOld->playlist.videos[0].url.c_str());
 			youtube_destroy_struct(ytVidInfoOld);
 		}
+		*/
 
 		s_ytFirstIdx = SCE_TRUE;
 	}
@@ -754,7 +753,6 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 
 		break;
 	case Mode_Youtube:
-
 		if (!s_isYtBtCbRegistered) {
 
 			searchParam.hash = EMPVAUtils::GetHash("player_template_youtube");
@@ -785,7 +783,7 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 			commonWidget->SetSurfaceBase(&s_favOnButtonTex);
 		}
 
-		core = new AudioplayerCore(playlist.path[0]->c_str());
+		core = new AudioplayerCore("https://");
 
 		if (!core->IsValid()) {
 			s_totalLength = new string();
@@ -865,6 +863,8 @@ SceVoid menu::audioplayer::Audioplayer::GetMusicList(menu::displayfiles::File *s
 
 	if (EMPVAUtils::GetPagemode() == menu::settings::Settings::PageMode_YouTube) {
 
+		//TODO: playlist
+		/*
 		if (s_ytVidInfo->playlist.videos.size()) {
 			for (SceInt32 j = 0; j < s_ytVidInfo->playlist.videos.size(); j++) {
 				playlist.path[i] = new string(s_ytVidInfo->playlist.videos[j].url.c_str());
@@ -872,8 +872,11 @@ SceVoid menu::audioplayer::Audioplayer::GetMusicList(menu::displayfiles::File *s
 				i++;
 			}
 		}
-		else {
-			playlist.path[i] = new string(s_ytVidInfo->url.c_str());
+		else
+		*/
+
+		{
+			playlist.path[i] = new string(s_ytVidInfo->id);
 			playlist.isConsumed[i] = 0;
 			i = 1;
 		}
@@ -954,6 +957,8 @@ menu::audioplayer::AudioplayerCore::AudioplayerCore(const char *file)
 		break;
 	case 1000:
 
+		//TODO: playlist
+		/*
 		if (!s_ytFirstIdx) {
 			s_ytVidInfo = youtube_parse_video_page((char *)file);
 
@@ -966,31 +971,53 @@ menu::audioplayer::AudioplayerCore::AudioplayerCore(const char *file)
 			}
 		}
 		else
-			s_ytFirstIdx = SCE_FALSE;
+		*/
 
-		if (!s_ytVidInfo->audio_stream_url.length()) {
+		{
+			s_ytFirstIdx = SCE_FALSE;
+		}
+
+		if (!s_ytVidInfo->audioHqUrl && !s_ytVidInfo->audioMqUrl && !s_ytVidInfo->audioLqUrl) {
 			decoder = new audio::YoutubeDecoder(SCE_NULL, SCE_TRUE);
 		}
 		else {
-			decoder = new audio::YoutubeDecoder(s_ytVidInfo->audio_stream_url.c_str(), SCE_TRUE);
+
+			const char *urlWithQuality = SCE_NULL;
+
+			switch (menu::settings::Settings::GetInstance()->yt_quality) {
+			case menu::settings::Settings::YtQuality_High:
+				if (s_ytVidInfo->audioHqUrl)
+					urlWithQuality = s_ytVidInfo->audioHqUrl;
+				else if (s_ytVidInfo->audioMqUrl)
+					urlWithQuality = s_ytVidInfo->audioMqUrl;
+				else if (s_ytVidInfo->audioLqUrl)
+					urlWithQuality = s_ytVidInfo->audioLqUrl;
+				break;
+			case menu::settings::Settings::YtQuality_Medium:
+				if (s_ytVidInfo->audioMqUrl)
+					urlWithQuality = s_ytVidInfo->audioMqUrl;
+				else if (s_ytVidInfo->audioLqUrl)
+					urlWithQuality = s_ytVidInfo->audioLqUrl;
+				else if (s_ytVidInfo->audioHqUrl)
+					urlWithQuality = s_ytVidInfo->audioHqUrl;
+				break;
+			case menu::settings::Settings::YtQuality_Low:
+				if (s_ytVidInfo->audioLqUrl)
+					urlWithQuality = s_ytVidInfo->audioLqUrl;
+				else if (s_ytVidInfo->audioMqUrl)
+					urlWithQuality = s_ytVidInfo->audioMqUrl;
+				else if (s_ytVidInfo->audioHqUrl)
+					urlWithQuality = s_ytVidInfo->audioHqUrl;
+				break;
+			}
+
+			decoder = new audio::YoutubeDecoder(urlWithQuality, SCE_TRUE);
 		}
 
 		// Cover handler for YouTube
 		auto coverLoader = new audio::YoutubePlayerCoverLoaderJob("EMPVA::PlayerCoverLoaderJob");
-		char url[256];
-		char id[32];
-		char *idptr = sce_paf_strchr(s_ytVidInfo->url.c_str(), '=');
-		char *listptr = sce_paf_strchr(idptr, '&');
-		idptr += 1;
 
-		sce_paf_memset(id, 0, sizeof(id));
-		if (listptr)
-			sce_paf_strncpy(id, idptr, listptr - idptr);
-		else
-			sce_paf_strncpy(id, idptr, sizeof(id));
-
-		youtube_get_video_thumbnail_hq_url_by_id(id, url, sizeof(url));
-		coverLoader->url = url;
+		coverLoader->url = s_ytVidInfo->thmbUrlHq;
 
 		SharedPtr<job::JobItem> itemParam(coverLoader);
 
@@ -1017,7 +1044,7 @@ menu::audioplayer::AudioplayerCore::~AudioplayerCore()
 	decoder = SCE_NULL;
 
 	if (s_ytVidInfo) {
-		youtube_destroy_struct(s_ytVidInfo);
+		invCleanupVideo(s_ytVidInfo);
 		s_ytVidInfo = SCE_NULL;
 	}
 
@@ -1070,20 +1097,25 @@ SceVoid menu::audioplayer::AudioplayerCore::SetMetadata(const char *file)
 		wstring title;
 		wstring album;
 
+		//TODO: playlist
+		/*
 		if (s_ytVidInfo->playlist.videos.size()) {
 			text8 = s_ytVidInfo->playlist.title.c_str();
 			ccc::UTF8toUTF16(&text8, &album);
 			textAlbum->SetLabel(&album);
 		}
-		else {
+		else
+		*/
+
+		{
 			textAlbum->SetLabel(&album);
 		}
 
-		text8 = s_ytVidInfo->author.name.c_str();
+		text8 = s_ytVidInfo->author;
 		ccc::UTF8toUTF16(&text8, &text16);
 		textArtist->SetLabel(&text16);
 
-		text8 = s_ytVidInfo->title.c_str();
+		text8 = s_ytVidInfo->title;
 		ccc::UTF8toUTF16(&text8, &title);
 		textTitle->SetLabel(&title);
 

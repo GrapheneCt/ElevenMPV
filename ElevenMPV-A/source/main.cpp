@@ -23,10 +23,6 @@ using namespace paf;
 
 extern "C" {
 	SCE_USER_MODULE_LIST("app0:module/libScePafPreload.suprx");
-
-	unsigned int sceLibcHeapSize = SCE_LIBC_HEAP_SIZE_EXTENDED_ALLOC_NO_LIMIT;
-	unsigned int sceLibcHeapInitialSize = 2 * 1024 * 1024;
-	unsigned int sceLibcHeapExtendedAlloc = 1;
 }
 
 SceUID g_eventFlagUid;
@@ -271,7 +267,7 @@ SceVoid pluginLoadCB(Plugin *plugin)
 	auto playerButtonCB = new menu::displayfiles::PlayerButtonCB();
 	playerButton->RegisterEventCallback(0x10000008, playerButtonCB, 0);
 	playerButton->PlayEffectReverse(0.0f, effect::EffectType_Reset);
-	playerButton->AssignButton(0x80); //square
+	playerButton->SetDirectKey(0x80); //square
 
 	sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 }

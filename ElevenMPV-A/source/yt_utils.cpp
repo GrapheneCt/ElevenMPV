@@ -28,6 +28,25 @@ SceVoid YTUtils::NMDeallocate(ScePVoid argP, ScePVoid argMemory)
 	sce_paf_free(argMemory);
 }
 
+SceBool YTUtils::DowbloadFile(char *url, ScePVoid *ppBuf, SceSize *pBufSize)
+{
+	SceInt32 ret = 0;
+
+	SharedPtr<HttpFile> file = paf::HttpFile::Open(url, SCE_O_RDONLY, 0, &ret);
+	if (ret != SCE_OK)
+		return SCE_FALSE;
+
+	char *buf = (char *)sce_paf_malloc(SCE_KERNEL_256KiB);
+
+	*pBufSize = file->Read(buf, SCE_KERNEL_256KiB);
+
+	file->Close();
+
+	*ppBuf = buf;
+
+	return SCE_TRUE;
+}
+
 SceInt32 YTUtils::Log::GetNext(char *data)
 {
 	SceInt32 ret;

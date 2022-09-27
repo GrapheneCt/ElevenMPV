@@ -41,9 +41,9 @@ namespace menu {
 
 			enum YtQuality
 			{
-				YtQuality_High = -1,
-				YtQuality_Medium = 90000,
-				YtQuality_Low = 58800
+				YtQuality_High = 0,
+				YtQuality_Medium = 1,
+				YtQuality_Low = 2
 			};
 
 			Settings();
