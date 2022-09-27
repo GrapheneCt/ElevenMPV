@@ -388,7 +388,7 @@
   </templatetable>
   
   <stringtable>
-	<locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="ja" />
+	<locale origsize="4576" src="RES_RCO_TMP\empva_locale_ja.xml.rcs.zlib" compress="on" id="ja" />
     <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="en" />
     <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="en-gb" />
     <locale origsize="5504" src="RES_RCO_TMP\empva_locale_fr.xml.rcs.zlib" compress="on" id="fr" />
