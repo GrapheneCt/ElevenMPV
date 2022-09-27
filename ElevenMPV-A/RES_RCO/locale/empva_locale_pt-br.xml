@@ -8,8 +8,8 @@
   <string src="Separar faixas por:" id="msg_settings_sort" />
   <string src="Opções de Áudio" id="msg_settings_audio" />
   <string src="Economia de Energia" id="msg_settings_power" />
-  <string src="Opções de Comando" id="msg_settings_control" />
-  <string src="Opções de Privacidade" id="msg_settings_youtube" />
+  <string src="Comandos" id="msg_settings_control" />
+  <string src="Opções do Youtube" id="msg_settings_youtube" />
   
   <string src="Equalizador" id="msg_settings_audio_eq" />
   <string src="Nível de Volume Automático" id="msg_settings_audio_alc" />
