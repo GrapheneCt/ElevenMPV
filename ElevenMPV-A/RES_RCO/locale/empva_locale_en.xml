@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
   <string src="This directory is empty" id="msg_empty_dir" />
-  <string src="SSL error has occured.To use this feature system time must be set correctly and iTLS-Enso plugin must be installed." id="msg_netcheck_fail" />
+  <string src="SSL error has occured. To use this feature system time must be set correctly and iTLS-Enso plugin must be installed." id="msg_netcheck_fail" />
   
   <string src="Settings" id="msg_settings" />
   <string src="Device" id="msg_settings_device" />
