@@ -25,20 +25,3 @@ extern "C" {
 		return (float)ldexpf((float)x, y);
 	}
 }
-
-namespace std {
-	int _Xout_of_range(char const*)
-	{
-		return 0;
-	}
-
-	int _Xlength_error(char const*)
-	{
-		return 0;
-	}
-
-	int _Syserror_map(int)
-	{
-		return 0;
-	}
-}

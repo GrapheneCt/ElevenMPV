@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
   <string src="此目錄為空" id="msg_empty_dir" />
-  <string src="發生SSL錯誤。\n\n使用此功能時必須設置正確的系統時間，并且必須已安裝iTLS-Enso插件。" id="msg_netcheck_fail" />
   
   <string src="設定" id="msg_settings" />
   <string src="設備" id="msg_settings_device" />

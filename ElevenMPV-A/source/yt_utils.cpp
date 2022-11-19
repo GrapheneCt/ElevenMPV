@@ -2,6 +2,7 @@
 #include <paf.h>
 #include <ini_file_processor.h>
 #include <sceavplayer.h>
+#include <psp2_compat/curl/curl.h>
 
 #include "yt_utils.h"
 #include "netmedia.h"
@@ -17,6 +18,7 @@ static SceAvPlayerFileReplacement s_fio;
 static SceNmHandle s_nmHandle = SCE_NULL;
 static SceAvPlayerMemAllocator s_nmAllocator;
 static Downloader *s_downloader = SCE_NULL;
+static CURL *s_curl = SCE_NULL;
 
 ScePVoid YTUtils::NMAllocate(ScePVoid argP, SceUInt32 argAlignment, SceUInt32 argSize)
 {
@@ -26,25 +28,6 @@ ScePVoid YTUtils::NMAllocate(ScePVoid argP, SceUInt32 argAlignment, SceUInt32 ar
 SceVoid YTUtils::NMDeallocate(ScePVoid argP, ScePVoid argMemory)
 {
 	sce_paf_free(argMemory);
-}
-
-SceBool YTUtils::DowbloadFile(char *url, ScePVoid *ppBuf, SceSize *pBufSize)
-{
-	SceInt32 ret = 0;
-
-	SharedPtr<HttpFile> file = paf::HttpFile::Open(url, SCE_O_RDONLY, 0, &ret);
-	if (ret != SCE_OK)
-		return SCE_FALSE;
-
-	char *buf = (char *)sce_paf_malloc(SCE_KERNEL_256KiB);
-
-	*pBufSize = file->Read(buf, SCE_KERNEL_256KiB);
-
-	file->Close();
-
-	*ppBuf = buf;
-
-	return SCE_TRUE;
 }
 
 SceInt32 YTUtils::Log::GetNext(char *data)
@@ -210,6 +193,18 @@ SceVoid YTUtils::Init()
 		s_favLog = new YTUtils::FavLog();
 	if (!s_downloader)
 		s_downloader = new Downloader();
+	if (!s_curl) {
+		s_curl = curl_easy_init();
+		curl_easy_setopt(s_curl, CURLOPT_USERAGENT, "Mozilla/5.0 (PlayStation Vita 3.74) AppleWebKit/537.73 (KHTML, like Gecko) Silk/3.2");
+		curl_easy_setopt(s_curl, CURLOPT_TIMEOUT, 5L);
+		curl_easy_setopt(s_curl, CURLOPT_ACCEPT_ENCODING, "");
+		curl_easy_setopt(s_curl, CURLOPT_SSL_VERIFYHOST, 0L);
+		curl_easy_setopt(s_curl, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(s_curl, CURLOPT_FOLLOWLOCATION, 1L);
+		curl_easy_setopt(s_curl, CURLOPT_HTTPGET, 1L);
+		curl_easy_setopt(s_curl, CURLOPT_TCP_KEEPALIVE, 1L);
+		curl_easy_setopt(s_curl, CURLOPT_NOPROGRESS, 1L);
+	}
 
 	if (!s_nmHandle) {
 
@@ -225,7 +220,7 @@ SceVoid YTUtils::Init()
 
 SceVoid YTUtils::Term(SceBool isFullTerm)
 {
-	if (isFullTerm) {
+	if (!isFullTerm) {
 		if (s_histLog) {
 			s_histLog->Flush();
 		}
@@ -243,10 +238,17 @@ SceVoid YTUtils::Term(SceBool isFullTerm)
 			s_favLog = SCE_NULL;
 		}
 
+		if (s_curl) {
+			curl_easy_cleanup(s_curl);
+			s_curl = SCE_NULL;
+		}
+
+		/*
 		if (s_nmHandle) {
 			NETMediaDeInit(s_nmHandle, &s_nmAllocator);
 			s_nmHandle = SCE_NULL;
 		}
+		*/
 
 		if (s_menuLock != SCE_UID_INVALID_UID) {
 			sceKernelDeleteEventFlag(s_menuLock);
@@ -292,4 +294,49 @@ SceVoid YTUtils::UnlockMenuParsers()
 SceVoid YTUtils::WaitMenuParsers()
 {
 	sceKernelWaitEventFlag(s_menuLock, 1, SCE_KERNEL_EVF_WAITMODE_OR, SCE_NULL, SCE_NULL);
+}
+
+SceSize YTUtils::InvDownloadCore(char *buffer, SceSize size, SceSize nitems, ScePVoid userdata)
+{
+	InvDownloadData *dw = (InvDownloadData *)userdata;
+	SceSize toCopy = size * nitems;
+
+	if (dw->pos > SCE_KERNEL_256KiB)
+		return 0;
+
+	if (toCopy != 0) {
+		sce_paf_memcpy(dw->buf + dw->pos, buffer, toCopy);
+		dw->pos += toCopy;
+		return toCopy;
+	}
+
+	return 0;
+}
+
+SceBool YTUtils::InvDownload(char *url, ScePVoid *ppBuf, SceSize *pBufSize)
+{
+	if (!s_curl)
+		return SCE_FALSE;
+
+	InvDownloadData dw;
+	dw.buf = sce_paf_malloc(SCE_KERNEL_256KiB);
+	dw.pos = 0;
+
+	if (!dw.buf) {
+		return SCE_FALSE;
+	}
+
+	curl_easy_setopt(s_curl, CURLOPT_URL, url);
+	curl_easy_setopt(s_curl, CURLOPT_WRITEFUNCTION, InvDownloadCore);
+	curl_easy_setopt(s_curl, CURLOPT_WRITEDATA, &dw);
+
+	if (curl_easy_perform(s_curl) != CURLE_OK) {
+		sce_paf_free(dw.buf);
+		return SCE_FALSE;
+	}
+
+	*ppBuf = dw.buf;
+	*pBufSize = dw.pos;
+
+	return SCE_TRUE;
 }

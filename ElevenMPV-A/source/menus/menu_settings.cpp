@@ -43,7 +43,7 @@ menu::settings::Settings::Settings()
 	pluginParam.resourcePath = "vs0:vsh/common/app_settings_plugin.rco";
 	pluginParam.scopeName = "__main__";
 
-	pluginParam.pluginCreateCB = AppSettings::PluginCreateCB;
+	pluginParam.pluginSetParamCB = AppSettings::PluginCreateCB;
 	pluginParam.pluginInitCB = AppSettings::PluginInitCB;
 	pluginParam.pluginStartCB = AppSettings::PluginStartCB;
 	pluginParam.pluginStopCB = AppSettings::PluginStopCB;
@@ -326,11 +326,11 @@ SceVoid menu::settings::Settings::CBTerm()
 	switch (s_callerMode) {
 	case menu::settings::SettingsButtonCB::Parent_Player:
 		// Show (enable) player page
-		g_player_page->PlayEffect(-1000.0f, effect::EffectType_Fadein1, SCE_NULL);
+		ui::Widget::SetControlFlags(g_player_page, 1);
 		break;
 	case menu::settings::SettingsButtonCB::Parent_Displayfiles:
 		// Show (enable) displayfiles page
-		g_rootPage->PlayEffect(-1000.0f, effect::EffectType_Fadein1, SCE_NULL);
+		ui::Widget::SetControlFlags(g_rootPage, 1);
 		break;
 	}
 
@@ -458,11 +458,11 @@ SceVoid menu::settings::SettingsButtonCB::SettingsButtonCBFun(SceInt32 eventId, 
 	switch (callerMode) {
 	case Parent_Player:
 		// Hide (disable) player page
-		g_player_page->PlayEffectReverse(100.0f, effect::EffectType_Fadein1, SCE_NULL);
+		ui::Widget::SetControlFlags(g_player_page, 0);
 		break;
 	case Parent_Displayfiles:
 		// Hide (disable) displayfiles page
-		g_rootPage->PlayEffectReverse(100.0f, effect::EffectType_Fadein1, SCE_NULL);
+		ui::Widget::SetControlFlags(g_rootPage, 0);
 		break;
 	}
 

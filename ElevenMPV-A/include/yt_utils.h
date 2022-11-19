@@ -9,6 +9,11 @@
 #include "netmedia.h"
 #include "downloader.h"
 
+extern "C"
+{
+	int curl_global_memmanager_set_np(void*(*)(unsigned int), void(*)(void *), void*(*)(void *, unsigned int));
+}
+
 using namespace paf;
 
 class YTUtils
@@ -92,7 +97,17 @@ public:
 
 	static SceVoid NMDeallocate(ScePVoid argP, ScePVoid argMemory);
 
-	static SceBool DowbloadFile(char *url, ScePVoid *ppBuf, SceSize *pBufSize);
+	class InvDownloadData
+	{
+	public:
+
+		ScePVoid buf;
+		SceUInt32 pos;
+	};
+
+	static SceBool InvDownload(char *url, ScePVoid *ppBuf, SceSize *pBufSize);
+
+	static SceSize InvDownloadCore(char *buffer, SceSize size, SceSize nitems, ScePVoid userdata);
 };
 
 #endif

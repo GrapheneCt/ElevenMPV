@@ -253,7 +253,7 @@ SceVoid menu::audioplayer::Audioplayer::RegularTask(ScePVoid pUserData)
 	SceInt32 motionCom = 0;
 	SceUInt32 ipcCom = 0;
 	SceCtrlData ctrlData;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *commonWidget;
 	rco::Element searchParam;
 
@@ -414,12 +414,12 @@ SceVoid menu::audioplayer::Audioplayer::RegularTask(ScePVoid pUserData)
 SceVoid menu::audioplayer::Audioplayer::Return()
 {
 	rco::Element searchParam;
-	Plugin::PageInitParam rwiParam;
+	Plugin::PageOpenParam rwiParam;
 
 	*(SceUInt32 *)g_settingsButtonCB->pUserData = menu::settings::SettingsButtonCB::Parent_Player;
 
 	// Hide (disable) displayfiles page
-	g_rootPage->PlayEffectReverse(100.0f, effect::EffectType_Fadein1, SCE_NULL);
+	ui::Widget::SetControlFlags(g_rootPage, 0);
 
 	// Get player widgets
 	searchParam.hash = EMPVAUtils::GetHash("plane_player_bg");
@@ -456,7 +456,7 @@ SceVoid menu::audioplayer::BackButtonCB::BackButtonCBFun(SceInt32 eventId, ui::W
 	*(SceUInt32 *)g_settingsButtonCB->pUserData = menu::settings::SettingsButtonCB::Parent_Displayfiles;
 
 	// Show (enable) displayfiles page
-	g_rootPage->PlayEffect(-1000.0f, effect::EffectType_Fadein1, SCE_NULL);
+	ui::Widget::SetControlFlags(g_rootPage, 1);
 
 	// Get hashes for animations and play them in reverse
 	searchParam.hash = EMPVAUtils::GetHash("plane_player_bg");
@@ -573,8 +573,8 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 	wstring text16;
 	string fullPath;
 	rco::Element searchParam;
-	Plugin::PageInitParam rwiParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::PageOpenParam rwiParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *playerCover = SCE_NULL;
 	ui::Widget *commonWidget;
 	ui::Widget *numText;
@@ -589,7 +589,7 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 	s_timerPof = 0;
 
 	// Hide (disable) root page
-	g_rootPage->PlayEffectReverse(100.0f, effect::EffectType_Fadein1, SCE_NULL);
+	ui::Widget::SetControlFlags(g_rootPage, 0);
 
 	searchParam.hash = EMPVAUtils::GetHash("displayfiles_pagemode_button");
 	ui::Widget *buttonPagemode = g_rootPage->GetChild(&searchParam, 0);

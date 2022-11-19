@@ -7,6 +7,7 @@
 #include "audio.h"
 #include "vitaaudiolib.h"
 #include "utils.h"
+#include "curl_file.h"
 
 enum Audio_BgmMode
 {
@@ -119,8 +120,7 @@ SceVoid audio::YoutubePlayerCoverLoaderJob::Run()
 	ui::BusyIndicator *playerBusyInd;
 	Rgba col;
 	SceInt32 res;
-	SceUInt32 retryCount = 0;
-	SharedPtr<HttpFile> fres;
+	SharedPtr<CurlFile> fres;
 
 	searchParam.hash = EMPVAUtils::GetHash("plane_player_cover");
 	playerCover = g_player_page->GetChild(&searchParam, 0);
@@ -132,13 +132,7 @@ SceVoid audio::YoutubePlayerCoverLoaderJob::Run()
 	if (g_currentCoverSurf != SCE_NULL)
 		menu::displayfiles::Page::ResetBgPlaneTex();
 
-	fres = HttpFile::Open(url.c_str(), &res, 0);
-
-	while (res < 0 && retryCount != 3) {
-		fres = HttpFile::Open(url.c_str(), &res, 0);
-		retryCount++;
-	}
-
+	fres = CurlFile::Open(url.c_str(), &res, 0, true);
 	if (res < 0) {
 		playerBusyInd->Stop();
 		return;

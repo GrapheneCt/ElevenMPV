@@ -172,7 +172,7 @@ SceVoid audio::YoutubeDecoder::Decode(ScePVoid stream, SceUInt32 length, ScePVoi
 
 			nestegg_packet_count(packet, &uret);
 			if (uret == 1) {
-				unsigned char* data;
+				unsigned char* data = SCE_NULL;
 				ret = nestegg_packet_data(packet, 0, &data, &uret);
 				if (ret == 0) {
 					const int samples = opus_decode(opusDec, data, uret, (opus_int16 *)stream, maxSamples, 0);

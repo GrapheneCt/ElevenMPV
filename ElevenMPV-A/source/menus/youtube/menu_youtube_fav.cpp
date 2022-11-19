@@ -10,6 +10,7 @@
 #include "menu_audioplayer.h"
 #include "utils.h"
 #include "yt_utils.h"
+#include "curl_file.h"
 #include "invidious.h"
 
 using namespace paf;
@@ -24,12 +25,12 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	string text8;
 	InvItemVideo *vidInfo;
 	rco::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *box;
 	ui::Widget *button;
 	ui::Widget *subtext;
 	VideoButtonCB *buttonCB;
-	SharedPtr<HttpFile> fres;
+	SharedPtr<CurlFile> fres;
 	graph::Surface *tmbTex;
 
 	res = invParseVideo(data, &vidInfo);
@@ -78,7 +79,7 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	button->RegisterEventCallback(ui::EventMain_Decide, buttonCB, 0);
 	thread::s_mainThreadMutex.Unlock();
 
-	fres = HttpFile::Open(vidInfo->thmbUrl, &res, 0);
+	fres = CurlFile::Open(vidInfo->thmbUrl, &res, 0, true);
 	invCleanupVideo(vidInfo);
 	if (res < 0) {
 		return;
@@ -101,7 +102,7 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 SceVoid menu::youtube::FavParserThread::EntryFunction()
 {
 	rco::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *commonWidget;
 	SceUInt32 prevResNum = 0;
 	SceInt32 parseRes = 0;

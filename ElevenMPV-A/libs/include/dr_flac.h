@@ -229,8 +229,6 @@ QUICK NOTES
 #include <kernel.h>
 #include <paf/stdc.h>
 
-#define memcpy sce_paf_memcpy
-#define memset sce_paf_memset
 #define malloc sce_paf_malloc
 #define free sce_paf_free
 #define realloc sce_paf_realloc

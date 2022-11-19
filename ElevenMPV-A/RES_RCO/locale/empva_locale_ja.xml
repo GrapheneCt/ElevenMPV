@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <stringset>
   <string src="このディレクトリは空です" id="msg_empty_dir" />
-  <string src="SSLエラーが発生しました。この機能を使用するには、システム時刻を正しく設定し、iTLS-Ensoプラグインをインストールする必要があります。" id="msg_netcheck_fail" />
   
   <string src="設定" id="msg_settings" />
   <string src="デバイス" id="msg_settings_device" />

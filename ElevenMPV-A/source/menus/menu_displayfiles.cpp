@@ -198,7 +198,7 @@ menu::displayfiles::Page::Page(const char* path)
 	}
 
 	rco::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 
 	cwd = new string(path);
 

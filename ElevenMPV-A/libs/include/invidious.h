@@ -36,6 +36,14 @@ typedef enum InvSort
 	INV_SORT_MAX
 } InvSort;
 
+typedef enum InvCommentSort
+{
+	INV_COMMENT_SORT_TOP,
+	INV_COMMENT_SORT_NEW,
+
+	INV_COMMENT_SORT_MAX
+} InvCommentSort;
+
 typedef enum InvDate
 {
 	INV_DATE_HOUR,
@@ -48,8 +56,18 @@ typedef enum InvDate
 	INV_DATE_MAX
 } InvDate;
 
+typedef enum InvHlsQuality
+{
+	INV_HLS_QUALITY_LOW,
+	INV_HLS_QUALITY_MEDIUM,
+	INV_HLS_QUALITY_HIGH,
+
+	INV_HLS_QUALITY_MAX
+} InvHlsQuality;
+
 typedef struct InvItemVideo
 {
+	ScePVoid reserved;
 	const char *title;
 	const char *id;
 	const char *author;
@@ -63,7 +81,9 @@ typedef struct InvItemVideo
 	const char *audioMqUrl;
 	const char *audioHqUrl;
 	SceInt32 lengthSec;
-	ScePVoid reserved;
+	SceBool isLive;
+	const char *description;
+	const char *published;
 } InvItemVideo;
 
 typedef struct InvItemPlaylist
@@ -85,8 +105,18 @@ typedef struct InvItemChannel
 	SceInt32 subCount;
 } InvItemChannel;
 
+typedef struct InvItemComment
+{
+	ScePVoid reserved;
+	const char *author;
+	const char *thmbUrl;
+	const char *content;
+	const char *continuation;
+} InvItemComment;
+
 typedef struct InvItem
 {
+	ScePVoid reserved;
 	InvItemType type;
 	union
 	{
@@ -94,7 +124,6 @@ typedef struct InvItem
 		InvItemPlaylist *playlistItem;
 		InvItemChannel *channelItem;
 	};
-	ScePVoid reserved;
 } InvItem;
 
 INV_EXPORT SceInt32 invInit(InvAllocator allocator, InvDeallocator deallocator, InvDownloader downloader);
@@ -107,8 +136,14 @@ INV_EXPORT SceInt32 invParseSearch(const char *request, SceInt32 page, InvItemTy
 
 INV_EXPORT SceInt32 invParseVideo(const char *videoId, InvItemVideo **item);
 
+INV_EXPORT SceInt32 invParseComments(const char *videoId, const char *continuation, InvCommentSort sort, InvItemComment **item);
+
 INV_EXPORT SceInt32 invCleanupVideo(InvItemVideo *item);
 
 INV_EXPORT SceInt32 invCleanupSearch(InvItem *items);
+
+INV_EXPORT SceInt32 invCleanupComments(InvItemComment *item);
+
+INV_EXPORT SceInt32 invGetHlsUrl(const char *videoId, InvHlsQuality quality, char *hlsUrl, SceInt32 sizeOfUrl);
 
 SCE_CDECL_END

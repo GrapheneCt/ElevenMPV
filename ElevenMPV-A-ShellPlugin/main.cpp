@@ -72,6 +72,24 @@ setup_error_return:
 
 }
 
+void startMainThread()
+{
+	if (mainThread == SCE_NULL) {
+		mainThread = new ImposeThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellControl");
+		mainThread->Start();
+	}
+}
+
+void stopMainThread()
+{
+	if (mainThread != SCE_NULL) {
+		mainThread->Cancel();
+		mainThread->Join();
+		delete mainThread;
+		mainThread = SCE_NULL;
+	}
+}
+
 void setup_stage2()
 {
 	topText = new wstring();
@@ -80,13 +98,13 @@ void setup_stage2()
 	ipcPipeRX = sceKernelCreateMsgPipe("ElevenMPVA::ShellIPC_RX", SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, IPC_PIPE_ATTR, sizeof(IpcDataRX), SCE_NULL);
 	ipcPipeTX = sceKernelCreateMsgPipe("ElevenMPVA::ShellIPC_TX", SCE_KERNEL_MSG_PIPE_TYPE_USER_MAIN, IPC_PIPE_ATTR, sizeof(IpcDataTX), SCE_NULL);
 
-	mainThread = new ImposeThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellControl");
-	mainThread->Start();
+	startMainThread();
 
 	rxThread = new RxThread(SCE_KERNEL_LOWEST_PRIORITY_USER, SCE_KERNEL_4KiB, "ElevenMPVA::ShellRx");
 	rxThread->Start();
 }
 
+/*
 void cleanup()
 {
 	IpcDataRX ipcDataRX;
@@ -113,6 +131,7 @@ void cleanup()
 	if (hookId[0] > 0)
 		taiHookRelease(hookId[0], hookRef[0]);
 }
+*/
 
 int findWidgets()
 {
@@ -254,6 +273,12 @@ SceVoid RxThread::EntryFunction()
 		case EMPVA_IPC_DEACTIVATE:
 			imposeIpcActive = SCE_FALSE;
 			break;
+		case EMPVA_IPC_APP_STOP:
+			stopMainThread();
+			break;
+		case EMPVA_IPC_APP_START:
+			startMainThread();
+			break;
 		case EMPVA_IPC_INFO:
 
 			if ((ipcDataRX.flags & EMPVA_IPC_REFRESH_PBBT) == EMPVA_IPC_REFRESH_PBBT) {
@@ -325,6 +350,10 @@ SceVoid ImposeThread::EntryFunction()
 
 extern "C" {
 
+	#include <moduleinfo.h>
+
+	SCE_MODULE_INFO(ElevenMPV_A_ShellPlugin, 2, 1, 1)
+
 	typedef struct SceShellAudioBGMState {
 		int bgmPortOwnerId;
 		int bgmPortPriority;
@@ -360,7 +389,7 @@ extern "C" {
 
 	int module_stop(SceSize args, const void * argp)
 	{
-		cleanup();
+		//cleanup();
 		return SCE_KERNEL_STOP_SUCCESS;
 	}
 

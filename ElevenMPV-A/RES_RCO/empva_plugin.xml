@@ -17,7 +17,7 @@
 	  
 	  <!-- top title bar -->
 	  <plane style="plane_titlebar_style" id="plane_top">
-        <layout_hint align="0, 2" anchor="0, 2" size="960, 96" pos="0, 0" />
+        <layout_hint align="0, 2" anchor="0, 2" size="980, 96" pos="0, 0" />
         <text auto_scroll="1" style="text_big_style" id="text_top_title">
           <layout_hint size="844, 0" anchor="1, 1" align="1, 1" adjust="0, 2" pos="20, 12" />
         </text>
@@ -388,26 +388,26 @@
   </templatetable>
   
   <stringtable>
-	<locale origsize="4576" src="RES_RCO_TMP\empva_locale_ja.xml.rcs.zlib" compress="on" id="ja" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="en" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="en-gb" />
-    <locale origsize="5504" src="RES_RCO_TMP\empva_locale_fr.xml.rcs.zlib" compress="on" id="fr" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="es" />
-    <locale origsize="5552" src="RES_RCO_TMP\empva_locale_de.xml.rcs.zlib" compress="on" id="de" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="it" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="nl" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="pt" />
-    <locale origsize="5616" src="RES_RCO_TMP\empva_locale_pt-br.xml.rcs.zlib" compress="on" id="pt-br" />
-    <locale origsize="5536" src="RES_RCO_TMP\empva_locale_ru.xml.rcs.zlib" compress="on" id="ru" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="ko" />
-    <locale origsize="4256" src="RES_RCO_TMP\empva_locale_ch.xml.rcs.zlib" compress="on" id="zh-t" />
-    <locale origsize="4288" src="RES_RCO_TMP\empva_locale_zh.xml.rcs.zlib" compress="on" id="zh-s" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="fi" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="sv" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="da" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="no" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="pl" />
-    <locale origsize="5264" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="tr" />
+	<locale origsize="4368" src="RES_RCO_TMP\empva_locale_ja.xml.rcs.zlib" compress="on" id="ja" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="en" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="en-gb" />
+    <locale origsize="5152" src="RES_RCO_TMP\empva_locale_fr.xml.rcs.zlib" compress="on" id="fr" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="es" />
+    <locale origsize="5184" src="RES_RCO_TMP\empva_locale_de.xml.rcs.zlib" compress="on" id="de" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="it" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="nl" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="pt" />
+    <locale origsize="5280" src="RES_RCO_TMP\empva_locale_pt-br.xml.rcs.zlib" compress="on" id="pt-br" />
+    <locale origsize="5168" src="RES_RCO_TMP\empva_locale_ru.xml.rcs.zlib" compress="on" id="ru" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="ko" />
+    <locale origsize="4096" src="RES_RCO_TMP\empva_locale_ch.xml.rcs.zlib" compress="on" id="zh-t" />
+    <locale origsize="4112" src="RES_RCO_TMP\empva_locale_zh.xml.rcs.zlib" compress="on" id="zh-s" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="fi" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="sv" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="da" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="no" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="pl" />
+    <locale origsize="4976" src="RES_RCO_TMP\empva_locale_en.xml.rcs.zlib" compress="on" id="tr" />
   </stringtable>
   
   <texturetable>

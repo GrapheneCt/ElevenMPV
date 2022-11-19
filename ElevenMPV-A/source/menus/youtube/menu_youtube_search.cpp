@@ -9,6 +9,7 @@
 #include "menu_audioplayer.h"
 #include "utils.h"
 #include "yt_utils.h"
+#include "curl_file.h"
 #include "invidious.h"
 
 using namespace paf;
@@ -22,12 +23,12 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 	wstring subtext16;
 	string text8;
 	rco::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *box;
 	ui::Widget *button;
 	ui::Widget *subtext;
 	VideoButtonCB *buttonCB;
-	SharedPtr<HttpFile> fres;
+	SharedPtr<CurlFile> fres;
 	graph::Surface *tmbTex;
 
 	if (page->parseResult[index].type == INV_ITEM_TYPE_CHANNEL ||
@@ -64,7 +65,7 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 		text8 += page->parseResult[index].videoItem->author;
 		ccc::UTF8toUTF16(&text8, &subtext16);
 
-		fres = HttpFile::Open(page->parseResult[index].videoItem->thmbUrl, &res, 0);
+		fres = CurlFile::Open(page->parseResult[index].videoItem->thmbUrl, &res, 0, true);
 
 		thread::s_mainThreadMutex.Lock();
 		buttonCB = new VideoButtonCB;
@@ -124,7 +125,7 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 SceVoid menu::youtube::SearchParserThread::EntryFunction()
 {
 	rco::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *commonWidget;
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_button_btmenu_right");

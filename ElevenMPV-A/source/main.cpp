@@ -53,7 +53,7 @@ static const EMPVAUtils::MemState k_ytModeLimit = EMPVAUtils::MemState_Mid;
 
 SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	rco::Element searchParam;
 	menu::settings::Settings *config = menu::settings::Settings::GetInstance();
 	SceUInt32 currentPagemode = EMPVAUtils::GetPagemode();
@@ -66,7 +66,7 @@ SceVoid menu::main::PagemodeButtonCB::PagemodeButtonCBFun(SceInt32 eventId, paf:
 
 	if (currentPagemode == menu::settings::Settings::PageMode_Normal) {
 
-		if (sceSysmoduleIsLoaded(SCE_SYSMODULE_HTTPS)) {
+		if (sceSysmoduleIsLoaded(SCE_SYSMODULE_NET)) {
 			if (EMPVAUtils::GetMemStatus() > k_ytModeLimit) {
 				menu::youtube::Base::FirstTimeInit();
 			}
@@ -151,8 +151,8 @@ SceVoid pluginLoadCB(Plugin *plugin)
 
 	ui::Widget *buttonPagemode = SCE_NULL;
 	rco::Element searchParam;
-	Plugin::PageInitParam rwiParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::PageOpenParam rwiParam;
+	Plugin::TemplateOpenParam tmpParam;
 	string initCwd;
 	SceUInt32 pagemode = menu::settings::Settings::PageMode_Normal;
 
@@ -286,7 +286,7 @@ int main()
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
 	if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Full) {
-		fwParam.defaultSurfacePoolSize = 18 * 1024 * 1024;
+		fwParam.defaultSurfacePoolSize = 20 * 1024 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
 	else if (EMPVAUtils::GetMemStatus() == EMPVAUtils::MemState_Mid) {

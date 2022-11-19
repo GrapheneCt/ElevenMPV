@@ -8,7 +8,9 @@ typedef enum IpcCmd {
 	EMPVA_IPC_PLAY,
 	EMPVA_IPC_FF,
 	EMPVA_IPC_REW,
-	EMPVA_IPC_INFO
+	EMPVA_IPC_INFO,
+	EMPVA_IPC_APP_STOP,
+	EMPVA_IPC_APP_START
 } IpcCmd;
 
 typedef enum IpcFlag {

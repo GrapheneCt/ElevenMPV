@@ -18,6 +18,7 @@
 #include "dialog.h"
 #include "utils.h"
 #include "yt_utils.h"
+#include "curl_file.h"
 
 using namespace paf;
 
@@ -27,7 +28,7 @@ static SceInt32 s_netCtlStateCbId = SCE_UID_INVALID_UID;
 
 SceVoid menu::youtube::Base::netCtlStateCB(SceInt32 event_type, ScePVoid arg)
 {
-	s_netCheckThread = new NetCheckThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_4KiB, "EMPVA::NetCheckThread");
+	s_netCheckThread = new NetCheckThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_16KiB, "EMPVA::NetCheckThread");
 	s_netCheckThread->Start();
 }
 
@@ -35,20 +36,20 @@ SceVoid menu::youtube::Base::NetCheckThread::EntryFunction()
 {
 	rco::Element searchParam;
 	ui::Widget *button;
-	HttpFile::OpenArg testHttp;
-	HttpFile testFile;
-	SceInt32 ret = -1;
+	CurlFile::OpenArg testHttp;
+	CurlFile testFile;
+	SceInt32 ret = SCE_NET_CTL_ERROR_NOT_AVAIL;
 
 	//sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 	
 	Dialog::OpenPleaseWait(g_empvaPlugin, SCE_NULL, EMPVAUtils::GetString("msg_wait"));
 
 	testHttp.SetUrl("https://www.youtube.com/s/desktop/b75d77f8/img/favicon_32x32.png");
-	testHttp.SetOpt(10000000, HttpFile::OpenArg::Opt_ResolveTimeOut);
-	testHttp.SetOpt(10000000, HttpFile::OpenArg::Opt_ConnectTimeOut);
+	testHttp.SetOpt(10000000, CurlFile::OpenArg::Opt_ResolveTimeOut);
+	testHttp.SetOpt(10000000, CurlFile::OpenArg::Opt_ConnectTimeOut);
+	testHttp.SetUseShare(true);
 
 	ret = testFile.Open(&testHttp);
-
 	if (ret == SCE_OK)
 		testFile.Close();
 
@@ -56,13 +57,7 @@ SceVoid menu::youtube::Base::NetCheckThread::EntryFunction()
 
 	if (ret != SCE_OK) {
 
-		if (ret == SCE_HTTP_ERROR_SSL) {
-			Dialog::OpenError(g_empvaPlugin, ret, EMPVAUtils::GetString("msg_netcheck_fail"));
-		}
-		else {
-			Dialog::OpenError(g_empvaPlugin, ret, EMPVAUtils::GetString("msg_error_server_peer_connect_timeout"));
-		}
-
+		Dialog::OpenError(g_empvaPlugin, ret, EMPVAUtils::GetString("msg_error_server_peer_connect_timeout"));
 		Dialog::WaitEnd();
 
 		searchParam.hash = EMPVAUtils::GetHash("displayfiles_pagemode_button");
@@ -98,6 +93,12 @@ SceVoid menu::youtube::VideoButtonCB::VideoButtonCBFun(SceInt32 eventId, ui::Wid
 
 SceVoid menu::youtube::SearchActionButtonCB::SearchActionButtonCBFun(SceInt32 eventId, paf::ui::Widget *self, SceInt32 a3, ScePVoid pUserData)
 {
+	if (eventId == 0x1000000B)
+	{
+		ui::TextBox *tb = (ui::TextBox *)self;
+		tb->Hide();
+	}
+
 	switch (s_currentYtMode) {
 	case menu::youtube::Base::Mode_Search:
 		menu::youtube::SearchPage::SearchActionButtonOp();
@@ -114,7 +115,7 @@ SceVoid menu::youtube::Base::InitCommon()
 	ui::Widget *btMenu;
 	ui::Widget *commonWidget;
 
-	s_netCheckThread = new NetCheckThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_4KiB, "EMPVA::NetCheckJob");
+	s_netCheckThread = new NetCheckThread(SCE_KERNEL_DEFAULT_PRIORITY_USER, SCE_KERNEL_256KiB, "EMPVA::NetCheckJob");
 	s_netCheckThread->Start();
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_plane_bottommenu");
@@ -291,7 +292,7 @@ SceUInt32 menu::youtube::Base::GetCurrentMode()
 SceVoid menu::youtube::Base::FirstTimeInit()
 {
 	rco::Element searchParam;
-	Plugin::TemplateInitParam tmpParam;
+	Plugin::TemplateOpenParam tmpParam;
 	ui::Widget *commonWidget;
 	ui::Widget *ytTopPlane;
 	ui::Widget *btMenu;
@@ -310,12 +311,10 @@ SceVoid menu::youtube::Base::FirstTimeInit()
 	auto searchActionButtonCB = new menu::youtube::SearchActionButtonCB();
 	commonWidget->RegisterEventCallback(0x10000008, searchActionButtonCB, 0);
 
-	/*
 	searchParam.hash = EMPVAUtils::GetHash("yt_text_box_top_search");
 	commonWidget = ytTopPlane->GetChild(&searchParam, 0);
 	searchActionButtonCB = new menu::youtube::SearchActionButtonCB();
-	commonWidget->RegisterEventCallback(0x10000008, searchActionButtonCB, 0);
-	*/
+	commonWidget->RegisterEventCallback(0x1000000B, searchActionButtonCB, 0);
 
 	searchParam.hash = EMPVAUtils::GetHash("yt_plane_bottommenu");
 	btMenu = g_rootPage->GetChild(&searchParam, 0);
@@ -354,12 +353,14 @@ SceInt32 menu::youtube::Base::InitYtStuff()
 	SceInt32 ret = 0;
 	SceInt32 quality = 0;
 
-	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTPS);
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
-	sceSysmoduleLoadModule(SCE_SYSMODULE_SSL);
 
+	new Module("app0:module/libcurl.suprx", 0, 0, 0);
 	new Module("app0:module/libInvidious.suprx", 0, 0, 0);
 	new Module("app0:module/libNetMedia.suprx", 0, 0, 0);
+
+	/* curl */
+	curl_global_memmanager_set_np(sce_paf_malloc, sce_paf_free, sce_paf_realloc);
 
 	/* libnet */
 	param.memory = sce_paf_malloc(k_netMemSize);
@@ -376,17 +377,7 @@ SceInt32 menu::youtube::Base::InitYtStuff()
 		SCE_DBG_LOG_ERROR("[EMPVA_PLUGIN_BASE] sceNetCtlInit() error: 0x%08X\n", ret);
 	}
 
-	ret = sceSslInit(300 * 1024);
-	if (ret < 0) {
-		SCE_DBG_LOG_ERROR("[EMPVA_PLUGIN_BASE] sceSslInit() error: 0x%08X\n", ret);
-	}
-
-	ret = sceHttpInit(40 * 1024);
-	if (ret < 0) {
-		SCE_DBG_LOG_ERROR("[EMPVA_PLUGIN_BASE] sceHttpInit() error: 0x%08X\n", ret);
-	}
-
-	ret = invInit(sce_paf_malloc, sce_paf_free, SCE_NULL);
+	ret = invInit(sce_paf_malloc, sce_paf_free, YTUtils::InvDownload);
 	if (ret < 0) {
 		SCE_DBG_LOG_ERROR("[EMPVA_PLUGIN_BASE] invInit() error: 0x%08X\n", ret);
 	}

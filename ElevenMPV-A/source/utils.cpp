@@ -24,7 +24,6 @@ static SceBool s_isDeactivatedByPowerCB = SCE_FALSE;
 
 static char s_titleid[12];
 
-static SceUID s_shellPluginUID = SCE_UID_INVALID_UID;
 static SceUID s_shellPid = SCE_UID_INVALID_UID;
 
 static SceUID s_ipcPipeRX = SCE_UID_INVALID_UID;
@@ -243,19 +242,26 @@ SceVoid EMPVAUtils::Init()
 	sceAppMgrAppParamGetString(SCE_KERNEL_PROCESS_ID_SELF, 12, s_titleid, 12);
 	task::Register(EMPVAUtils::AppWatchdogTask, SCE_NULL);
 
-	SceInt32 ret = sceAppMgrGetIdByName(&s_shellPid, "NPXS19999");
-	if (ret >= 0) {
-		sce_paf_snprintf(pluginPath, 256, "ux0:app/%s/module/shell_plugin.suprx", s_titleid);
-		s_shellPluginUID = taiLoadStartModuleForPid(s_shellPid, pluginPath, 0, SCE_NULL, 0);
-		sce_paf_memset(pluginPath, 0, sizeof(pluginPath));
-		sce_paf_snprintf(pluginPath, 256, "ux0:app/%s/module/download_enabler_empva.suprx", s_titleid);
-		taiLoadStartModuleForPid(s_shellPid, pluginPath, 0, SCE_NULL, 0);
+	s_ipcPipeRX = sceKernelOpenMsgPipe("ElevenMPVA::ShellIPC_RX");
+	if (s_ipcPipeRX <= 0) {
+		SceInt32 ret = sceAppMgrGetIdByName(&s_shellPid, "NPXS19999");
+		if (ret >= 0) {
+			sce_paf_snprintf(pluginPath, 256, "ux0:app/%s/module/shell_plugin.suprx", s_titleid);
+			taiLoadStartModuleForPid(s_shellPid, pluginPath, 0, SCE_NULL, 0);
+			sce_paf_memset(pluginPath, 0, sizeof(pluginPath));
+			sce_paf_snprintf(pluginPath, 256, "ux0:app/%s/module/download_enabler_empva.suprx", s_titleid);
+			taiLoadStartModuleForPid(s_shellPid, pluginPath, 0, SCE_NULL, 0);
 
-		if (s_shellPluginUID > 0) {
 			s_ipcPipeRX = sceKernelOpenMsgPipe("ElevenMPVA::ShellIPC_RX");
 			s_ipcPipeTX = sceKernelOpenMsgPipe("ElevenMPVA::ShellIPC_TX");
 		}
 	}
+
+	IpcDataRX packet;
+	packet.cmd = EMPVA_IPC_APP_START;
+
+	if (s_ipcPipeRX > 0)
+		sceKernelSendMsgPipe(s_ipcPipeRX, &packet, sizeof(IpcDataRX), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, SCE_NULL, SCE_NULL);
 
 	if (!SCE_PAF_IS_DOLCE) {
 		SceUID powerCbid = sceKernelCreateCallback("EMPVA::PowerCb", 0, EMPVAUtils::PowerCallback, SCE_NULL);
@@ -274,9 +280,10 @@ SceVoid EMPVAUtils::Init()
 SceVoid EMPVAUtils::Exit()
 {
 	SceInt32 ret;
-
-	if (s_shellPluginUID > 0)
-		taiStopUnloadModuleForPid(s_shellPid, s_shellPluginUID, 0, SCE_NULL, 0, SCE_NULL, &ret);
+	IpcDataRX packet;
+	packet.cmd = EMPVA_IPC_APP_STOP;
+	if (s_ipcPipeRX > 0)
+		sceKernelSendMsgPipe(s_ipcPipeRX, &packet, sizeof(IpcDataRX), SCE_KERNEL_MSG_PIPE_MODE_WAIT | SCE_KERNEL_MSG_PIPE_MODE_FULL, SCE_NULL, SCE_NULL);
 	YTUtils::Term(SCE_TRUE);
 	sceKernelExitProcess(0);
 }
@@ -284,7 +291,7 @@ SceVoid EMPVAUtils::Exit()
 SceVoid EMPVAUtils::Activate()
 {
 	audio::GenericDecoder *currentDecoder = SCE_NULL;
-	ui::Widget *scene;
+	ScePVoid ctx;
 
 	if (g_currentPlayerInstance != SCE_NULL) {
 		if (g_currentPlayerInstance->GetCore())
@@ -295,8 +302,8 @@ SceVoid EMPVAUtils::Activate()
 
 	system::ResumeTouchInput(SCE_TOUCH_PORT_FRONT);
 
-	scene = s_frameworkInstance->GetCurrentPage();
-	scene->unk_0D6 = 0;
+	ctx = s_frameworkInstance->GetUiContext();
+	*(SceInt32 *)(ctx + 0xD6) = 0;
 
 	if (currentDecoder) {
 		if ((currentDecoder->IsPaused() || !currentDecoder->isPlaying) && EMPVAUtils::IsDecoderUsed())
@@ -311,7 +318,7 @@ SceVoid EMPVAUtils::Activate()
 SceVoid EMPVAUtils::Deactivate()
 {
 	audio::GenericDecoder *currentDecoder = SCE_NULL;
-	ui::Widget *scene;
+	ScePVoid ctx;
 
 	if (g_currentPlayerInstance != SCE_NULL) {
 		if (g_currentPlayerInstance->GetCore())
@@ -322,8 +329,8 @@ SceVoid EMPVAUtils::Deactivate()
 
 	system::SuspendTouchInput(SCE_TOUCH_PORT_FRONT);
 
-	scene = s_frameworkInstance->GetCurrentPage();
-	scene->unk_0D6 = 1;
+	ctx = s_frameworkInstance->GetUiContext();
+	*(SceInt32 *)(ctx + 0xD6) = 1;
 
 	if (currentDecoder) {
 		if (currentDecoder->IsPaused() || !currentDecoder->isPlaying)
