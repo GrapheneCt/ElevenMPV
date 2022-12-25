@@ -3,6 +3,7 @@
 #include <ini_file_processor.h>
 #include <sceavplayer.h>
 #include <psp2_compat/curl/curl.h>
+#include <curl_file.h>
 
 #include "yt_utils.h"
 #include "netmedia.h"
@@ -19,6 +20,8 @@ static SceNmHandle s_nmHandle = SCE_NULL;
 static SceAvPlayerMemAllocator s_nmAllocator;
 static Downloader *s_downloader = SCE_NULL;
 static CURL *s_curl = SCE_NULL;
+static thread::RMutex *s_curlDwMtx = SCE_NULL;
+static CurlFile::Share *s_curlShare = SCE_NULL;
 
 ScePVoid YTUtils::NMAllocate(ScePVoid argP, SceUInt32 argAlignment, SceUInt32 argSize)
 {
@@ -204,6 +207,11 @@ SceVoid YTUtils::Init()
 		curl_easy_setopt(s_curl, CURLOPT_HTTPGET, 1L);
 		curl_easy_setopt(s_curl, CURLOPT_TCP_KEEPALIVE, 1L);
 		curl_easy_setopt(s_curl, CURLOPT_NOPROGRESS, 1L);
+		s_curlDwMtx = new thread::RMutex("EMPVA::YtInvDwMtx", SCE_TRUE);
+	}
+	if (!s_curlShare) {
+		s_curlShare = CurlFile::Share::Create();
+		s_curlShare->AddRef();
 	}
 
 	if (!s_nmHandle) {
@@ -241,6 +249,8 @@ SceVoid YTUtils::Term(SceBool isFullTerm)
 		if (s_curl) {
 			curl_easy_cleanup(s_curl);
 			s_curl = SCE_NULL;
+			delete s_curlDwMtx;
+			s_curlDwMtx = SCE_NULL;
 		}
 
 		/*
@@ -250,11 +260,21 @@ SceVoid YTUtils::Term(SceBool isFullTerm)
 		}
 		*/
 
+		if (s_curlShare) {
+			s_curlShare->Release();
+			s_curlShare = SCE_NULL;
+		}
+
 		if (s_menuLock != SCE_UID_INVALID_UID) {
 			sceKernelDeleteEventFlag(s_menuLock);
 			s_menuLock = SCE_UID_INVALID_UID;
 		}
 	}
+}
+
+CurlFile::Share *YTUtils::GetCurlFileShare()
+{
+	return s_curlShare;
 }
 
 SceVoid YTUtils::GetNETMedia(SceNmHandle *handle, SceAvPlayerFileReplacement *fio)
@@ -326,11 +346,16 @@ SceBool YTUtils::InvDownload(char *url, ScePVoid *ppBuf, SceSize *pBufSize)
 		return SCE_FALSE;
 	}
 
+	s_curlDwMtx->Lock();
+
 	curl_easy_setopt(s_curl, CURLOPT_URL, url);
 	curl_easy_setopt(s_curl, CURLOPT_WRITEFUNCTION, InvDownloadCore);
 	curl_easy_setopt(s_curl, CURLOPT_WRITEDATA, &dw);
+	CURLcode dwRet = curl_easy_perform(s_curl);
 
-	if (curl_easy_perform(s_curl) != CURLE_OK) {
+	s_curlDwMtx->Unlock();
+
+	if (dwRet != CURLE_OK) {
 		sce_paf_free(dw.buf);
 		return SCE_FALSE;
 	}

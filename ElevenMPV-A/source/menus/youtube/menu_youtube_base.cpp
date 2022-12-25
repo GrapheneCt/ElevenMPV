@@ -10,6 +10,7 @@
 #include <libhttp.h>
 #include <shellsvc.h>
 #include <paf.h>
+#include <curl_file.h>
 
 #include "common.h"
 #include "main.h"
@@ -18,7 +19,6 @@
 #include "dialog.h"
 #include "utils.h"
 #include "yt_utils.h"
-#include "curl_file.h"
 
 using namespace paf;
 
@@ -47,7 +47,7 @@ SceVoid menu::youtube::Base::NetCheckThread::EntryFunction()
 	testHttp.SetUrl("https://www.youtube.com/s/desktop/b75d77f8/img/favicon_32x32.png");
 	testHttp.SetOpt(10000000, CurlFile::OpenArg::Opt_ResolveTimeOut);
 	testHttp.SetOpt(10000000, CurlFile::OpenArg::Opt_ConnectTimeOut);
-	testHttp.SetUseShare(true);
+	testHttp.SetShare(YTUtils::GetCurlFileShare());
 
 	ret = testFile.Open(&testHttp);
 	if (ret == SCE_OK)
@@ -354,6 +354,7 @@ SceInt32 menu::youtube::Base::InitYtStuff()
 	SceInt32 quality = 0;
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+	sceSysmoduleLoadModule(SCE_SYSMODULE_FIBER);
 
 	new Module("app0:module/libcurl.suprx", 0, 0, 0);
 	new Module("app0:module/libInvidious.suprx", 0, 0, 0);

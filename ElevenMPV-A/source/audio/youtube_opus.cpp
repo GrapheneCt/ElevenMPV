@@ -13,7 +13,6 @@
 
 static SceOff s_currPos = 0;
 
-
 SceInt32 audio::YoutubeDecoder::NeRead(ScePVoid buffer, SceSize length, ScePVoid userdata)
 {
 	// success = 1
@@ -83,10 +82,10 @@ audio::YoutubeDecoder::YoutubeDecoder(const char *path, SceBool isSwDecoderUsed)
 	ne = SCE_NULL;
 	metadata->hasCover = SCE_TRUE;
 
-	YTUtils::GetNETMedia(&nmHandle, &fio);
-
 	if (!path)
 		return;
+
+	YTUtils::GetNETMedia(&nmHandle, &fio);
 
 	fio.open(fio.objectPointer, path);
 

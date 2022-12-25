@@ -4,13 +4,13 @@
 #include <string.h>
 #include <paf.h>
 #include <ini_file_processor.h>
+#include <curl_file.h>
 
 #include "common.h"
 #include "menu_youtube.h"
 #include "menu_audioplayer.h"
 #include "utils.h"
 #include "yt_utils.h"
-#include "curl_file.h"
 #include "invidious.h"
 
 using namespace paf;
@@ -79,7 +79,7 @@ SceVoid menu::youtube::FavParserThread::CreateVideoButton(FavPage *page, const c
 	button->RegisterEventCallback(ui::EventMain_Decide, buttonCB, 0);
 	thread::s_mainThreadMutex.Unlock();
 
-	fres = CurlFile::Open(vidInfo->thmbUrl, &res, 0, true);
+	fres = CurlFile::Open(vidInfo->thmbUrl, &res, 0, YTUtils::GetCurlFileShare());
 	invCleanupVideo(vidInfo);
 	if (res < 0) {
 		return;

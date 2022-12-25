@@ -5,6 +5,7 @@
 #include <paf.h>
 #include <ini_file_processor.h>
 #include <sceavplayer.h>
+#include <curl_file.h>
 
 #include "netmedia.h"
 #include "downloader.h"
@@ -90,6 +91,8 @@ public:
 	static SceVoid UnlockMenuParsers();
 
 	static SceVoid WaitMenuParsers();
+
+	static CurlFile::Share *GetCurlFileShare();
 
 	static SceVoid GetNETMedia(SceNmHandle *handle, SceAvPlayerFileReplacement *fio);
 

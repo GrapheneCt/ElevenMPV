@@ -690,7 +690,10 @@ menu::audioplayer::Audioplayer::Audioplayer(const char *cwd, menu::displayfiles:
 
 	if (mode == Mode_Youtube) {
 		YTUtils::LockMenuParsers();
-		invParseVideo(cwd, &s_ytVidInfo);
+		SceInt32 invRes = invParseVideo(cwd, &s_ytVidInfo);
+		if (invRes != 1) {
+			return;
+		}
 
 		//TODO: playlist
 		/*

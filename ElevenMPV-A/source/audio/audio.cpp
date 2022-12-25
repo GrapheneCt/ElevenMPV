@@ -2,12 +2,13 @@
 #include <appmgr.h>
 #include <audioout.h>
 #include <shellaudio.h>
+#include <curl_file.h>
 
 #include "common.h"
 #include "audio.h"
 #include "vitaaudiolib.h"
 #include "utils.h"
-#include "curl_file.h"
+#include "yt_utils.h"
 
 enum Audio_BgmMode
 {
@@ -132,7 +133,7 @@ SceVoid audio::YoutubePlayerCoverLoaderJob::Run()
 	if (g_currentCoverSurf != SCE_NULL)
 		menu::displayfiles::Page::ResetBgPlaneTex();
 
-	fres = CurlFile::Open(url.c_str(), &res, 0, true);
+	fres = CurlFile::Open(url.c_str(), &res, 0, YTUtils::GetCurlFileShare());
 	if (res < 0) {
 		playerBusyInd->Stop();
 		return;

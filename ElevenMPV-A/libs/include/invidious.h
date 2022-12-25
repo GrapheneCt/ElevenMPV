@@ -58,9 +58,11 @@ typedef enum InvDate
 
 typedef enum InvHlsQuality
 {
-	INV_HLS_QUALITY_LOW,
-	INV_HLS_QUALITY_MEDIUM,
-	INV_HLS_QUALITY_HIGH,
+	INV_HLS_QUALITY_144P,
+	INV_HLS_QUALITY_240P,
+	INV_HLS_QUALITY_360P,
+	INV_HLS_QUALITY_480P,
+	INV_HLS_QUALITY_720P,
 
 	INV_HLS_QUALITY_MAX
 } InvHlsQuality;
@@ -72,6 +74,7 @@ typedef struct InvItemVideo
 	const char *id;
 	const char *author;
 	const char *authorId;
+	const char *published;
 	char thmbUrl[128];
 	char thmbUrlHq[128];
 	// Only with invParseVideo
@@ -83,7 +86,8 @@ typedef struct InvItemVideo
 	SceInt32 lengthSec;
 	SceBool isLive;
 	const char *description;
-	const char *published;
+	const char *subCount;
+	SceInt32 likeCount;
 } InvItemVideo;
 
 typedef struct InvItemPlaylist
@@ -112,6 +116,7 @@ typedef struct InvItemComment
 	const char *thmbUrl;
 	const char *content;
 	const char *continuation;
+	const char *replyContinuation;
 } InvItemComment;
 
 typedef struct InvItem

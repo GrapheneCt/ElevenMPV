@@ -3,13 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <paf.h>
+#include <curl_file.h>
 
 #include "common.h"
 #include "menu_youtube.h"
 #include "menu_audioplayer.h"
 #include "utils.h"
 #include "yt_utils.h"
-#include "curl_file.h"
 #include "invidious.h"
 
 using namespace paf;
@@ -65,7 +65,7 @@ SceVoid menu::youtube::SearchParserThread::CreateVideoButton(SearchPage *page, S
 		text8 += page->parseResult[index].videoItem->author;
 		ccc::UTF8toUTF16(&text8, &subtext16);
 
-		fres = CurlFile::Open(page->parseResult[index].videoItem->thmbUrl, &res, 0, true);
+		fres = CurlFile::Open(page->parseResult[index].videoItem->thmbUrl, &res, 0, YTUtils::GetCurlFileShare());
 
 		thread::s_mainThreadMutex.Lock();
 		buttonCB = new VideoButtonCB;
