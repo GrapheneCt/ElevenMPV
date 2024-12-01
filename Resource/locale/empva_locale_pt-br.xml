@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<stringset>
+  <string src="Este diretório está vazio" id="msg_empty_dir" />
+  <string src="Ocorreu um erro de conexão SSL.Para utilizar esta função o horário do sistema e o plugin iTLS-Enso devem estar previamente configurados." id="msg_netcheck_fail" />
+  
+  <string src="Configurações" id="msg_settings" />
+  <string src="Partição:" id="msg_settings_device" />
+  <string src="Separar faixas por:" id="msg_settings_sort" />
+  <string src="Opções de Áudio" id="msg_settings_audio" />
+  <string src="Economia de Energia" id="msg_settings_power" />
+  <string src="Comandos" id="msg_settings_control" />
+  <string src="Opções do Youtube" id="msg_settings_youtube" />
+  
+  <string src="Equalizador" id="msg_settings_audio_eq" />
+  <string src="Nível de Volume Automático" id="msg_settings_audio_alc" />
+  <string src="Limitar Volume" id="msg_settings_audio_limit" />
+  
+  <string src="Limitador de FPS" id="msg_settings_power_fps" />
+  <string src="Suspender Automaticamente quando Pausado" id="msg_settings_power_save" />
+  <string src="Temporizador Standby (min)" id="msg_settings_power_time" />
+  
+  <string src="Pular Faixas com o Analógico Direito no Standby" id="msg_settings_control_stick" />
+  <string src="Sensores de Movimento" id="msg_settings_control_motion" />
+  <string src="Temporizador (sec)" id="msg_settings_control_time" />
+  <string src="Angulação ( °)" id="msg_settings_control_angle" />
+  
+  <string src="Limpar Histórico de Pesquisa" id="msg_settings_youtube_clean_history" />
+  <string src="Limpar Favoritos" id="msg_settings_youtube_clean_fav" />
+  <string src="Seu Histórico foi limpo." id="msg_settings_youtube_clean_history_done" />
+  <string src="Seus Favoritos foram limpos." id="msg_settings_youtube_clean_fav_done" />
+  <string src="Todo os registros do histórico serão deletados. Confirmar?" id="msg_settings_youtube_clean_history_confirm" />
+  <string src="Todos os favoritos serão deletados. Confirmar?" id="msg_settings_youtube_clean_fav_confirm" />
+  <string src="Fazer Download da faixa atual" id="msg_settings_youtube_download" />
+  <string src="Faixa adicionada a lista de Downloads." id="msg_settings_youtube_download_begin" />
+  <string src="Qualidade" id="msg_youtube_quality" />
+  <string src="Alta" id="msg_option_youtube_quality_0" />
+  <string src="Média" id="msg_option_youtube_quality_1" />
+  <string src="Baixa" id="msg_option_youtube_quality_2" />
+  
+  <string src="Aleatório" id="msg_player_shuffle" />
+  <string src="Repetição" id="msg_player_repeat" />
+  <string src="Favoritos" id="msg_player_fav" />
+  
+  <string src="Desligado" id="msg_option_audio_eq_0" />
+  <string src="Pesado" id="msg_option_audio_eq_1" />
+  <string src="Pop" id="msg_option_audio_eq_2" />
+  <string src="Jazz" id="msg_option_audio_eq_3" />
+  <string src="Unique" id="msg_option_audio_eq_4" />
+  
+  <string src="ux0:/" id="msg_option_device_0" />
+  <string src="ur0:/" id="msg_option_device_1" />
+  <string src="uma0:/" id="msg_option_device_2" />
+  <string src="xmc0:/" id="msg_option_device_3" />
+  <string src="imc0:/" id="msg_option_device_4" />
+  <string src="grw0:/" id="msg_option_device_5" />
+  <string src="Partição não encontrada." id="msg_settings_device_not_found" />
+  
+  <string src="Nome (A - Z)" id="msg_option_sort_0" />
+  <string src="Nome (Z - A)" id="msg_option_sort_1" />
+  <string src="Tamanho (Maior primeiro)" id="msg_option_sort_2" />
+  <string src="Tamanho (Menor primeiro)" id="msg_option_sort_3" />
+  
+</stringset>
